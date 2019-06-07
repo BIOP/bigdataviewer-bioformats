@@ -28,11 +28,11 @@ import java.awt.*;
 import java.io.File;
 import java.util.logging.Logger;
 
-@Plugin(type = Command.class,menuPath = "Plugins>BigDataViewer>SciJava>Open VSI Single Source (experimental) (SciJava)")
+@Plugin(type = Command.class,menuPath = "Plugins>BigDataViewer>SciJava>Open single source with BioFormats (experimental) (SciJava)")
 public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
     private static final Logger LOGGER = Logger.getLogger( BioFormatsOpenPlugInSingleSourceSciJava.class.getName() );
 
-    @Parameter(label = "VSI Image File")
+    @Parameter(label = "Image File")
     public File inputFile;
 
     @Parameter(label = "Open in new BigDataViewer window")

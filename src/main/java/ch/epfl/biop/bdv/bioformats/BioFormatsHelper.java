@@ -71,12 +71,6 @@ public class BioFormatsHelper {
             pZmm = omeMeta.getPlanePositionZ(image_index, 0).value(UNITS.MILLIMETER).doubleValue();
             dZmm = omeMeta.getPixelsPhysicalSizeZ(image_index).value(UNITS.MILLIMETER).doubleValue();
         }
-
-        //System.out.println("["+pXmm+","+pYmm+","+pZmm+"]");
-
-        //System.out.println("["+dXmm+","+dYmm+","+dZmm+"]");
-
-
     }
 
     public String toString() {

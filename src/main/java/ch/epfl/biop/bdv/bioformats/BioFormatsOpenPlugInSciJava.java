@@ -35,13 +35,13 @@ import java.util.logging.Logger;
 // https://github.com/ome/bio-formats-imagej/blob/master/src/main/java/loci/plugins/in/ImportProcess.java
 // TODO : add lookuptable
 
-@Plugin(type = Command.class,menuPath = "Plugins>BigDataViewer>SciJava>Open VSI (experimental) (SciJava)")
+@Plugin(type = Command.class,menuPath = "Plugins>BigDataViewer>SciJava>Open with BioFormats (experimental) (SciJava)")
 public class BioFormatsOpenPlugInSciJava implements Command
 {
 
     private static final Logger LOGGER = Logger.getLogger( BioFormatsOpenPlugInSciJava.class.getName() );
 
-    @Parameter(label = "VSI Image File")
+    @Parameter(label = "Image File")
     public File inputFile;
 
     @Parameter(label = "Open in new BigDataViewer window")
@@ -82,7 +82,7 @@ public class BioFormatsOpenPlugInSciJava implements Command
             LOGGER.info("reader.getSeriesCount()="+reader.getSeriesCount());
 
             ArrayList<Pair<Integer, ArrayList<Integer>>>
-                listOfStuff =
+                listOfSources =
                     commaSeparatedListToArrayOfArray(
                         sourceIndexStringNewFull,
                         idxSeries ->(idxSeries>=0)?idxSeries:reader.getSeriesCount()+idxSeries-1, // apparently -1 is necessary
@@ -90,7 +90,7 @@ public class BioFormatsOpenPlugInSciJava implements Command
                                 (idxChannel>=0)?idxChannel:omeMetaOmeXml.getChannelCount(idxSeries)+idxChannel
                     );
 
-            listOfStuff.stream().forEach(p -> {
+            listOfSources.stream().forEach(p -> {
                 p.getRight().stream().forEach(idCh -> {
                     try {
 
@@ -186,7 +186,6 @@ public class BioFormatsOpenPlugInSciJava implements Command
                     } else {
                         int indexMin, indexMax;
 
-                        System.out.println("ON est la");
                         if (seriesIdentifier.trim().contains(":")) {
                             String[] boundIndex = seriesIdentifier.split(":");
                             assert boundIndex.length==2;
