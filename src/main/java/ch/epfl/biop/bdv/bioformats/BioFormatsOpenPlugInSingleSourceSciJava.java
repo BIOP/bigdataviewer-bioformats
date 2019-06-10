@@ -104,7 +104,7 @@ public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
             LOGGER.info("name=" + omeMetaIdxOmeXml.getChannelName(sourceIndex, channelIndex));
 
             BdvOptions opts = BdvOptions.options();
-            if (bdvSrc.numDimensions== 2) opts = opts.is2D();
+            if (bdvSrc.numDimensions == 2) opts = opts.is2D();
             if (bdv_h != null) opts = opts.addTo(bdv_h);
             //{"Volatile","Standard", "Volatile + Standard"}
             BdvStackSource<?> bdvstack;

@@ -50,6 +50,7 @@ public class BioFormatsBdvUnsignedByteSource extends BioFormatsBdvSource<Unsigne
 
             int xc = cellDimensions[0];
             int yc = cellDimensions[1];
+            int zc = cellDimensions[2];
 
             // Creates border image, with cell Consumer method, which creates the image
 
@@ -58,24 +59,29 @@ public class BioFormatsBdvUnsignedByteSource extends BioFormatsBdvSource<Unsigne
                         synchronized(reader) {
                             reader.setResolution(level);
                             Cursor<UnsignedByteType> out = Views.flatIterable(cell).cursor();
-                            int minX = (int) cell.min(0);
-                            int maxX = Math.min(minX + xc, reader.getSizeX());
+                            int minZ = (int) cell.min(2);
+                            int maxZ = Math.min(minZ + zc, reader.getSizeZ());
 
-                            int minY = (int) cell.min(1);
-                            int maxY = Math.min(minY + yc, reader.getSizeY());
+                            for (int z=minZ;z<maxZ;z++) {
 
-                            int w = maxX - minX;
-                            int h = maxY - minY;
+                                int minX = (int) cell.min(0);
+                                int maxX = Math.min(minX + xc, reader.getSizeX());
 
-                            byte[] bytes = reader.openBytes(switchZandC?reader.getIndex(cChannel,0,t):reader.getIndex(0,cChannel,t), minX, minY, w, h);
+                                int minY = (int) cell.min(1);
+                                int maxY = Math.min(minY + yc, reader.getSizeY());
 
-                            int idxPx = 0;
+                                int w = maxX - minX;
+                                int h = maxY - minY;
 
-                            int totBytes = (w * h);
-                            while ((out.hasNext()) && (idxPx < totBytes)) {
-                                //int v = ((bytes[idxPx] & 0xff) << 16 ) | ((bytes[idxPx + 1] & 0xff) << 8) | (bytes[idxPx+2] & 0xff);
-                                out.next().set(bytes[idxPx]);
-                                idxPx ++;
+                                byte[] bytes = reader.openBytes(switchZandC ? reader.getIndex(cChannel, z, t) : reader.getIndex(z, cChannel, t), minX, minY, w, h);
+
+                                int idxPx = 0;
+
+                                int totBytes = (w * h);
+                                while ((out.hasNext()) && (idxPx < totBytes)) {
+                                    out.next().set(bytes[idxPx]);
+                                    idxPx++;
+                                }
                             }
                         }
                     }, options().initializeCellsAsDirty(true));

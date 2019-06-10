@@ -136,8 +136,13 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
             pZmm=0;
             dZmm=1;
         } else {
-            pZmm = omeMeta.getPlanePositionZ(image_index, 0).value(UNITS.MILLIMETER).doubleValue();
-            dZmm = omeMeta.getPixelsPhysicalSizeZ(image_index).value(UNITS.MILLIMETER).doubleValue();
+            if (omeMeta.getPlaneCount(image_index)>0) {
+                pZmm = omeMeta.getPlanePositionZ(image_index, 0).value(UNITS.MILLIMETER).doubleValue();
+                dZmm = omeMeta.getPixelsPhysicalSizeZ(image_index).value(UNITS.MILLIMETER).doubleValue();
+            } else {
+                pZmm=0;
+                dZmm=1;
+            }
         }
 
         // Sets AffineTransform of the highest resolution image from the pyramid
@@ -153,7 +158,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
         assert physSizeX!=null;
         assert physSizeY!=null;
 
-        numDimensions = 2 + (physSizeZ!=null?1:0);
+        numDimensions = 2 + (reader.getSizeZ()>0?1:0);
 
         // Sets voxel dimension object
         if (numDimensions==2) {

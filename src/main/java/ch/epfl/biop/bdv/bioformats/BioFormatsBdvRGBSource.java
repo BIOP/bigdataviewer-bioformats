@@ -31,7 +31,7 @@ public class BioFormatsBdvRGBSource extends BioFormatsBdvSource<ARGBType> {
     public RandomAccessibleInterval<ARGBType> createSource(int t, int level) {
         assert is24bitsRGB;
         synchronized(reader) {
-            //System.out.println("Building level "+level);
+
             if (!raiMap.containsKey(t)) {
                 raiMap.put(t, new ConcurrentHashMap<>());
             }
@@ -58,6 +58,7 @@ public class BioFormatsBdvRGBSource extends BioFormatsBdvSource<ARGBType> {
 
             int xc = cellDimensions[0];
             int yc = cellDimensions[1];
+            int zc = cellDimensions[2];
 
             // Creates border image, with cell Consumer method, which creates the image
             // TODO improve interleave case
@@ -68,26 +69,31 @@ public class BioFormatsBdvRGBSource extends BioFormatsBdvSource<ARGBType> {
                             synchronized(reader) {
                                 reader.setResolution(level);
                                 Cursor<ARGBType> out = Views.flatIterable(cell).cursor();
-                                int minX = (int) cell.min(0);
-                                int maxX = Math.min(minX + xc, reader.getSizeX());
+                                int minZ = (int) cell.min(2);
+                                int maxZ = Math.min(minZ + zc, reader.getSizeZ());
 
-                                int minY = (int) cell.min(1);
-                                int maxY = Math.min(minY + yc, reader.getSizeY());
+                                for (int z=minZ;z<maxZ;z++) {
+                                    int minX = (int) cell.min(0);
+                                    int maxX = Math.min(minX + xc, reader.getSizeX());
 
-                                int w = maxX - minX;
-                                int h = maxY - minY;
+                                    int minY = (int) cell.min(1);
+                                    int maxY = Math.min(minY + yc, reader.getSizeY());
+
+                                    int w = maxX - minX;
+                                    int h = maxY - minY;
 
 
-                                byte[] bytes = reader.openBytes(switchZandC?reader.getIndex(cChannel,0,t):reader.getIndex(0,cChannel,t),
-                                        minX, minY, w, h);
+                                    byte[] bytes = reader.openBytes(switchZandC?reader.getIndex(cChannel,z,t):reader.getIndex(z,cChannel,t),
+                                            minX, minY, w, h);
 
-                                int idxPx = 0;
+                                    int idxPx = 0;
 
-                                int totBytes = (w * h) * 3;
-                                while ((out.hasNext()) && (idxPx < totBytes)) {
-                                    int v = ((bytes[idxPx] & 0xff) << 16 ) | ((bytes[idxPx + 1] & 0xff) << 8) | (bytes[idxPx+2] & 0xff);
-                                    out.next().set(v);
-                                    idxPx += 3;
+                                    int totBytes = (w * h) * 3;
+                                    while ((out.hasNext()) && (idxPx < totBytes)) {
+                                        int v = ((bytes[idxPx] & 0xff) << 16 ) | ((bytes[idxPx + 1] & 0xff) << 8) | (bytes[idxPx+2] & 0xff);
+                                        out.next().set(v);
+                                        idxPx += 3;
+                                    }
                                 }
                             }
                         }, options().initializeCellsAsDirty(true));
@@ -97,32 +103,37 @@ public class BioFormatsBdvRGBSource extends BioFormatsBdvSource<ARGBType> {
                             synchronized(reader) {
                                 reader.setResolution(level);
                                 Cursor<ARGBType> out = Views.flatIterable(cell).cursor();
-                                int minX = (int) cell.min(0);
-                                int maxX = Math.min(minX + xc, reader.getSizeX());
+                                int minZ = (int) cell.min(2);
+                                int maxZ = Math.min(minZ + zc, reader.getSizeZ());
 
-                                int minY = (int) cell.min(1);
-                                int maxY = Math.min(minY + yc, reader.getSizeY());
+                                for (int z=minZ;z<maxZ;z++) {
+                                    int minX = (int) cell.min(0);
+                                    int maxX = Math.min(minX + xc, reader.getSizeX());
 
-                                int w = maxX - minX;
-                                int h = maxY - minY;
+                                    int minY = (int) cell.min(1);
+                                    int maxY = Math.min(minY + yc, reader.getSizeY());
 
-
-                                byte[] bytesR = reader.openBytes(switchZandC?reader.getIndex(cChannel,0,t):reader.getIndex(0,cChannel,t),
-                                        minX, minY, w, h);
-
-                                int idxPx = 0;
+                                    int w = maxX - minX;
+                                    int h = maxY - minY;
 
 
-                                int totBytes = (w * h) ;
+                                    byte[] bytesR = reader.openBytes(switchZandC?reader.getIndex(cChannel,z,t):reader.getIndex(z,cChannel,t),
+                                            minX, minY, w, h);
 
-                                int gOffset = totBytes;
+                                    int idxPx = 0;
 
-                                int bOffset = 2*totBytes;
 
-                                while ((out.hasNext()) && (idxPx < totBytes)) {
-                                    int v = ((bytesR[idxPx] & 0xff) << 16 ) | ((bytesR[idxPx+gOffset] & 0xff) << 8) | (bytesR[idxPx+bOffset] & 0xff);
-                                    out.next().set(v);
-                                    idxPx += 1;
+                                    int totBytes = (w * h) ;
+
+                                    int gOffset = totBytes;
+
+                                    int bOffset = 2*totBytes;
+
+                                    while ((out.hasNext()) && (idxPx < totBytes)) {
+                                        int v = ((bytesR[idxPx] & 0xff) << 16 ) | ((bytesR[idxPx+gOffset] & 0xff) << 8) | (bytesR[idxPx+bOffset] & 0xff);
+                                        out.next().set(v);
+                                        idxPx += 1;
+                                    }
                                 }
                             }
                         }, options().initializeCellsAsDirty(true));
