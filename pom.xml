@@ -163,6 +163,18 @@
 			<groupId>sc.fiji</groupId>
 			<artifactId>bigdataviewer-vistools</artifactId>
 		</dependency>
+        <dependency>
+            <groupId>sc.fiji</groupId>
+            <artifactId>bigdataviewer_fiji</artifactId>
+            <version>5.0.0</version>
+        </dependency>
 
-	</dependencies>
+		<dependency>
+			<groupId>ch.epfl.biop</groupId>
+			<artifactId>bigdataviewer_scijava</artifactId>
+			<scope>test</scope>
+			<version>0.1.1-SNAPSHOT</version>
+		</dependency>
+
+    </dependencies>
 </project>

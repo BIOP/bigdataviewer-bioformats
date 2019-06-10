@@ -46,17 +46,17 @@ public class BioFormatsHelper {
         is24bitsRGB = (reader.isRGB());//omeMeta.getPixelsType(image_index) == PixelType.UINT8)&&(omeMeta.getChannelSamplesPerPixel(image_index, 0) == PositiveInteger.valueOf("3"));
         is8bits = (omeMeta.getPixelsType(image_index) == PixelType.UINT8)&&(!is24bitsRGB);
         is16bits = (omeMeta.getPixelsType(image_index) == PixelType.UINT16)&&(!is24bitsRGB);
-        /*System.out.println("getchannelsamples="+omeMeta.getChannelSamplesPerPixel(image_index, 0));
-        System.out.println("getchannelcount="+omeMeta.getChannelCount(image_index));
-        System.out.println("reader.getImageCount()="+reader.getImageCount());
-        System.out.println("reader.isRGB()="+reader.isRGB());
-        System.out.println("reader.getOptimalTileHeight()="+reader.getOptimalTileHeight());
-        System.out.println("reader.getOptimalTileWidth()="+reader.getOptimalTileWidth());
-        System.out.println("reader.isInterleaved()="+reader.isInterleaved());*/
+        LOGGER.info("getchannelsamples="+omeMeta.getChannelSamplesPerPixel(image_index, 0));
+        LOGGER.info("getchannelcount="+omeMeta.getChannelCount(image_index));
+        LOGGER.info("reader.getImageCount()="+reader.getImageCount());
+        LOGGER.info("reader.isRGB()="+reader.isRGB());
+        LOGGER.info("reader.getOptimalTileHeight()="+reader.getOptimalTileHeight());
+        LOGGER.info("reader.getOptimalTileWidth()="+reader.getOptimalTileWidth());
+        LOGGER.info("reader.isInterleaved()="+reader.isInterleaved());
 
-        final Length physSizeZ = omeMeta.getPixelsPhysicalSizeZ(image_index);
+        //final Length physSizeZ = omeMeta.getPixelsPhysicalSizeZ(image_index);
 
-        double pXmm, pYmm, pZmm, dXmm, dYmm, dZmm;
+        /*double pXmm, pYmm, pZmm, dXmm, dYmm, dZmm;
 
         pXmm = omeMeta.getPlanePositionX(image_index, 0).value(UNITS.MILLIMETER).doubleValue();
         pYmm = omeMeta.getPlanePositionY(image_index, 0).value(UNITS.MILLIMETER).doubleValue();
@@ -70,7 +70,7 @@ public class BioFormatsHelper {
         } else {
             pZmm = omeMeta.getPlanePositionZ(image_index, 0).value(UNITS.MILLIMETER).doubleValue();
             dZmm = omeMeta.getPixelsPhysicalSizeZ(image_index).value(UNITS.MILLIMETER).doubleValue();
-        }
+        }*/
     }
 
     public String toString() {

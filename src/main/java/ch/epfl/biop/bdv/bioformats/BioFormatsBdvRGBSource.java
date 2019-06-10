@@ -60,39 +60,76 @@ public class BioFormatsBdvRGBSource extends BioFormatsBdvSource<ARGBType> {
             int yc = cellDimensions[1];
 
             // Creates border image, with cell Consumer method, which creates the image
+            // TODO improve interleave case
+            final Img<ARGBType> rai;
+            if (reader.isInterleaved()) {
+                rai = factory.create(new FinalInterval(new long[]{sx, sy, sz}),
+                        cell -> {
+                            synchronized(reader) {
+                                reader.setResolution(level);
+                                Cursor<ARGBType> out = Views.flatIterable(cell).cursor();
+                                int minX = (int) cell.min(0);
+                                int maxX = Math.min(minX + xc, reader.getSizeX());
 
-            final Img<ARGBType> rai = factory.create(new FinalInterval(new long[]{sx, sy, sz}),
-            cell -> {
-                synchronized(reader) {
-                    reader.setResolution(level);
-                    Cursor<ARGBType> out = Views.flatIterable(cell).cursor();
-                    int minX = (int) cell.min(0);
-                    int maxX = Math.min(minX + xc, reader.getSizeX());
+                                int minY = (int) cell.min(1);
+                                int maxY = Math.min(minY + yc, reader.getSizeY());
 
-                    int minY = (int) cell.min(1);
-                    int maxY = Math.min(minY + yc, reader.getSizeY());
-
-                    int w = maxX - minX;
-                    int h = maxY - minY;
+                                int w = maxX - minX;
+                                int h = maxY - minY;
 
 
-                    byte[] bytes = reader.openBytes(switchZandC?reader.getIndex(cChannel,0,t):reader.getIndex(0,cChannel,t),
-                            minX, minY, w, h);
+                                byte[] bytes = reader.openBytes(switchZandC?reader.getIndex(cChannel,0,t):reader.getIndex(0,cChannel,t),
+                                        minX, minY, w, h);
 
-                    int idxPx = 0;
+                                int idxPx = 0;
 
-                    int totBytes = (w * h) * 3;
-                    while ((out.hasNext()) && (idxPx < totBytes)) {
-                        int v = ((bytes[idxPx] & 0xff) << 16 ) | ((bytes[idxPx + 1] & 0xff) << 8) | (bytes[idxPx+2] & 0xff);
-                        out.next().set(v);
-                        idxPx += 3;
-                    }
-                }
-            }, options().initializeCellsAsDirty(true));
+                                int totBytes = (w * h) * 3;
+                                while ((out.hasNext()) && (idxPx < totBytes)) {
+                                    int v = ((bytes[idxPx] & 0xff) << 16 ) | ((bytes[idxPx + 1] & 0xff) << 8) | (bytes[idxPx+2] & 0xff);
+                                    out.next().set(v);
+                                    idxPx += 3;
+                                }
+                            }
+                        }, options().initializeCellsAsDirty(true));
+            } else {
+                rai = factory.create(new FinalInterval(new long[]{sx, sy, sz}),
+                        cell -> {
+                            synchronized(reader) {
+                                reader.setResolution(level);
+                                Cursor<ARGBType> out = Views.flatIterable(cell).cursor();
+                                int minX = (int) cell.min(0);
+                                int maxX = Math.min(minX + xc, reader.getSizeX());
+
+                                int minY = (int) cell.min(1);
+                                int maxY = Math.min(minY + yc, reader.getSizeY());
+
+                                int w = maxX - minX;
+                                int h = maxY - minY;
+
+
+                                byte[] bytesR = reader.openBytes(switchZandC?reader.getIndex(cChannel,0,t):reader.getIndex(0,cChannel,t),
+                                        minX, minY, w, h);
+
+                                int idxPx = 0;
+
+
+                                int totBytes = (w * h) ;
+
+                                int gOffset = totBytes;
+
+                                int bOffset = 2*totBytes;
+
+                                while ((out.hasNext()) && (idxPx < totBytes)) {
+                                    int v = ((bytesR[idxPx] & 0xff) << 16 ) | ((bytesR[idxPx+gOffset] & 0xff) << 8) | (bytesR[idxPx+bOffset] & 0xff);
+                                    out.next().set(v);
+                                    idxPx += 1;
+                                }
+                            }
+                        }, options().initializeCellsAsDirty(true));
+            }
 
             raiMap.get(t).put(level, rai);
 
-            //System.out.println("Building level "+level+" done!");
             return raiMap.get(t).get(level);
         }
     }
