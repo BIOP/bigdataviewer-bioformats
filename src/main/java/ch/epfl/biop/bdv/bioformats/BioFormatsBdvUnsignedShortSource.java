@@ -1,5 +1,6 @@
 package ch.epfl.biop.bdv.bioformats;
 
+import loci.formats.IFormatReader;
 import loci.formats.ImageReader;
 import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
@@ -16,8 +17,8 @@ import static net.imglib2.cache.img.DiskCachedCellImgOptions.options;
 
 // TODO : say interleaved channels not supported
 public class BioFormatsBdvUnsignedShortSource extends BioFormatsBdvSource<UnsignedShortType> {
-    public BioFormatsBdvUnsignedShortSource(ImageReader reader, int image_index, int channel_index, boolean sw) {
-        super(reader, image_index, channel_index, sw);
+    public BioFormatsBdvUnsignedShortSource(IFormatReader reader, int image_index, int channel_index, boolean sw, FinalInterval cacheBlockSize, boolean useBioFormatsXYBlockSize) {
+        super(reader, image_index, channel_index, sw, cacheBlockSize, useBioFormatsXYBlockSize);
     }
 
 
@@ -41,9 +42,10 @@ public class BioFormatsBdvUnsignedShortSource extends BioFormatsBdvSource<Unsign
             int sy = reader.getSizeY();
             int sz = numDimensions==2?1:reader.getSizeZ();
 
-
-            final int[] cellDimensions = new int[] { reader.getOptimalTileWidth(), reader.getOptimalTileHeight(),  numDimensions==2?1:64 };
-
+            final int[] cellDimensions = new int[] {
+                    useBioFormatsXYBlockSize?reader.getOptimalTileWidth():(int)cacheBlockSize.dimension(0),
+                    useBioFormatsXYBlockSize?reader.getOptimalTileHeight():(int)cacheBlockSize.dimension(1),
+                    numDimensions==2?1:(int)cacheBlockSize.dimension(2)};
             // Cached Image Factory Options
             final DiskCachedCellImgOptions factoryOptions = options()
                     .cellDimensions( cellDimensions )
@@ -53,8 +55,6 @@ public class BioFormatsBdvUnsignedShortSource extends BioFormatsBdvSource<Unsign
 
             // Creates cached image factory of Type Byte
             final DiskCachedCellImgFactory<UnsignedShortType> factory = new DiskCachedCellImgFactory<>( new UnsignedShortType() , factoryOptions );
-
-            //final Random random = new Random( 10 );
 
             int xc = cellDimensions[0];
             int yc = cellDimensions[1];

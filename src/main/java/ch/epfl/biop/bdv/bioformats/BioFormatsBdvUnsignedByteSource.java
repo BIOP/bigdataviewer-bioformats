@@ -1,5 +1,6 @@
 package ch.epfl.biop.bdv.bioformats;
 
+import loci.formats.IFormatReader;
 import loci.formats.ImageReader;
 import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
@@ -15,8 +16,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import static net.imglib2.cache.img.DiskCachedCellImgOptions.options;
 
 public class BioFormatsBdvUnsignedByteSource extends BioFormatsBdvSource<UnsignedByteType> {
-    public BioFormatsBdvUnsignedByteSource(ImageReader reader, int image_index, int channel_index, boolean sw) {
-        super(reader, image_index, channel_index, sw);
+    public BioFormatsBdvUnsignedByteSource(IFormatReader reader, int image_index, int channel_index, boolean sw, FinalInterval cacheBlockSize, boolean useBioFormatsXYBlockSize) {
+        super(reader, image_index, channel_index, sw, cacheBlockSize, useBioFormatsXYBlockSize);
     }
 
     @Override
@@ -34,7 +35,10 @@ public class BioFormatsBdvUnsignedByteSource extends BioFormatsBdvSource<Unsigne
             int sz = numDimensions==2?1:reader.getSizeZ();
 
 
-            final int[] cellDimensions = new int[] { 512, 512,  numDimensions==2?1:64 };
+            final int[] cellDimensions = new int[] {
+                                 useBioFormatsXYBlockSize?reader.getOptimalTileWidth():(int)cacheBlockSize.dimension(0),
+                                 useBioFormatsXYBlockSize?reader.getOptimalTileHeight():(int)cacheBlockSize.dimension(1),
+                                 numDimensions==2?1:(int)cacheBlockSize.dimension(2)};
 
             // Cached Image Factory Options
             final DiskCachedCellImgOptions factoryOptions = options()

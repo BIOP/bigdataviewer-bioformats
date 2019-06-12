@@ -1,6 +1,6 @@
 package ch.epfl.biop.bdv.bioformats;
 
-import loci.formats.ImageReader;
+import loci.formats.IFormatReader;
 import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
@@ -17,9 +17,8 @@ import static net.imglib2.cache.img.DiskCachedCellImgOptions.options;
 
 public class BioFormatsBdvRGBSource extends BioFormatsBdvSource<ARGBType> {
 
-
-    public BioFormatsBdvRGBSource(ImageReader reader, int image_index, int channel_index, boolean sw) {
-        super(reader, image_index, channel_index, sw);
+    public BioFormatsBdvRGBSource(IFormatReader reader, int image_index, int channel_index, boolean sw, FinalInterval cacheBlockSize, boolean useBioFormatsXYBlockSize) {
+        super(reader, image_index, channel_index, sw, cacheBlockSize, useBioFormatsXYBlockSize);
     }
 
     /**
@@ -41,20 +40,19 @@ public class BioFormatsBdvRGBSource extends BioFormatsBdvSource<ARGBType> {
             int sy = reader.getSizeY();
             int sz = numDimensions==2?1:reader.getSizeZ();
 
-
-            final int[] cellDimensions = new int[] { 512, 512,  numDimensions==2?1:64 };
-
+            final int[] cellDimensions = new int[] {
+                    useBioFormatsXYBlockSize?reader.getOptimalTileWidth():(int)cacheBlockSize.dimension(0),
+                    useBioFormatsXYBlockSize?reader.getOptimalTileHeight():(int)cacheBlockSize.dimension(1),
+                    numDimensions==2?1:(int)cacheBlockSize.dimension(2)};
+            
             // Cached Image Factory Options
             final DiskCachedCellImgOptions factoryOptions = options()
                     .cellDimensions( cellDimensions )
                     .cacheType( DiskCachedCellImgOptions.CacheType.BOUNDED )
                     .maxCacheSize( 100 );
 
-
             // Creates cached image factory of Type Byte
             final DiskCachedCellImgFactory<ARGBType> factory = new DiskCachedCellImgFactory<ARGBType>( new ARGBType() , factoryOptions );
-
-            //final Random random = new Random( 10 );
 
             int xc = cellDimensions[0];
             int yc = cellDimensions[1];
@@ -82,7 +80,6 @@ public class BioFormatsBdvRGBSource extends BioFormatsBdvSource<ARGBType> {
                                     int w = maxX - minX;
                                     int h = maxY - minY;
 
-
                                     byte[] bytes = reader.openBytes(switchZandC?reader.getIndex(cChannel,z,t):reader.getIndex(z,cChannel,t),
                                             minX, minY, w, h);
 
@@ -95,6 +92,7 @@ public class BioFormatsBdvRGBSource extends BioFormatsBdvSource<ARGBType> {
                                         idxPx += 3;
                                     }
                                 }
+
                             }
                         }, options().initializeCellsAsDirty(true));
             } else {

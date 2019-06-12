@@ -5,9 +5,10 @@ import bdv.util.BdvHandle;
 import bdv.util.BdvOptions;
 import bdv.util.BdvStackSource;
 import bdv.util.volatiles.SharedQueue;
-import loci.formats.ImageReader;
-import loci.formats.MetadataTools;
+import bdv.viewer.Source;
+import loci.formats.*;
 import loci.formats.meta.IMetadata;
+import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.RealType;
@@ -57,6 +58,21 @@ public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
     @Parameter
     public boolean autoscale = true;
 
+    @Parameter
+    public boolean keepBdv3d = false;
+
+    @Parameter
+    public boolean letBioFormatDecideCacheBlockXY = true;
+
+    @Parameter
+    int cacheBlockSizeX = 512;
+
+    @Parameter
+    int cacheBlockSizeY = 512;
+
+    @Parameter
+    int cacheBlockSizeZ = 32;
+
     @Override
     public void run()
     {
@@ -69,30 +85,40 @@ public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
             options.addTo(bdv_h);
         }
         try {
-            final ImageReader readerIdx = new ImageReader();
-            readerIdx.setFlattenedResolutions(false);
+            IFormatReader reader = new ImageReader();
+            reader.setFlattenedResolutions(false);
+            Memoizer memo = new Memoizer( reader );
             final IMetadata omeMetaIdxOmeXml = MetadataTools.createOMEXMLMetadata();
-            readerIdx.setMetadataStore(omeMetaIdxOmeXml);
-            readerIdx.setId(inputFile.getAbsolutePath());
+            memo.setMetadataStore(omeMetaIdxOmeXml);
+            memo.setId( inputFile.getAbsolutePath() );
+            final IFormatReader readerIdx = memo;
 
-            BioFormatsBdvSource bdvSrc = null;
+            Source bdvSrc = null;
 
             LOGGER.info("src idx = "+sourceIndex);
             LOGGER.info("ch idx = "+channelIndex);
             BioFormatsHelper h = new BioFormatsHelper(readerIdx, sourceIndex);
-            VolatileBioFormatsBdvSource<?, ?> vSrc = null;
-            if (h.is24bitsRGB) {
-                bdvSrc = new BioFormatsBdvRGBSource(readerIdx, sourceIndex, channelIndex, switchZandC);
-                vSrc = new VolatileBioFormatsBdvSource<ARGBType, VolatileARGBType>(bdvSrc, new VolatileARGBType(), new SharedQueue(2));
+            VolatileBdvSource<?, ?> vSrc = null;
 
+            FinalInterval cacheBlockSize = new FinalInterval(new long[]
+                           {(long)cacheBlockSizeX,
+                            (long)cacheBlockSizeY,
+                            (long)cacheBlockSizeZ});
+
+            if (h.is24bitsRGB) {
+                bdvSrc = new BioFormatsBdvRGBSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY);
+                //bdvSrc = new LazyPyramidBdvSource<>(bdvSrc);
+                vSrc = new VolatileBdvSource<ARGBType, VolatileARGBType>(bdvSrc, new VolatileARGBType(), new SharedQueue(1));
             } else {
                 if (h.is8bits)  {
-                    bdvSrc = new BioFormatsBdvUnsignedByteSource(readerIdx, sourceIndex, channelIndex, switchZandC);
-                    vSrc = new VolatileBioFormatsBdvSource<UnsignedByteType, VolatileUnsignedByteType>(bdvSrc, new VolatileUnsignedByteType(), new SharedQueue(2));
+                    bdvSrc = new BioFormatsBdvUnsignedByteSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY);
+                    //bdvSrc = new LazyPyramidBdvSource<>(bdvSrc);
+                    vSrc = new VolatileBdvSource<UnsignedByteType, VolatileUnsignedByteType>(bdvSrc, new VolatileUnsignedByteType(), new SharedQueue(1));
                 }
                 if (h.is16bits) {
-                    bdvSrc = new BioFormatsBdvUnsignedShortSource(readerIdx, sourceIndex, channelIndex, switchZandC);
-                    vSrc = new VolatileBioFormatsBdvSource<UnsignedShortType, VolatileUnsignedShortType>(bdvSrc, new VolatileUnsignedShortType(), new SharedQueue(2));
+                    bdvSrc = new BioFormatsBdvUnsignedShortSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY);
+                    //bdvSrc = new LazyPyramidBdvSource<>(bdvSrc);
+                    vSrc = new VolatileBdvSource<UnsignedShortType, VolatileUnsignedShortType>(bdvSrc, new VolatileUnsignedShortType(), new SharedQueue(1));
                 }
             }
 
@@ -104,9 +130,8 @@ public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
             LOGGER.info("name=" + omeMetaIdxOmeXml.getChannelName(sourceIndex, channelIndex));
 
             BdvOptions opts = BdvOptions.options();
-            if (bdvSrc.numDimensions == 2) opts = opts.is2D();
+            if ((keepBdv3d==false)) opts = opts.is2D();
             if (bdv_h != null) opts = opts.addTo(bdv_h);
-            //{"Volatile","Standard", "Volatile + Standard"}
             BdvStackSource<?> bdvstack;
             switch (appendMode) {
                 case "Volatile":
@@ -138,17 +163,15 @@ public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
                 // autoscale attempt based on min max of last pyramid -> no scaling of RGB image
                 RandomAccessibleInterval<RealType> rai = bdvSrc.getSource(0,bdvSrc.getNumMipmapLevels()-1);
                 RealType vMax = Util.getTypeFromInterval(rai);
-                //RealType vMin = Util.getTypeFromInterval(rai);
+                if (rai.max(0)*rai.max(1)*rai.max(2)> (long) (1024*1024)) {
+                    LOGGER.info("Image too big, autoscale is quick and dirty...");
+                    rai = Views.interval(rai, new FinalInterval(rai.max(0)/5, rai.max(1)/5, 1));
+                }
                 for (RealType px :  Views.flatIterable( rai ) ) {
-                    //if (px.compareTo(vMin)<0) {
-                    //    vMin.setReal(px.getRealDouble());
-                    //}
-
                     if (px.compareTo(vMax)>0) {
                         vMax.setReal(px.getRealDouble());
                     }
                 }
-                //vMin.getRealDouble()
                 // TODO understand why min do not work
                 bdvstack.setDisplayRange(0, vMax.getRealDouble());
             }

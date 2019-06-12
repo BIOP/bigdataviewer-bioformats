@@ -2,7 +2,9 @@ package ch.epfl.biop.bdv.bioformats;
 
 import bdv.util.BdvHandle;
 import loci.common.DebugTools;
+import loci.formats.IFormatReader;
 import loci.formats.ImageReader;
+import loci.formats.Memoizer;
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
 import net.imagej.ImageJ;
@@ -51,7 +53,7 @@ public class BioFormatsOpenPlugInSciJava implements Command
     @Parameter(label = "BigDataViewer Frame", type = ItemIO.BOTH, required = false)
     public BdvHandle bdv_h;
 
-    @Parameter(label="Full New")
+    @Parameter(label="Series and channel, * for everything")
     public String sourceIndexStringNewFull = "0";
 
     @Parameter(label="Display type ()", choices = {"Volatile","Standard", "Volatile + Standard"})
@@ -64,20 +66,39 @@ public class BioFormatsOpenPlugInSciJava implements Command
     public boolean switchZandC = false;
 
     @Parameter
+    public boolean keepBdv3d = false;
+
+    @Parameter
     CommandService cs;
+
+    @Parameter
+    public boolean letBioFormatDecideCacheBlockXY = true;
+
+    @Parameter
+    public int cacheBlockSizeX = 512;
+
+    @Parameter
+    public int cacheBlockSizeY = 512;
+
+    @Parameter
+    public int cacheBlockSizeZ = 32;
 
     @Override
     public void run()
     {
-        DebugTools.enableIJLogging(false);
+        //DebugTools.enableIJLogging(false);
         DebugTools.enableLogging("INFO");
         try {
+            IFormatReader readerIdx = new ImageReader();
 
-            final ImageReader reader = new ImageReader();
-            reader.setFlattenedResolutions(false);
+            readerIdx.setFlattenedResolutions(false);
+            Memoizer memo = new Memoizer( readerIdx );
+
             final IMetadata omeMetaOmeXml = MetadataTools.createOMEXMLMetadata();
-            reader.setMetadataStore(omeMetaOmeXml);
-            reader.setId(inputFile.getAbsolutePath());
+            memo.setMetadataStore(omeMetaOmeXml);
+
+            memo.setId( inputFile.getAbsolutePath() );
+            final IFormatReader reader = memo;
 
             LOGGER.info("reader.getSeriesCount()="+reader.getSeriesCount());
 
@@ -85,7 +106,7 @@ public class BioFormatsOpenPlugInSciJava implements Command
                 listOfSources =
                     commaSeparatedListToArrayOfArray(
                         sourceIndexStringNewFull,
-                        idxSeries ->(idxSeries>=0)?idxSeries:reader.getSeriesCount()+idxSeries-1, // apparently -1 is necessary
+                        idxSeries ->(idxSeries>=0)?idxSeries:reader.getSeriesCount()+idxSeries, // apparently -1 is necessary -> I don't really understand
                         (idxSeries, idxChannel) ->
                                 (idxChannel>=0)?idxChannel:omeMetaOmeXml.getChannelCount(idxSeries)+idxChannel
                     );
@@ -105,7 +126,13 @@ public class BioFormatsOpenPlugInSciJava implements Command
                                     "inputFile", inputFile,
                                     "switchZandC", switchZandC,
                                     "autoscale", autoscale,
-                                    "appendMode", appendMode);
+                                    "appendMode", appendMode,
+                                    "keepBdv3d", keepBdv3d,
+                                    "cacheBlockSizeX", cacheBlockSizeX,
+                                    "cacheBlockSizeY", cacheBlockSizeY,
+                                    "cacheBlockSizeZ", cacheBlockSizeZ,
+                                    "letBioFormatDecideCacheBlockXY", letBioFormatDecideCacheBlockXY
+                            );
                             cm = module.get();
                         } else {
                             Future<CommandModule> module = cs.run(BioFormatsOpenPlugInSingleSourceSciJava.class, false,
@@ -116,7 +143,13 @@ public class BioFormatsOpenPlugInSciJava implements Command
                                     "inputFile", inputFile,
                                     "switchZandC", switchZandC,
                                     "autoscale", autoscale,
-                                    "appendMode", "Volatile");
+                                    "appendMode", "Volatile",
+                                    "keepBdv3d", keepBdv3d,
+                                    "cacheBlockSizeX", cacheBlockSizeX,
+                                    "cacheBlockSizeY", cacheBlockSizeY,
+                                    "cacheBlockSizeZ", cacheBlockSizeZ,
+                                    "letBioFormatDecideCacheBlockXY", letBioFormatDecideCacheBlockXY
+                            );
                             module.get();
                             module = cs.run(BioFormatsOpenPlugInSingleSourceSciJava.class, false,
                                     "sourceIndex", p.getLeft(),
@@ -126,7 +159,13 @@ public class BioFormatsOpenPlugInSciJava implements Command
                                     "inputFile", inputFile,
                                     "switchZandC", switchZandC,
                                     "autoscale", autoscale,
-                                    "appendMode", "Standard");
+                                    "appendMode", "Standard",
+                                    "keepBdv3d", keepBdv3d,
+                                    "cacheBlockSizeX", cacheBlockSizeX,
+                                    "cacheBlockSizeY", cacheBlockSizeY,
+                                    "cacheBlockSizeZ", cacheBlockSizeZ,
+                                    "letBioFormatDecideCacheBlockXY", letBioFormatDecideCacheBlockXY
+                            );
                             cm = module.get();
 
                         }

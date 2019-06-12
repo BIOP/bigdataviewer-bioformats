@@ -3,6 +3,7 @@ package ch.epfl.biop.bdv.bioformats;
 import bdv.util.AbstractSource;
 import bdv.util.volatiles.SharedQueue;
 import bdv.util.volatiles.VolatileViews;
+import bdv.viewer.Source;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
@@ -13,13 +14,13 @@ import net.imglib2.type.numeric.NumericType;
 
 import java.util.function.Supplier;
 
-public class VolatileBioFormatsBdvSource< T extends NumericType< T >, V extends Volatile< T > & NumericType< V >> extends AbstractSource< V > {
-    private final BioFormatsBdvSource< T > source;
+public class VolatileBdvSource< T extends NumericType< T >, V extends Volatile< T > & NumericType< V >> extends AbstractSource< V > {
+    private final Source< T > source;
 
     private SharedQueue queue;
 
-    public VolatileBioFormatsBdvSource(
-            final BioFormatsBdvSource< T > source,
+    public VolatileBdvSource(
+            final Source< T > source,
             final V type,
             final SharedQueue queue )
     {
@@ -28,7 +29,7 @@ public class VolatileBioFormatsBdvSource< T extends NumericType< T >, V extends 
         this.queue = queue;
     }
 
-    public VolatileBioFormatsBdvSource(
+    public VolatileBdvSource(
             final BioFormatsBdvSource< T > source,
             final Supplier< V > typeSupplier,
             final SharedQueue queue )

@@ -3,9 +3,10 @@ package ch.epfl.biop.bdv.bioformats;
 import bdv.util.DefaultInterpolators;
 import bdv.viewer.Interpolation;
 import bdv.viewer.Source;
-import loci.formats.ImageReader;
+import loci.formats.IFormatReader;
 import loci.formats.meta.IMetadata;
 import mpicbg.spim.data.sequence.VoxelDimensions;
+import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccessible;
 import net.imglib2.realtransform.AffineTransform3D;
@@ -46,7 +47,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
     protected final DefaultInterpolators< T > interpolators = new DefaultInterpolators<>();
 
     // Bioformat reader
-    volatile ImageReader reader;
+    volatile IFormatReader reader;
 
     // Inner VoxelDimensions, taken from BioFormats
     final VoxelDimensions voxelsDimensions;
@@ -87,6 +88,10 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
     // Source name
     public String sourceName;
 
+    final FinalInterval cacheBlockSize;
+
+    public boolean useBioFormatsXYBlockSize;
+
     /**
      * Bio Format source cosntructor
      * @param reader bio format reader -> flatten should be set to false to allow for multiresolution handling
@@ -94,8 +99,9 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
      * @param channel_index channel index within source
      * @param swZC switch or not z and c
      */
-    public BioFormatsBdvSource(ImageReader reader, int image_index, int channel_index, boolean swZC) {
-
+    public BioFormatsBdvSource(IFormatReader reader, int image_index, int channel_index, boolean swZC, FinalInterval cacheBlockSize, boolean useBioFormatsXYBlockSize) {
+        this.useBioFormatsXYBlockSize=useBioFormatsXYBlockSize;
+        this.cacheBlockSize = cacheBlockSize;
         this.switchZandC=swZC;
         this.reader = reader;
         this.reader.setSeries(image_index);
@@ -158,7 +164,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
         assert physSizeX!=null;
         assert physSizeY!=null;
 
-        numDimensions = 2 + (reader.getSizeZ()>0?1:0);
+        numDimensions = 2 + (reader.getSizeZ()>1?1:0);
 
         // Sets voxel dimension object
         if (numDimensions==2) {
