@@ -76,7 +76,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
     // Position of dataset + voxel spacing
     public double pXmm, pYmm, pZmm, dXmm, dYmm, dZmm;
 
-    // Affine transform of the highest resolution iamge
+    // Affine transform of the highest resolution image
     AffineTransform3D rootTransform = new AffineTransform3D();
 
     // Concurrent HashMap containing the affine transforms of the source - limitation : they are not changing over time
@@ -115,7 +115,15 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
         final Length physSizeZ = omeMeta.getPixelsPhysicalSizeZ(image_index);
 
         // SourceName
-        this.sourceName = omeMeta.getImageName(image_index)+"_ch_"+omeMeta.getChannelName(image_index, channel_index);
+        if (omeMeta.getChannelName(image_index, channel_index)!=null) {
+            if (omeMeta.getChannelName(image_index, channel_index).equals("null")) {
+                this.sourceName = omeMeta.getImageName(image_index);
+            } else {
+                this.sourceName = omeMeta.getImageName(image_index) + "_ch_" + omeMeta.getChannelName(image_index, channel_index);
+            }
+        } else {
+            this.sourceName = omeMeta.getImageName(image_index);
+        }
 
         // Get image type
         is24bitsRGB = (omeMeta.getPixelsType(image_index) == PixelType.UINT8)&&(omeMeta.getChannelSamplesPerPixel(image_index, 0) == PositiveInteger.valueOf("3"));
