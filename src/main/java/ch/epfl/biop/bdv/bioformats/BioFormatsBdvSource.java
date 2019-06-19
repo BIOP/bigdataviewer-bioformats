@@ -9,6 +9,7 @@ import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccessible;
+import net.imglib2.Volatile;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.NumericType;
@@ -356,7 +357,13 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
 
     @Override
     public String getName() {
-        return this.sourceName;
+
+        if (getType() instanceof Volatile) {
+            return this.sourceName+" (Volatile)";
+        } else {
+            return this.sourceName;
+        }
+
     }
 
     public void setName(String newName) {
