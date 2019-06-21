@@ -13,9 +13,11 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.integer.UnsignedIntType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.volatiles.VolatileARGBType;
 import net.imglib2.type.volatiles.VolatileUnsignedByteType;
+import net.imglib2.type.volatiles.VolatileUnsignedIntType;
 import net.imglib2.type.volatiles.VolatileUnsignedShortType;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
@@ -119,6 +121,11 @@ public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
                     bdvSrc = new BioFormatsBdvUnsignedShortSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY);
                     //bdvSrc = new LazyPyramidBdvSource<>(bdvSrc);
                     vSrc = new VolatileBdvSource<UnsignedShortType, VolatileUnsignedShortType>(bdvSrc, new VolatileUnsignedShortType(), new SharedQueue(1));
+                }
+                if (h.is32bits) {
+                    bdvSrc = new BioFormatsBdvUnsignedIntSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY);
+                    //bdvSrc = new LazyPyramidBdvSource<>(bdvSrc);
+                    vSrc = new VolatileBdvSource<UnsignedIntType, VolatileUnsignedIntType>(bdvSrc, new VolatileUnsignedIntType(), new SharedQueue(1));
                 }
             }
 

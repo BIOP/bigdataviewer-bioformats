@@ -57,13 +57,13 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
     final int numDimensions;
 
     // UnsignedByte channel flag
-    final boolean is8bit;
+    //final boolean is8bit;
 
     // UnsignedShort channel flag
-    final boolean is16bits;
+    //final boolean is16bits;
 
     // 24 bits RGB channel flag
-    final boolean is24bitsRGB;
+    //final boolean is24bitsRGB;
 
     // Fix BioFormat confusion between c and z in some file formats
     public boolean switchZandC;
@@ -127,9 +127,9 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
         }
 
         // Get image type
-        is24bitsRGB = (omeMeta.getPixelsType(image_index) == PixelType.UINT8)&&(omeMeta.getChannelSamplesPerPixel(image_index, 0) == PositiveInteger.valueOf("3"));
-        is8bit = (omeMeta.getPixelsType(image_index) == PixelType.UINT8)&&(!is24bitsRGB);
-        is16bits = (omeMeta.getPixelsType(image_index) == PixelType.UINT16)&&(!is24bitsRGB);
+        //is24bitsRGB = (omeMeta.getPixelsType(image_index) == PixelType.UINT8)&&(omeMeta.getChannelSamplesPerPixel(image_index, 0) == PositiveInteger.valueOf("3"));
+        //is8bit = (omeMeta.getPixelsType(image_index) == PixelType.UINT8)&&(!is24bitsRGB);
+        //is16bits = (omeMeta.getPixelsType(image_index) == PixelType.UINT16)&&(!is24bitsRGB);
 
         // Get image origin and spacing
 
@@ -348,12 +348,12 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
     }
 
     @Override
-    public T getType() {
+    abstract public T getType();/* {
         if (is8bit) return (T) new UnsignedByteType();
         if (is16bits) return (T) new UnsignedShortType();
         if (is24bitsRGB) return (T) new ARGBType();
         return null;
-    }
+    }*/
 
     @Override
     public String getName() {

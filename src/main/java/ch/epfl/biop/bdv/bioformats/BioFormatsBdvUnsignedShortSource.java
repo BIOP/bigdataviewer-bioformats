@@ -24,7 +24,7 @@ public class BioFormatsBdvUnsignedShortSource extends BioFormatsBdvSource<Unsign
 
     @Override
     public RandomAccessibleInterval<UnsignedShortType> createSource(int t, int level) {
-        assert is8bit;
+        //assert is8bit;
         synchronized(reader) {
             //System.out.println("Building level "+level);
             if (!raiMap.containsKey(t)) {
@@ -109,5 +109,10 @@ public class BioFormatsBdvUnsignedShortSource extends BioFormatsBdvSource<Unsign
             //System.out.println("Building level "+level+" done!");
             return raiMap.get(t).get(level);
         }
+    }
+
+    @Override
+    public UnsignedShortType getType() {
+        return new UnsignedShortType();
     }
 }

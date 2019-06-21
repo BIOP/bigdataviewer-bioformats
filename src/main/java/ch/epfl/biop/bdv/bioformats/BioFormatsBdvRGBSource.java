@@ -28,7 +28,7 @@ public class BioFormatsBdvRGBSource extends BioFormatsBdvSource<ARGBType> {
      * @return
      */
     public RandomAccessibleInterval<ARGBType> createSource(int t, int level) {
-        assert is24bitsRGB;
+        //assert is24bitsRGB;
         synchronized(reader) {
 
             if (!raiMap.containsKey(t)) {
