@@ -1,0 +1,267 @@
+package ch.epfl.biop.bdv.bioformats.export;
+//https://github.com/ome/bio-formats-examples
+
+import bdv.util.BdvHandle;
+import bdv.viewer.Source;
+import loci.common.image.IImageScaler;
+import loci.common.image.SimpleImageScaler;
+import loci.common.services.DependencyException;
+import loci.common.services.ServiceException;
+import loci.common.services.ServiceFactory;
+import loci.formats.FormatException;
+import loci.formats.FormatTools;
+import loci.formats.IFormatWriter;
+import loci.formats.ImageReader;
+import loci.formats.ImageWriter;
+import loci.formats.Resolution;
+import loci.formats.meta.IMetadata;
+import loci.formats.ome.OMEPyramidStore;
+import loci.formats.out.OMETiffWriter;
+import loci.formats.services.OMEXMLService;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.Volatile;
+import net.imglib2.type.numeric.ARGBType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
+import ome.xml.model.enums.DimensionOrder;
+import ome.xml.model.enums.EnumerationException;
+import ome.xml.model.enums.PixelType;
+import ome.xml.model.primitives.PositiveInteger;
+import org.scijava.command.Command;
+import org.scijava.plugin.Parameter;
+import org.scijava.plugin.Plugin;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Function;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
+/**
+ * Inspired from https://github.com/ome/bio-formats-examples/blob/master/src/main/java/FileExport.java
+ */
+
+@Plugin(type = Command.class,menuPath = "Plugins>BigDataViewer>SciJava>Save as OMETIFF (experimental) (SciJava)")
+public class BioFormatsExport implements Command{
+
+    private static final Logger LOGGER = Logger.getLogger( BioFormatsExport.class.getName() );
+
+    @Parameter(label="Sources to save ('2,3-5'), starts at 0")
+    String index_srcs_to_save;
+
+    @Parameter(label = "BigDataViewer Frame")
+    public BdvHandle bdv_h;
+
+
+    /** The file format writer. */
+    private OMETiffWriter writer;
+
+    /** The name of the output file. */
+    @Parameter(label = "output file, ome tiff format")
+    public File outputFile;
+
+    @Parameter(label = "compute pyramid")
+    public boolean computePyramid;
+
+    @Parameter(label = "pyramid scale factor (XY only)")
+    public int scale = 4;
+
+    @Parameter(label = "number of resolutions")
+    public int resolutions = 4;
+
+    @Override
+    public void run() {
+        ArrayList<Integer> idx_src = expressionToArray(index_srcs_to_save, i -> {
+            if (i>=0) {
+                return i;
+            } else {
+                return bdv_h.getViewerPanel().getState().getSources().size()+i;
+            }});
+
+        List<Source<?>> srcs = idx_src
+                .stream()
+                .map(idx -> bdv_h.getViewerPanel().getState().getSources().get(idx).getSpimSource())
+                .collect(Collectors.toList());
+
+
+        //OMEPyramidStore) service.createOMEXMLMetadata();
+
+        try {
+            ServiceFactory factory = new ServiceFactory();
+            OMEXMLService service = factory.getInstance(OMEXMLService.class);
+            OMEPyramidStore meta = (OMEPyramidStore) service.createOMEXMLMetadata();
+            meta.createRoot();
+
+            // Let's generate the metadata first
+            int iImage = 0;
+            Source<?> src = srcs.get(iImage);
+            if (src.getName()!=null) {
+                meta.setImageName(src.getName(), iImage);
+            } else {
+                meta.setImageName("No Name", iImage);
+            }
+            meta.setImageID("Image:"+iImage, iImage);
+            meta.setPixelsID("Pixels:"+iImage, iImage);
+
+            // specify that the pixel data is stored in big-endian format
+            // change 'TRUE' to 'FALSE' to specify little-endian format
+            meta.setPixelsBinDataBigEndian(Boolean.TRUE, 0, 0);
+
+            // specify that the images are stored in ZCT order
+            meta.setPixelsDimensionOrder(DimensionOrder.XYZCT, 0);
+
+
+            long sizeX = src.getSource(0,0).dimension(0);
+            long sizeY = src.getSource(0,0).dimension(1);
+            long sizeZ = src.getSource(0,0).dimension(2);
+
+            int type;
+            boolean isRGB = false;
+            String pt;
+
+            // specify that the pixel type of the images
+            if (src.getType() instanceof Volatile) {
+                System.err.println("Volatile unsupported");
+                cleanup();
+                return;
+            } else if (src.getType() instanceof UnsignedByteType) {
+                type = FormatTools.UINT8;
+                pt = FormatTools.getPixelTypeString(type);
+                meta.setPixelsType(PixelType.fromString(pt), iImage);
+            } else if (src.getType() instanceof UnsignedShortType) {
+                type = FormatTools.UINT16;
+                pt = FormatTools.getPixelTypeString(type);
+                meta.setPixelsType(PixelType.fromString(pt), iImage);
+            } else if (src.getType() instanceof ARGBType) {
+                type = FormatTools.UINT8;
+                pt = FormatTools.getPixelTypeString(type); isRGB=true;
+                meta.setPixelsType(PixelType.fromString(pt), iImage);
+            } else {
+                System.err.println("Pixel type unsupported");
+                cleanup();
+                return;
+            }
+
+            assert sizeX<Integer.MAX_VALUE;
+            assert sizeY<Integer.MAX_VALUE;
+
+            // specify the dimensions of the images
+            meta.setPixelsSizeX(new PositiveInteger((int)sizeX), iImage);
+            meta.setPixelsSizeY(new PositiveInteger((int)sizeY), iImage);
+            meta.setPixelsSizeZ(new PositiveInteger((int)sizeZ), iImage);
+            meta.setPixelsSizeC(new PositiveInteger(1), iImage);
+            meta.setPixelsSizeT(new PositiveInteger(1), iImage);
+
+            // define each channel and specify the number of samples in the channel
+            // the number of samples is 3 for RGB images and 1 otherwise
+            meta.setChannelID("Channel:"+iImage+":0", iImage, 0);
+            meta.setChannelSamplesPerPixel(new PositiveInteger(isRGB?3:1), iImage, 0);
+
+            for (int i=1;i<resolutions;i++) {
+                int divScale = (int) Math.pow(scale,i);
+                meta.setResolutionSizeX(new PositiveInteger((int) (sizeX/divScale)),iImage,i);
+                meta.setResolutionSizeY(new PositiveInteger((int) (sizeY/divScale)),iImage,i);
+            }
+
+            writer = new OMETiffWriter();
+            writer.setMetadataRetrieve(meta);
+            writer.setId(outputFile.getAbsolutePath());
+
+            iImage = 0;
+            src = srcs.get(iImage);
+
+
+            byte[] arrayToSave = SourceToByteArray.raiUnsignedByteTypeToByteArray(
+                    (RandomAccessibleInterval<UnsignedByteType>) src.getSource(0,0), new UnsignedByteType()
+            );
+
+            writer.setSeries(iImage);
+            writer.saveBytes(iImage,arrayToSave);
+
+            IImageScaler scaler = new SimpleImageScaler();
+
+            for (int i=1;i<resolutions;i++) {
+                writer.setResolution(i);
+                int divScale = (int) Math.pow(scale,i);
+                int x = meta.getResolutionSizeX(iImage,i).getValue();
+                int y = meta.getResolutionSizeY(iImage,i).getValue();
+                System.out.println("i="+i+"; x="+x+"y="+y);
+                byte[] downsample = scaler.downsample(arrayToSave,
+                        (int) sizeX, (int) sizeY, Math.pow(scale,i),
+                        FormatTools.getBytesPerPixel(pt),
+                        false,
+                        false,
+                        1,
+                        false);
+                writer.saveBytes(iImage, downsample);
+            }
+            cleanup();
+            System.out.println("Done");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+//        cleanup();
+
+    }
+
+    /** Close the file writer. */
+    private void cleanup() {
+        try {
+            writer.close();
+        }
+        catch (IOException e) {
+            System.err.println("Failed to close file writer.");
+            e.printStackTrace();
+        }
+    }
+
+    static public ArrayList<Integer> expressionToArray(String expression, Function<Integer, Integer> fbounds) {
+        String[] splitIndexes = expression.split(",");
+        ArrayList<Integer> arrayOfIndexes = new ArrayList<>();
+        for (String str : splitIndexes) {
+            str.trim();
+            if (str.contains(":")) {
+                // Array of source, like 2:5 = 2,3,4,5
+                String[] boundIndex = str.split(":");
+                if (boundIndex.length==2) {
+                    try {
+                        int b1 = fbounds.apply(Integer.valueOf(boundIndex[0].trim()));
+                        int b2 = fbounds.apply(Integer.valueOf(boundIndex[1].trim()));
+                        if (b1<b2) {
+                            for (int index = b1; index <= b2; index++) {
+                                arrayOfIndexes.add(index);
+                            }
+                        }  else {
+                            for (int index = b2; index >= b1; index--) {
+                                arrayOfIndexes.add(index);
+                            }
+                        }
+                    } catch (NumberFormatException e) {
+                        LOGGER.warning("Number format problem with expression:"+str+" - Expression ignored");
+                    }
+                } else {
+                    LOGGER.warning("Cannot parse expression "+str+" to pattern 'begin-end' (2-5) for instance, omitted");
+                }
+            } else {
+                // Single source
+                try {
+                    if (str.trim().equals("*")) {
+                        int maxIndex = fbounds.apply(-1);
+                        for (int index = 0; index <=maxIndex; index++) {
+                            arrayOfIndexes.add(index);
+                        }
+                    } else {
+                        int index = fbounds.apply(Integer.valueOf(str.trim()));
+                        arrayOfIndexes.add(index);
+                    }
+                } catch (NumberFormatException e) {
+                    LOGGER.warning("Number format problem with expression:"+str+" - Expression ignored");
+                }
+            }
+        }
+        return arrayOfIndexes;
+    }
+}

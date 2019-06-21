@@ -50,7 +50,6 @@ public class BioFormatsHelper {
     public String toString() {
         String str = "Img \n";
         str+="nDimensions = "+nDimensions;
-
         return str;
     }
 }
