@@ -17,6 +17,7 @@ import loci.formats.Resolution;
 import loci.formats.meta.IMetadata;
 import loci.formats.ome.OMEPyramidStore;
 import loci.formats.out.OMETiffWriter;
+import loci.formats.out.PyramidOMETiffWriter;
 import loci.formats.services.OMEXMLService;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
@@ -56,7 +57,7 @@ public class BioFormatsExport implements Command{
 
 
     /** The file format writer. */
-    private OMETiffWriter writer;
+    private IFormatWriter writer;
 
     /** The name of the output file. */
     @Parameter(label = "output file, ome tiff format")
@@ -107,11 +108,10 @@ public class BioFormatsExport implements Command{
 
             // specify that the pixel data is stored in big-endian format
             // change 'TRUE' to 'FALSE' to specify little-endian format
-            meta.setPixelsBinDataBigEndian(Boolean.TRUE, 0, 0);
+            meta.setPixelsBinDataBigEndian(Boolean.TRUE, iImage, 0);
 
             // specify that the images are stored in ZCT order
-            meta.setPixelsDimensionOrder(DimensionOrder.XYZCT, 0);
-
+            meta.setPixelsDimensionOrder(DimensionOrder.XYZCT, iImage);
 
             long sizeX = src.getSource(0,0).dimension(0);
             long sizeY = src.getSource(0,0).dimension(1);
@@ -159,19 +159,21 @@ public class BioFormatsExport implements Command{
             meta.setChannelID("Channel:"+iImage+":0", iImage, 0);
             meta.setChannelSamplesPerPixel(new PositiveInteger(isRGB?3:1), iImage, 0);
 
-            for (int i=1;i<resolutions;i++) {
+            for (int i=0;i<resolutions;i++) {
                 int divScale = (int) Math.pow(scale,i);
+                System.out.println("divscale="+divScale);
+                System.out.println(new PositiveInteger((int) (sizeX/divScale)).getNumberValue().doubleValue());
+                System.out.println(new PositiveInteger((int) (sizeY/divScale)).getNumberValue().doubleValue());
                 meta.setResolutionSizeX(new PositiveInteger((int) (sizeX/divScale)),iImage,i);
                 meta.setResolutionSizeY(new PositiveInteger((int) (sizeY/divScale)),iImage,i);
             }
 
-            writer = new OMETiffWriter();
+            writer = new ImageWriter();//new PyramidOMETiffWriter();
             writer.setMetadataRetrieve(meta);
             writer.setId(outputFile.getAbsolutePath());
 
             iImage = 0;
             src = srcs.get(iImage);
-
 
             byte[] arrayToSave = SourceToByteArray.raiUnsignedByteTypeToByteArray(
                     (RandomAccessibleInterval<UnsignedByteType>) src.getSource(0,0), new UnsignedByteType()
@@ -195,6 +197,7 @@ public class BioFormatsExport implements Command{
                         false,
                         1,
                         false);
+                System.out.println("downsample.length="+downsample.length);
                 writer.saveBytes(iImage, downsample);
             }
             cleanup();

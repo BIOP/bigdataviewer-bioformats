@@ -33,6 +33,8 @@ public class BioFormatsBdvUnsignedByteSource extends BioFormatsBdvSource<Unsigne
             reader.setResolution(level);
             int sx = reader.getSizeX();
             int sy = reader.getSizeY();
+
+            System.out.println("level="+level+" sx = "+sx+" sy = "+sy);
             int sz = numDimensions==2?1:reader.getSizeZ();
 
 

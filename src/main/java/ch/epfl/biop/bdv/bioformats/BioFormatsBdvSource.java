@@ -11,17 +11,12 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccessible;
 import net.imglib2.Volatile;
 import net.imglib2.realtransform.AffineTransform3D;
-import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.NumericType;
-import net.imglib2.type.numeric.integer.UnsignedByteType;
-import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.view.ExtendedRandomAccessibleInterval;
 import net.imglib2.view.Views;
 import ome.units.UNITS;
 import ome.units.quantity.Length;
 import ome.units.unit.Unit;
-import ome.xml.model.enums.PixelType;
-import ome.xml.model.primitives.PositiveInteger;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -55,15 +50,6 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
 
     // 2D or 3D supported (3D TODO)
     final int numDimensions;
-
-    // UnsignedByte channel flag
-    //final boolean is8bit;
-
-    // UnsignedShort channel flag
-    //final boolean is16bits;
-
-    // 24 bits RGB channel flag
-    //final boolean is24bitsRGB;
 
     // Fix BioFormat confusion between c and z in some file formats
     public boolean switchZandC;
@@ -109,11 +95,8 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
         this.cChannel = channel_index;
         this.numberOfTimePoints = this.reader.getSizeT();
 
-        // Get image size
+        // MetaData
         final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
-        final Length physSizeX = omeMeta.getPixelsPhysicalSizeX(image_index);
-        final Length physSizeY = omeMeta.getPixelsPhysicalSizeY(image_index);
-        final Length physSizeZ = omeMeta.getPixelsPhysicalSizeZ(image_index);
 
         // SourceName
         if (omeMeta.getChannelName(image_index, channel_index)!=null) {
@@ -126,52 +109,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
             this.sourceName = omeMeta.getImageName(image_index);
         }
 
-        // Get image type
-        //is24bitsRGB = (omeMeta.getPixelsType(image_index) == PixelType.UINT8)&&(omeMeta.getChannelSamplesPerPixel(image_index, 0) == PositiveInteger.valueOf("3"));
-        //is8bit = (omeMeta.getPixelsType(image_index) == PixelType.UINT8)&&(!is24bitsRGB);
-        //is16bits = (omeMeta.getPixelsType(image_index) == PixelType.UINT16)&&(!is24bitsRGB);
-
-        // Get image origin and spacing
-
-        if (omeMeta.getPlaneCount(image_index)>0) {
-            pXmm = omeMeta.getPlanePositionX(image_index, 0).value(UNITS.MILLIMETER).doubleValue();
-            pYmm = omeMeta.getPlanePositionY(image_index, 0).value(UNITS.MILLIMETER).doubleValue();
-
-            dXmm = omeMeta.getPixelsPhysicalSizeX(image_index).value(UNITS.MILLIMETER).doubleValue();
-            dYmm = omeMeta.getPixelsPhysicalSizeY(image_index).value(UNITS.MILLIMETER).doubleValue();
-        } else {
-            pXmm=0;
-            pYmm=0;
-            dXmm=1;
-            dYmm=1;
-        }
-
-        // In 3D if available
-        if (physSizeZ==null) {
-            pZmm=0;
-            dZmm=1;
-        } else {
-            if (omeMeta.getPlaneCount(image_index)>0) {
-                pZmm = omeMeta.getPlanePositionZ(image_index, 0).value(UNITS.MILLIMETER).doubleValue();
-                dZmm = omeMeta.getPixelsPhysicalSizeZ(image_index).value(UNITS.MILLIMETER).doubleValue();
-            } else {
-                pZmm=0;
-                dZmm=1;
-            }
-        }
-
-        // Sets AffineTransform of the highest resolution image from the pyramid
-        rootTransform.identity();
-        rootTransform.set(
-                dXmm,0   ,0   ,0,
-                0   ,dYmm,0   ,0,
-                0   ,0   ,dZmm,0,
-                0   ,0   ,0   ,1
-        );
-        rootTransform.translate(pXmm, pYmm, pZmm);
-
-        assert physSizeX!=null;
-        assert physSizeY!=null;
+        setRootTransform(omeMeta, image_index);
 
         numDimensions = 2 + (reader.getSizeZ()>1?1:0);
 
@@ -235,6 +173,83 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
                 }
             };
         }
+    }
+
+
+    public void setRootTransform(IMetadata omeMeta, int image_index) {
+        // Get image size
+        //final Length physSizeX = omeMeta.getPixelsPhysicalSizeX(image_index);
+        //final Length physSizeY = omeMeta.getPixelsPhysicalSizeY(image_index);
+        //final Length physSizeZ = omeMeta.getPixelsPhysicalSizeZ(image_index);
+
+        // First : try with Physical dimension
+        try {
+            if (omeMeta.getPlaneCount(image_index)>0) {
+                pXmm = omeMeta.getPlanePositionX(image_index, 0).value(UNITS.MILLIMETER).doubleValue();
+                pYmm = omeMeta.getPlanePositionY(image_index, 0).value(UNITS.MILLIMETER).doubleValue();
+            }
+        } catch(NullPointerException e) { // Beurk
+            System.out.println("NullPointerException Caught : no physical units");
+            try {
+                //System.out.println("omeMeta.getPlanePositionX(image_index, 0)="+omeMeta.getPlanePositionX(image_index, 0));
+                pXmm = omeMeta.getPlanePositionX(image_index, 0).value().doubleValue()*1000;
+                pYmm = omeMeta.getPlanePositionY(image_index, 0).value().doubleValue()*1000;
+                System.out.println("NullPointerException Caught : no plane position");
+            } catch (NullPointerException e2) { // Beurk
+                //System.out.print("NullPointerException Caught");
+                pXmm=0;
+                pYmm=0;
+               /* try {
+
+                    System.out.println("omeMeta.getPlanePositionX(image_index, 0)="+omeMeta.getPlanePositionX(image_index, 0));
+                    pXmm = omeMeta.getPlanePositionX(image_index, 0).value(UNITS.REFERENCEFRAME).doubleValue()*1000;
+                    pYmm = omeMeta.getPlanePositionY(image_index, 0).value(UNITS.REFERENCEFRAME).doubleValue()*1000;
+                    System.out.println("NullPointerException Caught : no plane position");
+                } catch (NullPointerException e3) { // Beurk
+                    //System.out.print("NullPointerException Caught");
+
+                }*/
+            }
+        }
+
+        try {
+            dXmm = omeMeta.getPixelsPhysicalSizeX(image_index).value(UNITS.MILLIMETER).doubleValue();
+            dYmm = omeMeta.getPixelsPhysicalSizeY(image_index).value(UNITS.MILLIMETER).doubleValue();
+        } catch(NullPointerException e1) { // Beurk
+            //System.out.print("NullPointerException Caught");
+            try {
+                dXmm = omeMeta.getPixelsSizeX(image_index).getNumberValue().doubleValue();
+                dYmm = omeMeta.getPixelsSizeY(image_index).getNumberValue().doubleValue();
+            } catch(NullPointerException e2) { // Beurk
+                //System.out.print("NullPointerException Caught");
+                dXmm=1;
+                dYmm=1;
+            }
+        }
+
+        // In 3D if available
+        if (omeMeta.getPixelsPhysicalSizeZ(image_index)==null) {
+            pZmm=0;
+            dZmm=1;
+        } else {
+            try {
+                pZmm = omeMeta.getPlanePositionZ(image_index, 0).value(UNITS.MILLIMETER).doubleValue();
+                dZmm = omeMeta.getPixelsPhysicalSizeZ(image_index).value(UNITS.MILLIMETER).doubleValue();
+            }  catch(NullPointerException e2) { // Beurk
+                pZmm=0;
+                dZmm=1;
+            }
+        }
+
+        // Sets AffineTransform of the highest resolution image from the pyramid
+        rootTransform.identity();
+        rootTransform.set(
+                dXmm,0   ,0   ,0,
+                0   ,dYmm,0   ,0,
+                0   ,0   ,dZmm,0,
+                0   ,0   ,0   ,1
+        );
+        rootTransform.translate(pXmm, pYmm, pZmm);
     }
 
     /**
