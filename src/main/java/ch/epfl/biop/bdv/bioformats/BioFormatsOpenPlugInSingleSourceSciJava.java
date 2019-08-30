@@ -15,10 +15,8 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedIntType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
-import net.imglib2.type.volatiles.VolatileARGBType;
-import net.imglib2.type.volatiles.VolatileUnsignedByteType;
-import net.imglib2.type.volatiles.VolatileUnsignedIntType;
-import net.imglib2.type.volatiles.VolatileUnsignedShortType;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.type.volatiles.*;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import ome.units.UNITS;
@@ -127,10 +125,16 @@ public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
                     //bdvSrc = new LazyPyramidBdvSource<>(bdvSrc);
                     vSrc = new VolatileBdvSource<UnsignedIntType, VolatileUnsignedIntType>(bdvSrc, new VolatileUnsignedIntType(), new SharedQueue(1));
                 }
+
+                if (h.isFloat32bits) {
+                    bdvSrc = new BioFormatsBdvFloatSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY);
+                    //bdvSrc = new LazyPyramidBdvSource<>(bdvSrc);
+                    vSrc = new VolatileBdvSource<FloatType, VolatileFloatType>(bdvSrc, new VolatileFloatType(), new SharedQueue(1));
+                }
             }
 
             if (vSrc==null) {
-                LOGGER.severe("Couldn't display source type. UnsignedShort, UnsignedByte and 24 bit RGB only are supported. ");
+                LOGGER.severe("Couldn't display source type. UnsignedShort, UnsignedByte, Float, and 24 bit RGB only are supported. ");
                 return;
             }
 

@@ -28,6 +28,8 @@ public class BioFormatsHelper {
 
     final boolean is32bits;
 
+    final boolean isFloat32bits;
+
     final boolean is24bitsRGB;
 
     public BioFormatsHelper(IFormatReader reader, int image_index) throws Exception {
@@ -38,6 +40,7 @@ public class BioFormatsHelper {
         is8bits = (omeMeta.getPixelsType(image_index) == PixelType.UINT8)&&(!is24bitsRGB);
         is16bits = (omeMeta.getPixelsType(image_index) == PixelType.UINT16)&&(!is24bitsRGB);
         is32bits = (omeMeta.getPixelsType(image_index) == PixelType.UINT32)&&(!is24bitsRGB);
+        isFloat32bits = (omeMeta.getPixelsType(image_index) == PixelType.FLOAT)&&(!is24bitsRGB);
 
         Consumer<String> log = (s) -> {};// LOGGER.info(s);
 
