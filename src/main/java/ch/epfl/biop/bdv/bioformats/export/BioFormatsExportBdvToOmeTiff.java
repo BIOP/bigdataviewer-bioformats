@@ -5,19 +5,11 @@ import bdv.util.BdvHandle;
 import bdv.viewer.Source;
 import loci.common.image.IImageScaler;
 import loci.common.image.SimpleImageScaler;
-import loci.common.services.DependencyException;
-import loci.common.services.ServiceException;
 import loci.common.services.ServiceFactory;
-import loci.formats.FormatException;
 import loci.formats.FormatTools;
 import loci.formats.IFormatWriter;
-import loci.formats.ImageReader;
 import loci.formats.ImageWriter;
-import loci.formats.Resolution;
-import loci.formats.meta.IMetadata;
 import loci.formats.ome.OMEPyramidStore;
-import loci.formats.out.OMETiffWriter;
-import loci.formats.out.PyramidOMETiffWriter;
 import loci.formats.services.OMEXMLService;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
@@ -25,7 +17,6 @@ import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import ome.xml.model.enums.DimensionOrder;
-import ome.xml.model.enums.EnumerationException;
 import ome.xml.model.enums.PixelType;
 import ome.xml.model.primitives.PositiveInteger;
 import org.scijava.command.Command;
@@ -45,9 +36,9 @@ import java.util.stream.Collectors;
  */
 
 @Plugin(type = Command.class,menuPath = "Plugins>BigDataViewer>SciJava>Save as OMETIFF (experimental) (SciJava)")
-public class BioFormatsExport implements Command{
+public class BioFormatsExportBdvToOmeTiff implements Command{
 
-    private static final Logger LOGGER = Logger.getLogger( BioFormatsExport.class.getName() );
+    private static final Logger LOGGER = Logger.getLogger( BioFormatsExportBdvToOmeTiff.class.getName() );
 
     @Parameter(label="Sources to save ('2,3-5'), starts at 0")
     String index_srcs_to_save;

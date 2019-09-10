@@ -22,15 +22,15 @@ public class BioFormatsHelper {
 
     public int nDimensions;
 
-    final boolean is8bits;
+    final public boolean is8bits;
 
-    final boolean is16bits;
+    final public boolean is16bits;
 
-    final boolean is32bits;
+    final public boolean is32bits;
 
-    final boolean isFloat32bits;
+    final public boolean isFloat32bits;
 
-    final boolean is24bitsRGB;
+    final public boolean is24bitsRGB;
 
     public BioFormatsHelper(IFormatReader reader, int image_index) throws Exception {
 

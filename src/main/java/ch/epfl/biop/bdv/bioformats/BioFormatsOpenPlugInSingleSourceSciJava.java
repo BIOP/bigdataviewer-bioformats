@@ -43,7 +43,13 @@ public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
     @Parameter(label = "BigDataViewer Frame", type = ItemIO.BOTH, required = false)
     public BdvHandle bdv_h;
 
-    @Parameter(label="Display type ()", choices = {"Volatile","Standard"})
+    @Parameter(type = ItemIO.OUTPUT)
+    public Source bdvSrc;
+
+    @Parameter(type = ItemIO.OUTPUT)
+    public VolatileBdvSource<?, ?> vSrc;
+
+    @Parameter(label="Display type ()", choices = {"Volatile","Standard","No Show"})
     public String appendMode = "Volatile";
 
     @Parameter
@@ -65,13 +71,13 @@ public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
     public boolean letBioFormatDecideCacheBlockXY = true;
 
     @Parameter
-    int cacheBlockSizeX = 512;
+    public int cacheBlockSizeX = 512;
 
     @Parameter
-    int cacheBlockSizeY = 512;
+    public int cacheBlockSizeY = 512;
 
     @Parameter
-    int cacheBlockSizeZ = 32;
+    public int cacheBlockSizeZ = 32;
 
     @Override
     public void run()
@@ -93,12 +99,12 @@ public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
             memo.setId( inputFile.getAbsolutePath() );
             final IFormatReader readerIdx = memo;
 
-            Source bdvSrc = null;
+            bdvSrc = null;
 
             LOGGER.info("src idx = "+sourceIndex);
             LOGGER.info("ch idx = "+channelIndex);
             BioFormatsHelper h = new BioFormatsHelper(readerIdx, sourceIndex);
-            VolatileBdvSource<?, ?> vSrc = null;
+            vSrc = null;
 
             FinalInterval cacheBlockSize = new FinalInterval(new long[]
                            {(long)cacheBlockSizeX,
@@ -151,44 +157,47 @@ public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
                 case "Standard":
                     bdvstack = BdvFunctions.show(bdvSrc, opts);
                     break;
+                case "No Show":
+                    bdvstack=null;
+                    break;
                 default:
                     LOGGER.info("Invalid append mode: "+appendMode);
                     return;
             }
-
-            if (!h.is24bitsRGB) {
-                ome.xml.model.primitives.Color c = omeMetaIdxOmeXml.getChannelColor(sourceIndex, channelIndex);
-                if (c!=null) {
-                    bdvstack.setColor(new ARGBType(ARGBType.rgba(c.getRed(), c.getGreen(), c.getBlue(), 255)));
-                } else {
-                    if (omeMetaIdxOmeXml.getChannelEmissionWavelength(sourceIndex, channelIndex) != null) {
-                        int emission = omeMetaIdxOmeXml.getChannelEmissionWavelength(sourceIndex, channelIndex).value(UNITS.NANOMETER).intValue();
-                        LOGGER.info("emission=" + emission + " nm");
-                        Color cAwt = getColorFromWavelength(emission);
-                        bdvstack.setColor(new ARGBType(ARGBType.rgba(cAwt.getRed(), cAwt.getGreen(), cAwt.getBlue(), 255)));
+            if (bdvstack!=null) {
+                if (!h.is24bitsRGB) {
+                    ome.xml.model.primitives.Color c = omeMetaIdxOmeXml.getChannelColor(sourceIndex, channelIndex);
+                    if (c != null) {
+                        bdvstack.setColor(new ARGBType(ARGBType.rgba(c.getRed(), c.getGreen(), c.getBlue(), 255)));
+                    } else {
+                        if (omeMetaIdxOmeXml.getChannelEmissionWavelength(sourceIndex, channelIndex) != null) {
+                            int emission = omeMetaIdxOmeXml.getChannelEmissionWavelength(sourceIndex, channelIndex).value(UNITS.NANOMETER).intValue();
+                            LOGGER.info("emission=" + emission + " nm");
+                            Color cAwt = getColorFromWavelength(emission);
+                            bdvstack.setColor(new ARGBType(ARGBType.rgba(cAwt.getRed(), cAwt.getGreen(), cAwt.getBlue(), 255)));
+                        }
                     }
                 }
-            }
 
-            if ((!h.is24bitsRGB)&&(autoscale)) {
-                // autoscale attempt based on min max of last pyramid -> no scaling of RGB image
-                RandomAccessibleInterval<RealType> rai = bdvSrc.getSource(0,bdvSrc.getNumMipmapLevels()-1);
-                RealType vMax = Util.getTypeFromInterval(rai);
-                if (rai.max(0)*rai.max(1)*rai.max(2)> (long) (1024*1024)) {
-                    LOGGER.info("Image too big, autoscale is quick and dirty...");
-                    rai = Views.interval(rai, new FinalInterval(rai.max(0)/5, rai.max(1)/5, 1));
-                }
-                for (RealType px :  Views.flatIterable( rai ) ) {
-                    if (px.compareTo(vMax)>0) {
-                        vMax.setReal(px.getRealDouble());
+                if ((!h.is24bitsRGB) && (autoscale)) {
+                    // autoscale attempt based on min max of last pyramid -> no scaling of RGB image
+                    RandomAccessibleInterval<RealType> rai = bdvSrc.getSource(0, bdvSrc.getNumMipmapLevels() - 1);
+                    RealType vMax = Util.getTypeFromInterval(rai);
+                    if (rai.max(0) * rai.max(1) * rai.max(2) > (long) (1024 * 1024)) {
+                        LOGGER.info("Image too big, autoscale is quick and dirty...");
+                        rai = Views.interval(rai, new FinalInterval(rai.max(0) / 5, rai.max(1) / 5, 1));
                     }
+                    for (RealType px : Views.flatIterable(rai)) {
+                        if (px.compareTo(vMax) > 0) {
+                            vMax.setReal(px.getRealDouble());
+                        }
+                    }
+                    // TODO understand why min do not work
+                    bdvstack.setDisplayRange(0, vMax.getRealDouble());
                 }
-                // TODO understand why min do not work
-                bdvstack.setDisplayRange(0, vMax.getRealDouble());
+
+                bdv_h = bdvstack.getBdvHandle();
             }
-
-            bdv_h = bdvstack.getBdvHandle();
-
         } catch (Exception e) {
             e.printStackTrace();
         }

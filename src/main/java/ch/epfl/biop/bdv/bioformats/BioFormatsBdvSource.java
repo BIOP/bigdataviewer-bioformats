@@ -192,8 +192,8 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
             System.out.println("NullPointerException Caught : no physical units");
             try {
                 //System.out.println("omeMeta.getPlanePositionX(image_index, 0)="+omeMeta.getPlanePositionX(image_index, 0));
-                pXmm = omeMeta.getPlanePositionX(image_index, 0).value().doubleValue()*1000;
-                pYmm = omeMeta.getPlanePositionY(image_index, 0).value().doubleValue()*1000;
+                pXmm = omeMeta.getPlanePositionX(image_index, 0).value().doubleValue();
+                pYmm = omeMeta.getPlanePositionY(image_index, 0).value().doubleValue();
                 System.out.println("NullPointerException Caught : no plane position");
             } catch (NullPointerException e2) { // Beurk
                 //System.out.print("NullPointerException Caught");

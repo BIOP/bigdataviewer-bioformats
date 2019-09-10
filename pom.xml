@@ -215,6 +215,12 @@
 			<artifactId>scijava-ui-swing</artifactId>
 			<version>0.13.0</version>
 		</dependency>
+
+		<dependency>
+			<groupId>net.preibisch</groupId>
+			<artifactId>multiview-reconstruction</artifactId>
+			<version>0.3.6</version>
+		</dependency>
 		<!--
 		<dependency>
 			<groupId>ch.epfl.biop</groupId>
