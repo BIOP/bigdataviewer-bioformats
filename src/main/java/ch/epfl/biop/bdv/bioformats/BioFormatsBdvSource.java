@@ -235,7 +235,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
             try {
                 pZmm = omeMeta.getPlanePositionZ(image_index, 0).value(UNITS.MILLIMETER).doubleValue();
                 dZmm = omeMeta.getPixelsPhysicalSizeZ(image_index).value(UNITS.MILLIMETER).doubleValue();
-            }  catch(NullPointerException e2) { // Beurk
+            }  catch(NullPointerException | IndexOutOfBoundsException e2) { // Beurk
                 pZmm=0;
                 dZmm=1;
             }

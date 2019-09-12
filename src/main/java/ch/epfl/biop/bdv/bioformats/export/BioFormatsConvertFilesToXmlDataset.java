@@ -13,9 +13,8 @@ import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.*;
 import net.imglib2.Dimensions;
 import net.imglib2.realtransform.AffineTransform3D;
-import net.imglib2.util.Pair;
 import ome.units.UNITS;
-import org.scijava.ItemIO;
+import org.apache.commons.io.FilenameUtils;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -40,17 +39,30 @@ import static ch.epfl.biop.bdv.bioformats.export.BioFormatsToXmlUtils.getChannel
 
 @Plugin(type = Command.class,menuPath = "Plugins>BigDataViewer>SciJava>Save as Xml Dataset (SciJava)")
 public class BioFormatsConvertFilesToXmlDataset implements Command {
-    @Parameter(label = "Image File")
-    public File inputFile;
+    @Parameter(label = "Image Files")
+    public File[] inputFiles;
 
-    @Parameter(type = ItemIO.BOTH) // To append datasets potentially
-    public File xmlFile;
+    @Parameter(required=false, label = "output path, empty = same folder as input", style = "directory") // To append datasets potentially
+    public File xmlFilePath;
+
+    @Parameter(required=false, label = "output file name") // To append datasets potentially
+    public String xmlFileName;
 
     Consumer<String> log = s -> System.out.println(s);
 
     int viewSetupCounter = 0;
 
+    int nTileCounter = 0;
+
     int maxTimepoints = -1;
+
+    Map<Integer,Integer> channelHashToId = new HashMap<>();
+
+    Map<Integer,Integer> fileIdxToNumberOfSeries = new HashMap<>();
+    Map<Integer,Channel> channelIdToChannel = new HashMap<>();
+
+    Map<Integer, SeriesTps> fileIdxToNumberOfSeriesAndTimepoints = new HashMap<>();
+    Map<Integer, FileSerieChannel> viewSetupToBFFileSerieChannel = new HashMap<>();
 
     @Override
     public void run() {
@@ -66,109 +78,127 @@ public class BioFormatsConvertFilesToXmlDataset implements Command {
         Illumination dummy_ill = new Illumination(0);
         // No Angle
         Angle dummy_ang = new Angle(0);
+        // Many View Setups
+        List<ViewSetup> viewSetups = new ArrayList<>();
 
         try {
-            memo.setId( inputFile.getAbsolutePath() );
-            final IFormatReader reader = memo;
+            for (int iF=0;iF<inputFiles.length;iF++) {
+                log.accept("File : "+ inputFiles[iF].getAbsolutePath());
 
-            List<ViewSetup> viewSetups = new ArrayList<>();
-            log.accept("Number of Series : "+reader.getSeriesCount());
-            final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
+                memo.setId(inputFiles[iF].getAbsolutePath());
+                final int iFile = iF;
+                final IFormatReader reader = memo;
 
-            // -------------------------- SETUPS For each Series : one per timepoint and one per channel
+                log.accept("Number of Series : " + reader.getSeriesCount());
+                final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
 
-            IntStream series = IntStream.range(0,reader.getSeriesCount());
+                fileIdxToNumberOfSeries.put(iF, reader.getSeriesCount() );
 
-            series.forEach( iSerie -> {
-                reader.setSeries(iSerie);
-                // One serie = one Tile
-                Tile tile = new Tile(iSerie);
-                // ---------- Serie >
-                // ---------- Serie > Timepoints
-                log.accept("\t Serie "+iSerie+" Number of timesteps = "+omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
-                // ---------- Serie > Channels
-                log.accept("\t Serie "+iSerie+" Number of channels = "+omeMeta.getChannelCount(iSerie));
-                //final int iS = iSerie;
-                // Properties of the serie
-                IntStream channels = IntStream.range(0,omeMeta.getChannelCount(iSerie));
-                if (omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue()>maxTimepoints) {
-                    maxTimepoints= omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue();
-                }
-                String imageName = omeMeta.getImageName(iSerie);
-                Dimensions dims = BioFormatsToXmlUtils.getDimensions(omeMeta,iSerie, UNITS.MILLIMETER);
-                VoxelDimensions voxDims = BioFormatsToXmlUtils.getVoxelDimensions(omeMeta,iSerie, UNITS.MILLIMETER);
-                // Register Setups (one per channel and one per timepoint)
-                channels.forEach(
-                        iCh -> {
-                            int ch_id = getChannelId(omeMeta,iSerie,iCh);
-                            String channelName = omeMeta.getChannelName(iSerie, iCh);
-                            IntStream timepoints = IntStream.range(0,omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
-                            timepoints.forEach(
-                                    iTp -> {
-                                        String setupName = imageName
-                                                +"-"+channelName+":"+iTp;
-                                        System.out.println(setupName);
-                                        ViewSetup vs = new ViewSetup(
-                                                viewSetupCounter,
-                                                setupName,
-                                                dims,
-                                                voxDims,
-                                                tile, // Tile is index of Serie
-                                                channelIdToChannel.get(ch_id),
-                                                dummy_ang,
-                                                dummy_ill);
-                                        viewSetups.add(vs);
-                                        viewSetupToBFSerieChannel.put(viewSetupCounter, new Pair<Integer, Integer>() {
-                                            @Override
-                                            public Integer getA() {
-                                                return iSerie;
-                                            }
+                // -------------------------- SETUPS For each Series : one per timepoint and one per channel
+                IntStream series = IntStream.range(0, reader.getSeriesCount());
+                series.forEach(iSerie -> {
+                    reader.setSeries(iSerie);
 
-                                            @Override
-                                            public Integer getB() {
-                                                return iCh;
-                                            }
+                    fileIdxToNumberOfSeriesAndTimepoints.put(iFile, new SeriesTps(reader.getSeriesCount(),omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue()));
+                    // One serie = one Tile
+                    Tile tile = new Tile(nTileCounter);
+                    nTileCounter++;
+                    // ---------- Serie >
+                    // ---------- Serie > Timepoints
+                    log.accept("\t Serie " + iSerie + " Number of timesteps = " + omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
+                    // ---------- Serie > Channels
+                    log.accept("\t Serie " + iSerie + " Number of channels = " + omeMeta.getChannelCount(iSerie));
+                    //final int iS = iSerie;
+                    // Properties of the serie
+                    IntStream channels = IntStream.range(0, omeMeta.getChannelCount(iSerie));
+                    if (omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue() > maxTimepoints) {
+                        maxTimepoints = omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue();
+                    }
+                    String imageName = omeMeta.getImageName(iSerie);
+                    Dimensions dims = BioFormatsToXmlUtils.getDimensions(omeMeta, iSerie, UNITS.MILLIMETER);
+                    VoxelDimensions voxDims = BioFormatsToXmlUtils.getVoxelDimensions(omeMeta, iSerie, UNITS.MILLIMETER);
+                    // Register Setups (one per channel and one per timepoint)
+                    channels.forEach(
+                            iCh -> {
+                                int ch_id = getChannelId(omeMeta, iSerie, iCh);
+                                String channelName = omeMeta.getChannelName(iSerie, iCh);
+                                IntStream timepoints = IntStream.range(0, omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
+                                timepoints.forEach(
+                                        iTp -> {
+                                            String setupName = imageName
+                                                    + "-" + channelName + ":" + iTp;
+                                            System.out.println(setupName);
+                                            ViewSetup vs = new ViewSetup(
+                                                    viewSetupCounter,
+                                                    setupName,
+                                                    dims,
+                                                    voxDims,
+                                                    tile, // Tile is index of Serie
+                                                    channelIdToChannel.get(ch_id),
+                                                    dummy_ang,
+                                                    dummy_ill);
+                                            viewSetups.add(vs);
+                                            viewSetupToBFFileSerieChannel.put(viewSetupCounter, new FileSerieChannel(iFile, iSerie, iCh));
+                                            viewSetupCounter++;
                                         });
-                                        viewSetupCounter++;
-                                    });
-                        });
+                            });
+                });
+                reader.close();
+            }
 
-            });
-
+            // ------------------- BUILDING SPIM DATA
+            ArrayList<File> inputFilesArray = new ArrayList<>();
+            for (File f:inputFiles) {
+                inputFilesArray.add(f);
+            }
             List<TimePoint> timePoints = new ArrayList<>();
             IntStream.range(0,maxTimepoints).forEach(tp -> timePoints.add(new TimePoint(tp)));
-            SequenceDescription sd = new SequenceDescription( new TimePoints( timePoints ), viewSetups , new BioFormatsImageLoader(inputFile,null), null);
-
+            SequenceDescription sd = new SequenceDescription( new TimePoints( timePoints ), viewSetups , new BioFormatsImageLoader(inputFilesArray,null), null);
 
             final ArrayList<ViewRegistration> registrations = new ArrayList<>();
 
-            // Need to set view registrations : identity ? how does that work with the one given by the image loader ?
-            series = IntStream.range(0,reader.getSeriesCount());
-            series.forEach(iSerie -> {
-                //IntStream timepoints = IntStream.range(0,omeMeta.getChannelCount(iSerie));
-                timePoints.forEach( iTp -> {
-                    viewSetupToBFSerieChannel
-                            .keySet()
-                            .stream()
-                            .filter( viewSetupId -> viewSetupToBFSerieChannel.get(viewSetupId).getA()==iSerie )
-                            .forEach(viewSetupId -> registrations.add( new ViewRegistration( iTp.getId(), viewSetupId, new AffineTransform3D()))//BioFormatsToXmlUtils.getRootTransform(omeMeta,iSerie,UNITS.MILLIMETER)
-                    );
+            for (int iF=0;iF<inputFiles.length;iF++) {
+                int iFile = iF;
+                int nSeries = fileIdxToNumberOfSeries.get(iF);
+                // Need to set view registrations : identity ? how does that work with the one given by the image loader ?
+                IntStream series = IntStream.range(0, nSeries);
+                series.forEach(iSerie -> {
+                    int iS = iSerie;
+                    IntStream timepoints = IntStream.range(0, omeMetaOmeXml.getPixelsSizeT(iS).getNumberValue().intValue());
+                    timePoints.forEach(iTp -> {
+                        viewSetupToBFFileSerieChannel
+                                .keySet()
+                                .stream()
+                                .filter(viewSetupId -> (viewSetupToBFFileSerieChannel.get(viewSetupId).iFile == iFile))
+                                .filter(viewSetupId -> (viewSetupToBFFileSerieChannel.get(viewSetupId).iSerie == iSerie))
+                                .forEach(viewSetupId -> registrations.add(new ViewRegistration(iTp.getId(), viewSetupId, new AffineTransform3D()))//BioFormatsToXmlUtils.getRootTransform(omeMeta,iSerie,UNITS.MILLIMETER)
+                                );
+                    });
                 });
-            });
+            }
 
-            final SpimData spimData = new SpimData( xmlFile.getParentFile(), sd, new ViewRegistrations( registrations ) );
+            if (inputFiles.length==1) {
+                File inputFile = inputFiles[0];
+                if ((xmlFilePath==null)||(xmlFilePath.equals(""))) {
+                    String outputPath = FilenameUtils.removeExtension(inputFile.getAbsolutePath())+".xml";
+                    System.out.println(outputPath);
+                    final SpimData spimData = new SpimData( inputFile.getParentFile(), sd, new ViewRegistrations( registrations ) );
+                    new XmlIoSpimData().save( spimData, outputPath );
+                } else {
+                    String outputFileName = FilenameUtils.getBaseName(inputFile.getAbsolutePath())+".xml";
+                    System.out.println(outputFileName);
+                    final SpimData spimData = new SpimData( xmlFilePath, sd, new ViewRegistrations( registrations ) );
+                    new XmlIoSpimData().save( spimData, new File(xmlFilePath,outputFileName).getAbsolutePath() );
+                }
+            } else {
+                final SpimData spimData = new SpimData( xmlFilePath, sd, new ViewRegistrations( registrations ) );
+                new XmlIoSpimData().save( spimData, new File(xmlFilePath,xmlFileName).getAbsolutePath() );
+            }
 
-            new XmlIoSpimData().save( spimData, xmlFile.getAbsolutePath() );
-
-            reader.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
-    Map<Integer,Integer> channelHashToId = new HashMap<>();
-    Map<Integer,Channel> channelIdToChannel = new HashMap<>();
-    Map<Integer, Pair<Integer,Integer>> viewSetupToBFSerieChannel = new HashMap<>();
 
     int channelCounter = 0;
 

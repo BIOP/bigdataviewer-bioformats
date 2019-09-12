@@ -23,6 +23,7 @@ import java.util.concurrent.Future;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.logging.Logger;
+import static ch.epfl.biop.bdv.scijava.command.Info.ScijavaBdvRootMenu;
 
 // Have a look at:
 //
@@ -37,7 +38,7 @@ import java.util.logging.Logger;
 // https://github.com/ome/bio-formats-imagej/blob/master/src/main/java/loci/plugins/in/ImportProcess.java
 // TODO : add lookuptable
 
-@Plugin(type = Command.class,menuPath = "Plugins>BigDataViewer>SciJava>Open with BioFormats (experimental) (SciJava)")
+@Plugin(type = Command.class,menuPath = ScijavaBdvRootMenu+"Open with BioFormats in Bdv")
 public class BioFormatsOpenPlugInSciJava implements Command
 {
 
