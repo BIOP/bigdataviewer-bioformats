@@ -28,6 +28,7 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import static ch.epfl.biop.bdv.bioformats.export.BioFormatsToXmlUtils.getChannelHashFromBFMeta;
+import static ch.epfl.biop.bdv.scijava.command.Info.ScijavaBdvRootMenu;
 
 /**
  * Converting BioFormats structure into an Xml Dataset, compatible for BigDataViewer and FIJI BIG Plugins
@@ -37,7 +38,7 @@ import static ch.epfl.biop.bdv.bioformats.export.BioFormatsToXmlUtils.getChannel
  * @author nicolas.chiaruttini@epfl.ch
  */
 
-@Plugin(type = Command.class,menuPath = "Plugins>BigDataViewer>SciJava>Save as Xml Dataset (SciJava)")
+@Plugin(type = Command.class,menuPath = ScijavaBdvRootMenu+"Convert Files to Xml Dataset (SciJava)")
 public class BioFormatsConvertFilesToXmlDataset implements Command {
     @Parameter(label = "Image Files")
     public File[] inputFiles;
@@ -159,6 +160,15 @@ public class BioFormatsConvertFilesToXmlDataset implements Command {
 
             for (int iF=0;iF<inputFiles.length;iF++) {
                 int iFile = iF;
+
+
+                memo.setId(inputFiles[iF].getAbsolutePath());
+                //final int iFile = iF;
+                final IFormatReader reader = memo;
+
+                log.accept("Number of Series : " + reader.getSeriesCount());
+                final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
+
                 int nSeries = fileIdxToNumberOfSeries.get(iF);
                 // Need to set view registrations : identity ? how does that work with the one given by the image loader ?
                 IntStream series = IntStream.range(0, nSeries);
@@ -171,10 +181,12 @@ public class BioFormatsConvertFilesToXmlDataset implements Command {
                                 .stream()
                                 .filter(viewSetupId -> (viewSetupToBFFileSerieChannel.get(viewSetupId).iFile == iFile))
                                 .filter(viewSetupId -> (viewSetupToBFFileSerieChannel.get(viewSetupId).iSerie == iSerie))
-                                .forEach(viewSetupId -> registrations.add(new ViewRegistration(iTp.getId(), viewSetupId, new AffineTransform3D()))//BioFormatsToXmlUtils.getRootTransform(omeMeta,iSerie,UNITS.MILLIMETER)
+                                .forEach(viewSetupId -> registrations.add(new ViewRegistration(iTp.getId(), viewSetupId, BioFormatsToXmlUtils.getRootTransform(omeMeta,iSerie,UNITS.MILLIMETER)))//new AffineTransform3D()))//
                                 );
                     });
                 });
+
+                reader.close();
             }
 
             if (inputFiles.length==1) {

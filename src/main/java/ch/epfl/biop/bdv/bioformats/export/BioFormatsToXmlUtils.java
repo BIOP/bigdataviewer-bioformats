@@ -25,13 +25,9 @@ public class BioFormatsToXmlUtils {
         return hash;
     }
 
-    public static AffineTransform3D getRootTransform(IMetadata omeMeta, int iSerie, Unit u) {
 
-        AffineTransform3D rootTransform = new AffineTransform3D();
-
+    public static double[] getPos(IMetadata omeMeta, int iSerie, Unit u) {
         double pXmm = 0, pYmm = 0, pZmm = 0; // Location of pixel located at coordinates 0,0,0
-        double dXmm = 1, dYmm = 1, dZmm = 1; // Voxel size
-
         // First : try with Physical dimension
         try {
             if (omeMeta.getPlaneCount(iSerie)>0) {
@@ -41,26 +37,30 @@ public class BioFormatsToXmlUtils {
         } catch(NullPointerException e) { // Beurk
             System.out.println("NullPointerException Caught : no physical units");
             try {
-                //System.out.println("omeMeta.getPlanePositionX(image_index, 0)="+omeMeta.getPlanePositionX(image_index, 0));
                 pXmm = omeMeta.getPlanePositionX(iSerie, 0).value().doubleValue();
                 pYmm = omeMeta.getPlanePositionY(iSerie, 0).value().doubleValue();
                 System.out.println("NullPointerException Caught : no plane position");
             } catch (NullPointerException e2) { // Beurk
-                //System.out.print("NullPointerException Caught");
                 pXmm=0;
                 pYmm=0;
-               /* try {
-
-                    System.out.println("omeMeta.getPlanePositionX(image_index, 0)="+omeMeta.getPlanePositionX(image_index, 0));
-                    pXmm = omeMeta.getPlanePositionX(image_index, 0).value(UNITS.REFERENCEFRAME).doubleValue()*1000;
-                    pYmm = omeMeta.getPlanePositionY(image_index, 0).value(UNITS.REFERENCEFRAME).doubleValue()*1000;
-                    System.out.println("NullPointerException Caught : no plane position");
-                } catch (NullPointerException e3) { // Beurk
-                    //System.out.print("NullPointerException Caught");
-
-                }*/
             }
         }
+
+        // In 3D if available
+        if (omeMeta.getPixelsPhysicalSizeZ(iSerie)==null) {
+            pZmm=0;
+        } else {
+            try {
+                pZmm = omeMeta.getPlanePositionZ(iSerie, 0).value(u).doubleValue();
+            }  catch(NullPointerException e2) { // Beurk
+                pZmm=0;
+            }
+        }
+        return new double[]{pXmm,pYmm,pZmm};
+    }
+
+    public static double[] getVoxSize(IMetadata omeMeta, int iSerie, Unit u) {
+        double dXmm = 1, dYmm = 1, dZmm = 1; // Voxel size
 
         try {
             dXmm = omeMeta.getPixelsPhysicalSizeX(iSerie).value(u).doubleValue();
@@ -79,69 +79,54 @@ public class BioFormatsToXmlUtils {
 
         // In 3D if available
         if (omeMeta.getPixelsPhysicalSizeZ(iSerie)==null) {
-            pZmm=0;
             dZmm=1;
         } else {
             try {
-                pZmm = omeMeta.getPlanePositionZ(iSerie, 0).value(u).doubleValue();
                 dZmm = omeMeta.getPixelsPhysicalSizeZ(iSerie).value(u).doubleValue();
-            }  catch(NullPointerException e2) { // Beurk
-                pZmm=0;
+            }  catch(NullPointerException e2) {
                 dZmm=1;
             }
         }
+        return new double[]{dXmm, dYmm, dZmm};
+    }
+
+
+
+    public static AffineTransform3D getRootTransform(IMetadata omeMeta, int iSerie, Unit u) {
+
+        AffineTransform3D rootTransform = new AffineTransform3D();
+
+        double[] p = getPos(omeMeta, iSerie, u);
+        double[] d = getVoxSize(omeMeta, iSerie, u);
 
         // Sets AffineTransform of the highest resolution image from the pyramid
         rootTransform.identity();
         rootTransform.set(
-                dXmm,0   ,0   ,0,
-                0   ,dYmm,0   ,0,
-                0   ,0   ,dZmm,0,
+                d[0],0   ,0   ,0,
+                0   ,d[1],0   ,0,
+                0   ,0   ,d[2],0,
                 0   ,0   ,0   ,1
         );
-        rootTransform.translate(pXmm, pYmm, pZmm);
+        rootTransform.translate(p[0], p[1], p[2]);
         return rootTransform;
     }
 
     public static VoxelDimensions getVoxelDimensions(IMetadata omeMeta, int iSerie, Unit u) {
-        int numDimensions = 2 + (omeMeta.getPixelsSizeZ(iSerie).getNumberValue().intValue()>1?1:0);
+        // Always 3 to allow for big stitcher compatibility
+        //int numDimensions = 2 + (omeMeta.getPixelsSizeZ(iSerie).getNumberValue().intValue()>1?1:0);
+        int numDimensions = 3;
+
+        double[] d = getVoxSize(omeMeta, iSerie, u);
+
         VoxelDimensions voxelDimensions;
-        // Sets voxel dimension object
-        if (numDimensions==2) {
-            voxelDimensions = new VoxelDimensions() {
 
-                final Unit<Length> targetUnit = u;
-
-                double[] dims = {1,1};
-
-                @Override
-                public String unit() {
-                    return targetUnit.getSymbol();
-                }
-
-                @Override
-                public void dimensions(double[] doubles) {
-                    doubles[0] = dims[0];
-                    doubles[1] = dims[1];
-                }
-
-                @Override
-                public double dimension(int i) {
-                    return dims[i];
-                }
-
-                @Override
-                public int numDimensions() {
-                    return numDimensions;
-                }
-            };
-        } else {
+        {
             assert numDimensions == 3;
             voxelDimensions = new VoxelDimensions() {
 
                 final Unit<Length> targetUnit = u;
 
-                double[] dims = {1,1,1};
+                double[] dims = {d[0],d[1],d[2]};
 
                 @Override
                 public String unit() {
@@ -152,7 +137,8 @@ public class BioFormatsToXmlUtils {
                 public void dimensions(double[] doubles) {
                     doubles[0] = dims[0];
                     doubles[1] = dims[1];
-                    if (numDimensions==3) doubles[2] = dims[2];
+                    //if (numDimensions==3)
+                    doubles[2] = dims[2];
                 }
 
                 @Override
@@ -170,7 +156,9 @@ public class BioFormatsToXmlUtils {
     }
 
     public static Dimensions getDimensions(IMetadata omeMeta, int iSerie, Unit u) {
-        int numDimensions = 2 + (omeMeta.getPixelsSizeZ(iSerie).getNumberValue().intValue()>1?1:0);
+        // Always set 3d to allow for Big Stitcher compatibility
+        //int numDimensions = 2 + (omeMeta.getPixelsSizeZ(iSerie).getNumberValue().intValue()>1?1:0);
+        int numDimensions = 3;
 
         int sX = omeMeta.getPixelsSizeX(iSerie).getNumberValue().intValue();
         int sY = omeMeta.getPixelsSizeY(iSerie).getNumberValue().intValue();
@@ -188,7 +176,8 @@ public class BioFormatsToXmlUtils {
             public void dimensions(long[] dimensions) {
                 dimensions[0] = dims[0];
                 dimensions[1] = dims[1];
-                if (numDimensions==3) dimensions[2] = dims[2];
+                dimensions[2] = dims[2];
+                //if (numDimensions==3) dimensions[2] = dims[2];
             }
 
             @Override

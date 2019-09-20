@@ -38,12 +38,12 @@ public class BioFormatsBdvRGBSource extends BioFormatsBdvSource<ARGBType> {
             reader.setResolution(level);
             int sx = reader.getSizeX();
             int sy = reader.getSizeY();
-            int sz = numDimensions==2?1:reader.getSizeZ();
+            int sz = (!is3D)?1:reader.getSizeZ();
 
             final int[] cellDimensions = new int[] {
                     useBioFormatsXYBlockSize?reader.getOptimalTileWidth():(int)cacheBlockSize.dimension(0),
                     useBioFormatsXYBlockSize?reader.getOptimalTileHeight():(int)cacheBlockSize.dimension(1),
-                    numDimensions==2?1:(int)cacheBlockSize.dimension(2)};
+                    (!is3D)?1:(int)cacheBlockSize.dimension(2)};
             
             // Cached Image Factory Options
             final DiskCachedCellImgOptions factoryOptions = options()

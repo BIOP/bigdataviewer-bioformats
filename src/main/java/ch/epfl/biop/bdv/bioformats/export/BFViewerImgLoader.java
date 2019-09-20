@@ -9,11 +9,17 @@ import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.Dimensions;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Volatile;
+import net.imglib2.converter.Converter;
+import net.imglib2.converter.Converters;
 import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.NumericType;
+import net.imglib2.type.numeric.integer.AbstractIntegerType;
 import net.imglib2.type.numeric.real.FloatType;
 
 import java.io.File;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class BFViewerImgLoader<T extends NumericType<T>,V extends Volatile<T> & NumericType<V>> extends AbstractViewerSetupImgLoader<T, V> implements MultiResolutionSetupImgLoader< T > {
@@ -21,6 +27,12 @@ public class BFViewerImgLoader<T extends NumericType<T>,V extends Volatile<T> & 
     Source<T> bdvSrc;
 
     Source<V> vSrc;
+
+    Function<RandomAccessibleInterval<T>, RandomAccessibleInterval<FloatType>> cvtRaiToFloatRai;
+
+    final Converter<T,FloatType> cvt;
+
+    Consumer<String> errlog = s -> System.err.println("BFViewerImgLoader error:"+s);
 
     public BFViewerImgLoader(File inputFile,
                              int sourceIndex,
@@ -52,6 +64,31 @@ public class BFViewerImgLoader<T extends NumericType<T>,V extends Volatile<T> & 
         bdvSrc = (Source<T>) oss.bdvSrc;
         vSrc = (Source<V>) oss.vSrc;
 
+        T t = getT.get();
+
+        if (t instanceof FloatType) {
+            cvt = null;
+            cvtRaiToFloatRai = rai -> (RandomAccessibleInterval<FloatType>) rai; // Nothing to be done
+        }else if (t instanceof ARGBType) {
+            // Average of RGB value
+            cvt = (input, output) -> {
+                int v = ((ARGBType) input).get();
+                int r = ARGBType.red(v);
+                int g = ARGBType.green(v);
+                int b = ARGBType.blue(v);
+                output.set(r+g+b);
+            };
+            cvtRaiToFloatRai = rai -> Converters.convert( rai, cvt, new FloatType());
+        }else if (t instanceof AbstractIntegerType) {
+            cvt = (input, output) -> output.set(((AbstractIntegerType) input).getRealFloat());
+            cvtRaiToFloatRai = rai -> Converters.convert( rai, cvt, new FloatType());
+        }else {
+            cvt = null;
+            cvtRaiToFloatRai = e -> {
+                errlog.accept("Convertion from "+t.getClass()+" to Float unssupported");
+                return null;
+            };
+        }
     }
 
     @Override
@@ -61,7 +98,7 @@ public class BFViewerImgLoader<T extends NumericType<T>,V extends Volatile<T> & 
 
     @Override
     public RandomAccessibleInterval<FloatType> getFloatImage(int timepointId, int level, boolean normalize, ImgLoaderHint... hints) {
-        return null;
+        return cvtRaiToFloatRai.apply(getImage(timepointId,level));
     }
 
     @Override

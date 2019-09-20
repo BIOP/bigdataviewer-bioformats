@@ -49,7 +49,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
     final VoxelDimensions voxelsDimensions;
 
     // 2D or 3D supported (3D TODO)
-    final int numDimensions;
+    //final int numDimensions;
 
     // Fix BioFormat confusion between c and z in some file formats
     public boolean switchZandC;
@@ -78,6 +78,8 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
     final FinalInterval cacheBlockSize;
 
     public boolean useBioFormatsXYBlockSize;
+
+    public boolean is3D = false;
 
     /**
      * Bio Format source cosntructor
@@ -111,10 +113,16 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
 
         setRootTransform(omeMeta, image_index);
 
-        numDimensions = 2 + (reader.getSizeZ()>1?1:0);
+        if (reader.getSizeZ()>1) {
+            is3D=true;
+        } else {
+            is3D=false;
+        }
+
+        int        numDimensions = 3; //2 + (reader.getSizeZ()>1?1:0);
 
         // Sets voxel dimension object
-        if (numDimensions==2) {
+        /*if (numDimensions==2) {
             voxelsDimensions = new VoxelDimensions() {
 
                 final Unit<Length> targetUnit = UNITS.MILLIMETER;
@@ -142,7 +150,8 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
                     return numDimensions;
                 }
             };
-        } else {
+        } else*/
+        {
             assert numDimensions == 3;
             voxelsDimensions = new VoxelDimensions() {
 
@@ -243,13 +252,13 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
 
         // Sets AffineTransform of the highest resolution image from the pyramid
         rootTransform.identity();
-        rootTransform.set(
+       /* rootTransform.set(
                 dXmm,0   ,0   ,0,
                 0   ,dYmm,0   ,0,
                 0   ,0   ,dZmm,0,
                 0   ,0   ,0   ,1
         );
-        rootTransform.translate(pXmm, pYmm, pZmm);
+        rootTransform.translate(pXmm, pYmm, pZmm);*/
     }
 
     /**
