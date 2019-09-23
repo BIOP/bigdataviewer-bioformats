@@ -1,6 +1,6 @@
-package ch.epfl.biop.bdv.bioformats.export;
+package ch.epfl.biop.bdv.bioformats.imageloader;
 
-class FileSerieChannel {
+public class FileSerieChannel {
     public int iFile;
     public int iSerie;
     public int iChannel;

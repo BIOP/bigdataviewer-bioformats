@@ -1,26 +1,35 @@
-package ch.epfl.biop.bdv.bioformats.export;
+package ch.epfl.biop.bdv.bioformats.imageloader;
 
 import bdv.AbstractViewerSetupImgLoader;
 import bdv.viewer.Source;
 import ch.epfl.biop.bdv.bioformats.BioFormatsOpenPlugInSingleSourceSciJava;
+import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
 import mpicbg.spim.data.generic.sequence.ImgLoaderHint;
 import mpicbg.spim.data.sequence.MultiResolutionSetupImgLoader;
 import mpicbg.spim.data.sequence.VoxelDimensions;
-import net.imglib2.Dimensions;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.Volatile;
+import net.imglib2.*;
+import net.imglib2.cache.img.DiskCachedCellImg;
+import net.imglib2.cache.img.DiskCachedCellImgFactory;
+import net.imglib2.cache.img.DiskCachedCellImgOptions;
 import net.imglib2.converter.Converter;
 import net.imglib2.converter.Converters;
+import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.integer.AbstractIntegerType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
 
 import java.io.File;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
+import static net.imglib2.cache.img.DiskCachedCellImgOptions.options;
 
 public class BFViewerImgLoader<T extends NumericType<T>,V extends Volatile<T> & NumericType<V>> extends AbstractViewerSetupImgLoader<T, V> implements MultiResolutionSetupImgLoader< T > {
 
@@ -28,11 +37,13 @@ public class BFViewerImgLoader<T extends NumericType<T>,V extends Volatile<T> & 
 
     Source<V> vSrc;
 
+    int[] cellDimensions;
+
     Function<RandomAccessibleInterval<T>, RandomAccessibleInterval<FloatType>> cvtRaiToFloatRai;
 
     final Converter<T,FloatType> cvt;
 
-    Consumer<String> errlog = s -> System.err.println("BFViewerImgLoader error:"+s);
+    Consumer<String> errlog = s -> System.err.println(BFViewerImgLoader.class+" error:"+s);
 
     public BFViewerImgLoader(File inputFile,
                              int sourceIndex,
@@ -59,10 +70,14 @@ public class BFViewerImgLoader<T extends NumericType<T>,V extends Volatile<T> & 
         oss.cacheBlockSizeY=cacheBlockSizeY;
         oss.cacheBlockSizeZ=cacheBlockSizeZ;
 
+
         oss.run();
 
         bdvSrc = (Source<T>) oss.bdvSrc;
         vSrc = (Source<V>) oss.vSrc;
+
+
+        cellDimensions = ((BioFormatsBdvSource) bdvSrc).cellDimensions;
 
         T t = getT.get();
 
@@ -85,7 +100,7 @@ public class BFViewerImgLoader<T extends NumericType<T>,V extends Volatile<T> & 
         }else {
             cvt = null;
             cvtRaiToFloatRai = e -> {
-                errlog.accept("Convertion from "+t.getClass()+" to Float unssupported");
+                errlog.accept("Conversion of "+t.getClass()+" to FloatType unsupported.");
                 return null;
             };
         }
@@ -98,8 +113,69 @@ public class BFViewerImgLoader<T extends NumericType<T>,V extends Volatile<T> & 
 
     @Override
     public RandomAccessibleInterval<FloatType> getFloatImage(int timepointId, int level, boolean normalize, ImgLoaderHint... hints) {
-        return cvtRaiToFloatRai.apply(getImage(timepointId,level));
+
+        //System.out.println("type float ----------------- = "+getImage(timepointId,level));
+
+        //return cvtRaiToFloatRai.apply(getImage(timepointId,level));
+        // Again not working with bg stitcher! Let's compute it completely
+
+        //RandomAccessibleInterval<FloatType> raifloat = cvtRaiToFloatRai.apply(getImage(timepointId,level));
+        // Casting works because of the image loader
+        DiskCachedCellImg originalImage = (DiskCachedCellImg) getImage(timepointId, level);
+        //originalImage.
+
+
+       /* final DiskCachedCellImgOptions factoryOptions = options()
+                .cellDimensions( cellDimensions )
+                .cacheType( DiskCachedCellImgOptions.CacheType.BOUNDED )
+                .maxCacheSize( 1000 );
+
+
+        final CellImgFactory<FloatType> factory = new ArrayImgFactory<>( new FloatType()) );*/
+        Img< FloatType > img = copyImageCorrect((Img<T>)originalImage,new ArrayImgFactory<>( new FloatType()) );
+
+
+        return  img;//Views.extendZero(img);
+
     }
+
+
+    /** Necessary to avoid BigStitcher wrapping poroblem when computing interest points
+     *
+     */
+
+    /**
+     * This method copies the image correctly, using a RandomAccess.
+     */
+    Img< FloatType > copyImageCorrect(final Img< T > input,
+                                      final ImgFactory< FloatType > imgFactory )
+    {
+        // create a new Image with the same dimensions but the other imgFactory
+        // note that the input provides the size for the new image by implementing the Interval interface
+        Img< FloatType > output = imgFactory.create( input );
+
+        // create a cursor that automatically localizes itself on every move
+        Cursor< T > cursorInput = input.localizingCursor();
+        RandomAccess< FloatType > randomAccess = output.randomAccess();
+
+        // iterate over the input cursor
+        while ( cursorInput.hasNext())
+        {
+            // move input cursor forward
+            cursorInput.fwd();
+
+            // set the output cursor to the position of the input cursor
+            randomAccess.setPosition( cursorInput );
+
+            // set the value of this pixel of the output image, every Type supports T.set( T type )
+            cvt.convert(cursorInput.get(), randomAccess.get());
+            //randomAccess.get().set( cursorInput.get() );
+        }
+
+        // return the copy
+        return output;
+    }
+
 
     @Override
     public Dimensions getImageSize(int timepointId, int level) {
@@ -141,7 +217,6 @@ public class BFViewerImgLoader<T extends NumericType<T>,V extends Volatile<T> & 
             mmResolutions[iLevel][1] = (double)srcL0.dimension(1)/(double)srcLi.dimension(1);
             mmResolutions[iLevel][2] = (double)srcL0.dimension(2)/(double)srcLi.dimension(2);
         }
-
         return mmResolutions;
     }
 
@@ -165,9 +240,8 @@ public class BFViewerImgLoader<T extends NumericType<T>,V extends Volatile<T> & 
 
     @Override
     public RandomAccessibleInterval<FloatType> getFloatImage(int timepointId, boolean normalize, ImgLoaderHint... hints) {
-        return null;
+        return cvtRaiToFloatRai.apply(getImage(timepointId,0));
     }
-
 
     @Override
     public Dimensions getImageSize(int timepointId) {

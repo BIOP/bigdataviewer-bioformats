@@ -1,9 +1,9 @@
-package ch.epfl.biop.bdv.bioformats.export;
+package ch.epfl.biop.bdv.bioformats.export.xmlbdvdataset;
 
-//https://github.com/PreibischLab/multiview-reconstruction/blob/master/src/main/java/net/preibisch/mvrecon/fiji/datasetmanager/FileListDatasetDefinition.java
-
-//https://github.com/PreibischLab/multiview-reconstruction/blob/master/src/main/java/net/preibisch/mvrecon/fiji/datasetmanager/FileListDatasetDefinition.java
-
+import ch.epfl.biop.bdv.bioformats.BioFormatsHelper;
+import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsImageLoader;
+import ch.epfl.biop.bdv.bioformats.imageloader.FileSerieChannel;
+import ch.epfl.biop.bdv.bioformats.imageloader.SeriesTps;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;
 import mpicbg.spim.data.SpimData;
@@ -12,7 +12,6 @@ import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.*;
 import net.imglib2.Dimensions;
-import net.imglib2.realtransform.AffineTransform3D;
 import ome.units.UNITS;
 import org.apache.commons.io.FilenameUtils;
 import org.scijava.command.Command;
@@ -27,7 +26,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
-import static ch.epfl.biop.bdv.bioformats.export.BioFormatsToXmlUtils.getChannelHashFromBFMeta;
 import static ch.epfl.biop.bdv.scijava.command.Info.ScijavaBdvRootMenu;
 
 /**
@@ -49,13 +47,18 @@ public class BioFormatsConvertFilesToXmlDataset implements Command {
     @Parameter(required=false, label = "output file name") // To append datasets potentially
     public String xmlFileName;
 
-    Consumer<String> log = s -> System.out.println(s);
+    @Parameter
+    boolean verbose;
+
+    public Consumer<String> log = s -> {};
 
     int viewSetupCounter = 0;
 
     int nTileCounter = 0;
 
     int maxTimepoints = -1;
+
+    int channelCounter = 0;
 
     Map<Integer,Integer> channelHashToId = new HashMap<>();
 
@@ -67,6 +70,10 @@ public class BioFormatsConvertFilesToXmlDataset implements Command {
 
     @Override
     public void run() {
+
+        if (verbose) {
+            log = s -> System.out.println(s);
+        }
         IFormatReader readerIdx = new ImageReader();
 
         readerIdx.setFlattenedResolutions(false);
@@ -116,8 +123,8 @@ public class BioFormatsConvertFilesToXmlDataset implements Command {
                         maxTimepoints = omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue();
                     }
                     String imageName = omeMeta.getImageName(iSerie);
-                    Dimensions dims = BioFormatsToXmlUtils.getDimensions(omeMeta, iSerie, UNITS.MILLIMETER);
-                    VoxelDimensions voxDims = BioFormatsToXmlUtils.getVoxelDimensions(omeMeta, iSerie, UNITS.MILLIMETER);
+                    Dimensions dims = BioFormatsHelper.getDimensions(omeMeta, iSerie, UNITS.MILLIMETER);
+                    VoxelDimensions voxDims = BioFormatsHelper.getVoxelDimensions(omeMeta, iSerie, UNITS.MILLIMETER);
                     // Register Setups (one per channel and one per timepoint)
                     channels.forEach(
                             iCh -> {
@@ -161,9 +168,7 @@ public class BioFormatsConvertFilesToXmlDataset implements Command {
             for (int iF=0;iF<inputFiles.length;iF++) {
                 int iFile = iF;
 
-
                 memo.setId(inputFiles[iF].getAbsolutePath());
-                //final int iFile = iF;
                 final IFormatReader reader = memo;
 
                 log.accept("Number of Series : " + reader.getSeriesCount());
@@ -181,11 +186,10 @@ public class BioFormatsConvertFilesToXmlDataset implements Command {
                                 .stream()
                                 .filter(viewSetupId -> (viewSetupToBFFileSerieChannel.get(viewSetupId).iFile == iFile))
                                 .filter(viewSetupId -> (viewSetupToBFFileSerieChannel.get(viewSetupId).iSerie == iSerie))
-                                .forEach(viewSetupId -> registrations.add(new ViewRegistration(iTp.getId(), viewSetupId, BioFormatsToXmlUtils.getRootTransform(omeMeta,iSerie,UNITS.MILLIMETER)))//new AffineTransform3D()))//
+                                .forEach(viewSetupId -> registrations.add(new ViewRegistration(iTp.getId(), viewSetupId, BioFormatsHelper.getRootTransform(omeMeta,iSerie,UNITS.MILLIMETER)))//new AffineTransform3D()))//
                                 );
                     });
                 });
-
                 reader.close();
             }
 
@@ -206,16 +210,13 @@ public class BioFormatsConvertFilesToXmlDataset implements Command {
                 final SpimData spimData = new SpimData( xmlFilePath, sd, new ViewRegistrations( registrations ) );
                 new XmlIoSpimData().save( spimData, new File(xmlFilePath,xmlFileName).getAbsolutePath() );
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    int channelCounter = 0;
-
     int getChannelId(IMetadata omeMeta, int iSerie, int iChannel) {
-        int channelHash = getChannelHashFromBFMeta(omeMeta, iSerie, iChannel);
+        int channelHash = BioFormatsHelper.getChannelHashFromBFMeta(omeMeta, iSerie, iChannel);
         if (!channelHashToId.containsKey(channelHash)) {
             // No : add it in the channel hashmap
             channelHashToId.put(channelHash,channelCounter);

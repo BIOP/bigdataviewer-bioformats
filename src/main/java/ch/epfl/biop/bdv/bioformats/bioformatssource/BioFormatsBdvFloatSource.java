@@ -1,4 +1,4 @@
-package ch.epfl.biop.bdv.bioformats;
+package ch.epfl.biop.bdv.bioformats.bioformatssource;
 
 import loci.formats.IFormatReader;
 import net.imglib2.Cursor;
@@ -7,7 +7,6 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.cache.img.DiskCachedCellImgFactory;
 import net.imglib2.cache.img.DiskCachedCellImgOptions;
 import net.imglib2.img.Img;
-import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
@@ -43,10 +42,10 @@ public class BioFormatsBdvFloatSource extends BioFormatsBdvSource<FloatType> {
             int sy = reader.getSizeY();
             int sz = (!is3D)?1:reader.getSizeZ();
 
-            final int[] cellDimensions = new int[] {
+            /*cellDimensions = new int[] {
                     useBioFormatsXYBlockSize?reader.getOptimalTileWidth():(int)cacheBlockSize.dimension(0),
                     useBioFormatsXYBlockSize?reader.getOptimalTileHeight():(int)cacheBlockSize.dimension(1),
-                    (!is3D)?1:(int)cacheBlockSize.dimension(2)};
+                    (!is3D)?1:(int)cacheBlockSize.dimension(2)};*/
             // Cached Image Factory Options
             final DiskCachedCellImgOptions factoryOptions = options()
                     .cellDimensions( cellDimensions )

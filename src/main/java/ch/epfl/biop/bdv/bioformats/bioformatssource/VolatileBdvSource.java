@@ -1,4 +1,4 @@
-package ch.epfl.biop.bdv.bioformats;
+package ch.epfl.biop.bdv.bioformats.bioformatssource;
 
 import bdv.util.AbstractSource;
 import bdv.util.volatiles.SharedQueue;

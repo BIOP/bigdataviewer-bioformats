@@ -1,4 +1,4 @@
-package ch.epfl.biop.bdv.bioformats.export;
+package ch.epfl.biop.bdv.bioformats.imageloader;
 
 public class SeriesTps {
     public int nSeries;

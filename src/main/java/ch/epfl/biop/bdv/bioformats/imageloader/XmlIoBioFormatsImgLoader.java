@@ -1,5 +1,6 @@
-package ch.epfl.biop.bdv.bioformats.export;
+package ch.epfl.biop.bdv.bioformats.imageloader;
 
+import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsImageLoader;
 import mpicbg.spim.data.XmlHelpers;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.ImgLoaderIo;

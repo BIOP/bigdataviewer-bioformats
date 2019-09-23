@@ -1,4 +1,4 @@
-package ch.epfl.biop.bdv.bioformats;
+package ch.epfl.biop.bdv.bioformats.bioformatssource;
 
 import bdv.util.DefaultInterpolators;
 import bdv.viewer.Interpolation;
@@ -10,6 +10,7 @@ import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccessible;
 import net.imglib2.Volatile;
+import net.imglib2.img.Img;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.view.ExtendedRandomAccessibleInterval;
@@ -70,7 +71,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
     volatile ConcurrentHashMap<Integer, AffineTransform3D> transforms = new ConcurrentHashMap<>();
 
     // Concurrent HashMap containing the randomAccessibleInterval of the source
-    volatile ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, RandomAccessibleInterval<T>>> raiMap = new ConcurrentHashMap<>();
+    volatile ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Img<T>>> raiMap = new ConcurrentHashMap<>();
 
     // Source name
     public String sourceName;
@@ -80,6 +81,8 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
     public boolean useBioFormatsXYBlockSize;
 
     public boolean is3D = false;
+
+    public int[] cellDimensions;
 
     /**
      * Bio Format source cosntructor
@@ -182,6 +185,13 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
                 }
             };
         }
+
+
+
+        cellDimensions = new int[] {
+                useBioFormatsXYBlockSize?reader.getOptimalTileWidth():(int)cacheBlockSize.dimension(0),
+                useBioFormatsXYBlockSize?reader.getOptimalTileHeight():(int)cacheBlockSize.dimension(1),
+                (!is3D)?1:(int)cacheBlockSize.dimension(2)};
     }
 
 
@@ -251,14 +261,8 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
         }
 
         // Sets AffineTransform of the highest resolution image from the pyramid
+        // Transform is handled by the image loader
         rootTransform.identity();
-       /* rootTransform.set(
-                dXmm,0   ,0   ,0,
-                0   ,dYmm,0   ,0,
-                0   ,0   ,dZmm,0,
-                0   ,0   ,0   ,1
-        );
-        rootTransform.translate(pXmm, pYmm, pZmm);*/
     }
 
     /**
@@ -372,22 +376,15 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
     }
 
     @Override
-    abstract public T getType();/* {
-        if (is8bit) return (T) new UnsignedByteType();
-        if (is16bits) return (T) new UnsignedShortType();
-        if (is24bitsRGB) return (T) new ARGBType();
-        return null;
-    }*/
+    abstract public T getType();
 
     @Override
     public String getName() {
-
         if (getType() instanceof Volatile) {
             return this.sourceName+" (Volatile)";
         } else {
             return this.sourceName;
         }
-
     }
 
     public void setName(String newName) {

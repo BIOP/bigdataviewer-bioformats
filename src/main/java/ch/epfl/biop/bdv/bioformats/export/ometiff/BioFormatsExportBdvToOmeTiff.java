@@ -1,5 +1,4 @@
-package ch.epfl.biop.bdv.bioformats.export;
-//https://github.com/ome/bio-formats-examples
+package ch.epfl.biop.bdv.bioformats.export.ometiff;
 
 import bdv.util.BdvHandle;
 import bdv.viewer.Source;
@@ -46,7 +45,6 @@ public class BioFormatsExportBdvToOmeTiff implements Command{
     @Parameter(label = "BigDataViewer Frame")
     public BdvHandle bdv_h;
 
-
     /** The file format writer. */
     private IFormatWriter writer;
 
@@ -76,9 +74,6 @@ public class BioFormatsExportBdvToOmeTiff implements Command{
                 .stream()
                 .map(idx -> bdv_h.getViewerPanel().getState().getSources().get(idx).getSpimSource())
                 .collect(Collectors.toList());
-
-
-        //OMEPyramidStore) service.createOMEXMLMetadata();
 
         try {
             ServiceFactory factory = new ServiceFactory();
@@ -196,8 +191,6 @@ public class BioFormatsExportBdvToOmeTiff implements Command{
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-//        cleanup();
 
     }
 

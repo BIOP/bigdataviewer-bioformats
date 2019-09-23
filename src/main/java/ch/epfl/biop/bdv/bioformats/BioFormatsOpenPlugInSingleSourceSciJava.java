@@ -6,6 +6,7 @@ import bdv.util.BdvOptions;
 import bdv.util.BdvStackSource;
 import bdv.util.volatiles.SharedQueue;
 import bdv.viewer.Source;
+import ch.epfl.biop.bdv.bioformats.bioformatssource.*;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;
 import net.imglib2.FinalInterval;
@@ -114,34 +115,28 @@ public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
 
             if (h.is24bitsRGB) {
                 bdvSrc = new BioFormatsBdvRGBSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY);
-                //bdvSrc = new LazyPyramidBdvSource<>(bdvSrc);
                 vSrc = new VolatileBdvSource<ARGBType, VolatileARGBType>(bdvSrc, new VolatileARGBType(), new SharedQueue(1));
             } else {
                 if (h.is8bits)  {
                     bdvSrc = new BioFormatsBdvUnsignedByteSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY);
-                    //bdvSrc = new LazyPyramidBdvSource<>(bdvSrc);
                     vSrc = new VolatileBdvSource<UnsignedByteType, VolatileUnsignedByteType>(bdvSrc, new VolatileUnsignedByteType(), new SharedQueue(1));
                 }
                 if (h.is16bits) {
                     bdvSrc = new BioFormatsBdvUnsignedShortSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY);
-                    //bdvSrc = new LazyPyramidBdvSource<>(bdvSrc);
                     vSrc = new VolatileBdvSource<UnsignedShortType, VolatileUnsignedShortType>(bdvSrc, new VolatileUnsignedShortType(), new SharedQueue(1));
                 }
                 if (h.is32bits) {
                     bdvSrc = new BioFormatsBdvUnsignedIntSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY);
-                    //bdvSrc = new LazyPyramidBdvSource<>(bdvSrc);
                     vSrc = new VolatileBdvSource<UnsignedIntType, VolatileUnsignedIntType>(bdvSrc, new VolatileUnsignedIntType(), new SharedQueue(1));
                 }
-
                 if (h.isFloat32bits) {
                     bdvSrc = new BioFormatsBdvFloatSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY);
-                    //bdvSrc = new LazyPyramidBdvSource<>(bdvSrc);
                     vSrc = new VolatileBdvSource<FloatType, VolatileFloatType>(bdvSrc, new VolatileFloatType(), new SharedQueue(1));
                 }
             }
 
             if (vSrc==null) {
-                LOGGER.severe("Couldn't display source type. UnsignedShort, UnsignedByte, Float, and 24 bit RGB only are supported. ");
+                LOGGER.severe("Couldn't display source type. UnsignedShort, UnsignedByte, UnsignedInt, Float, and 24 bit RGB only are supported. ");
                 return;
             }
 

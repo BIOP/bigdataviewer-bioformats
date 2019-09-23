@@ -1,4 +1,4 @@
-package ch.epfl.biop.bdv.bioformats.export;
+package ch.epfl.biop.bdv.bioformats.export.ometiff;
 
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessibleInterval;
