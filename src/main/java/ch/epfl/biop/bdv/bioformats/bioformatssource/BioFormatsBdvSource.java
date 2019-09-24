@@ -3,6 +3,7 @@ package ch.epfl.biop.bdv.bioformats.bioformatssource;
 import bdv.util.DefaultInterpolators;
 import bdv.viewer.Interpolation;
 import bdv.viewer.Source;
+import ch.epfl.biop.bdv.bioformats.BioFormatsHelper;
 import loci.formats.IFormatReader;
 import loci.formats.meta.IMetadata;
 import mpicbg.spim.data.sequence.VoxelDimensions;
@@ -80,9 +81,15 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
 
     public boolean useBioFormatsXYBlockSize;
 
-    public boolean is3D = false;
+    public boolean ignoreBioFormatsVoxelSizeMetaData;
+
+    public boolean is3D;
+
+    public boolean ignoreBioFormatsLocationMetaData;
 
     public int[] cellDimensions;
+
+    final Unit<Length> targetUnit;
 
     /**
      * Bio Format source cosntructor
@@ -91,7 +98,18 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
      * @param channel_index channel index within source
      * @param swZC switch or not z and c
      */
-    public BioFormatsBdvSource(IFormatReader reader, int image_index, int channel_index, boolean swZC, FinalInterval cacheBlockSize, boolean useBioFormatsXYBlockSize) {
+    public BioFormatsBdvSource(IFormatReader reader,
+                               int image_index,
+                               int channel_index,
+                               boolean swZC,
+                               FinalInterval cacheBlockSize,
+                               boolean useBioFormatsXYBlockSize,
+                               boolean ignoreBioFormatsLocationMetaData,
+                               boolean ignoreBioFormatsVoxelSizeMetaData,
+                               Unit u) {
+        this.targetUnit = u;
+        this.ignoreBioFormatsLocationMetaData = ignoreBioFormatsLocationMetaData;
+        this.ignoreBioFormatsVoxelSizeMetaData = ignoreBioFormatsVoxelSizeMetaData;
         this.useBioFormatsXYBlockSize=useBioFormatsXYBlockSize;
         this.cacheBlockSize = cacheBlockSize;
         this.switchZandC=swZC;
@@ -122,43 +140,10 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
             is3D=false;
         }
 
-        int        numDimensions = 3; //2 + (reader.getSizeZ()>1?1:0);
-
-        // Sets voxel dimension object
-        /*if (numDimensions==2) {
-            voxelsDimensions = new VoxelDimensions() {
-
-                final Unit<Length> targetUnit = UNITS.MILLIMETER;
-
-                double[] dims = {1,1};
-
-                @Override
-                public String unit() {
-                    return targetUnit.getSymbol();
-                }
-
-                @Override
-                public void dimensions(double[] doubles) {
-                    doubles[0] = dims[0];
-                    doubles[1] = dims[1];
-                }
-
-                @Override
-                public double dimension(int i) {
-                    return dims[i];
-                }
-
-                @Override
-                public int numDimensions() {
-                    return numDimensions;
-                }
-            };
-        } else*/
+        int numDimensions = 3; // For BigStitcher compatibility
         {
             assert numDimensions == 3;
             voxelsDimensions = new VoxelDimensions() {
-
-                final Unit<Length> targetUnit = UNITS.MILLIMETER;
 
                 double[] dims = {1,1,1};
 
@@ -186,83 +171,18 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
             };
         }
 
-
-
         cellDimensions = new int[] {
                 useBioFormatsXYBlockSize?reader.getOptimalTileWidth():(int)cacheBlockSize.dimension(0),
                 useBioFormatsXYBlockSize?reader.getOptimalTileHeight():(int)cacheBlockSize.dimension(1),
                 (!is3D)?1:(int)cacheBlockSize.dimension(2)};
     }
 
-
     public void setRootTransform(IMetadata omeMeta, int image_index) {
-        // Get image size
-        //final Length physSizeX = omeMeta.getPixelsPhysicalSizeX(image_index);
-        //final Length physSizeY = omeMeta.getPixelsPhysicalSizeY(image_index);
-        //final Length physSizeZ = omeMeta.getPixelsPhysicalSizeZ(image_index);
-
-        // First : try with Physical dimension
-        try {
-            if (omeMeta.getPlaneCount(image_index)>0) {
-                pXmm = omeMeta.getPlanePositionX(image_index, 0).value(UNITS.MILLIMETER).doubleValue();
-                pYmm = omeMeta.getPlanePositionY(image_index, 0).value(UNITS.MILLIMETER).doubleValue();
-            }
-        } catch(NullPointerException e) { // Beurk
-            System.out.println("NullPointerException Caught : no physical units");
-            try {
-                //System.out.println("omeMeta.getPlanePositionX(image_index, 0)="+omeMeta.getPlanePositionX(image_index, 0));
-                pXmm = omeMeta.getPlanePositionX(image_index, 0).value().doubleValue();
-                pYmm = omeMeta.getPlanePositionY(image_index, 0).value().doubleValue();
-                System.out.println("NullPointerException Caught : no plane position");
-            } catch (NullPointerException e2) { // Beurk
-                //System.out.print("NullPointerException Caught");
-                pXmm=0;
-                pYmm=0;
-               /* try {
-
-                    System.out.println("omeMeta.getPlanePositionX(image_index, 0)="+omeMeta.getPlanePositionX(image_index, 0));
-                    pXmm = omeMeta.getPlanePositionX(image_index, 0).value(UNITS.REFERENCEFRAME).doubleValue()*1000;
-                    pYmm = omeMeta.getPlanePositionY(image_index, 0).value(UNITS.REFERENCEFRAME).doubleValue()*1000;
-                    System.out.println("NullPointerException Caught : no plane position");
-                } catch (NullPointerException e3) { // Beurk
-                    //System.out.print("NullPointerException Caught");
-
-                }*/
-            }
-        }
-
-        try {
-            dXmm = omeMeta.getPixelsPhysicalSizeX(image_index).value(UNITS.MILLIMETER).doubleValue();
-            dYmm = omeMeta.getPixelsPhysicalSizeY(image_index).value(UNITS.MILLIMETER).doubleValue();
-        } catch(NullPointerException e1) { // Beurk
-            //System.out.print("NullPointerException Caught");
-            try {
-                dXmm = omeMeta.getPixelsSizeX(image_index).getNumberValue().doubleValue();
-                dYmm = omeMeta.getPixelsSizeY(image_index).getNumberValue().doubleValue();
-            } catch(NullPointerException e2) { // Beurk
-                //System.out.print("NullPointerException Caught");
-                dXmm=1;
-                dYmm=1;
-            }
-        }
-
-        // In 3D if available
-        if (omeMeta.getPixelsPhysicalSizeZ(image_index)==null) {
-            pZmm=0;
-            dZmm=1;
+        if (ignoreBioFormatsLocationMetaData) {
+            rootTransform.identity();
         } else {
-            try {
-                pZmm = omeMeta.getPlanePositionZ(image_index, 0).value(UNITS.MILLIMETER).doubleValue();
-                dZmm = omeMeta.getPixelsPhysicalSizeZ(image_index).value(UNITS.MILLIMETER).doubleValue();
-            }  catch(NullPointerException | IndexOutOfBoundsException e2) { // Beurk
-                pZmm=0;
-                dZmm=1;
-            }
+            rootTransform.set(BioFormatsHelper.getRootTransform(omeMeta, image_index, targetUnit));
         }
-
-        // Sets AffineTransform of the highest resolution image from the pyramid
-        // Transform is handled by the image loader
-        rootTransform.identity();
     }
 
     /**

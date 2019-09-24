@@ -8,6 +8,9 @@ import loci.formats.Memoizer;
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
 import net.imagej.ImageJ;
+import ome.units.UNITS;
+import ome.units.quantity.Length;
+import ome.units.unit.Unit;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.scijava.ItemIO;
@@ -25,20 +28,9 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 import static ch.epfl.biop.bdv.scijava.command.Info.ScijavaBdvRootMenu;
 
-// Have a look at:
-//
-// https://github.com/qupath/qupath-bioformats-extension/blob/master/src/main/java/qupath/lib/images/servers/BioFormatsServerOptions.java
-// https://github.com/qupath/qupath-bioformats-extension/blob/master/src/main/java/qupath/lib/images/servers/BioFormatsImageServer.java
-// https://github.com/scifio/scifio/blob/master/src/main/java/io/scif/img/ImgOpener.java
-// https://github.com/scifio/scifio-hdf5/tree/master/src/main/java/io/scif/formats/imaris
-// https://github.com/openmicroscopy/bioformats/issues/3343
-// https://github.com/openmicroscopy/bioformats/blob/96bd37e3f6d8a9fb3a74231f8775e08497fea886/components/formats-gpl/src/loci/formats/in/CellSensReader.java
-// https://github.com/openmicroscopy/bioformats/blob/96bd37e3f6d8a9fb3a74231f8775e08497fea886/components/formats-gpl/src/loci/formats/in/CellSensReader.java
-// https://github.com/ome/bio-formats-imagej
-// https://github.com/ome/bio-formats-imagej/blob/master/src/main/java/loci/plugins/in/ImportProcess.java
 // TODO : add lookuptable
 
-@Plugin(type = Command.class,menuPath = ScijavaBdvRootMenu+"Open with BioFormats in Bdv")
+@Plugin(type = Command.class,menuPath = ScijavaBdvRootMenu+"Open>Open with BioFormats in Bdv")
 public class BioFormatsOpenPlugInSciJava implements Command
 {
 
@@ -70,6 +62,12 @@ public class BioFormatsOpenPlugInSciJava implements Command
     public boolean keepBdv3d = false;
 
     @Parameter
+    public boolean ignoreMetadata = true;
+
+    @Parameter(choices = {"Millimeters", "Microns"})
+    public String unit;
+
+    @Parameter
     CommandService cs;
 
     @Parameter
@@ -84,12 +82,15 @@ public class BioFormatsOpenPlugInSciJava implements Command
     @Parameter
     public int cacheBlockSizeZ = 32;
 
+
+
     @Override
     public void run()
     {
         //DebugTools.enableIJLogging(false);
         DebugTools.enableLogging("INFO");
         try {
+
             IFormatReader readerIdx = new ImageReader();
 
             readerIdx.setFlattenedResolutions(false);
@@ -132,7 +133,10 @@ public class BioFormatsOpenPlugInSciJava implements Command
                                     "cacheBlockSizeX", cacheBlockSizeX,
                                     "cacheBlockSizeY", cacheBlockSizeY,
                                     "cacheBlockSizeZ", cacheBlockSizeZ,
-                                    "letBioFormatDecideCacheBlockXY", letBioFormatDecideCacheBlockXY
+                                    "letBioFormatDecideCacheBlockXY", letBioFormatDecideCacheBlockXY,
+                                    "ignoreMetadata", ignoreMetadata,
+                                    "unit", unit
+
                             );
                             cm = module.get();
                         } else {
@@ -149,7 +153,9 @@ public class BioFormatsOpenPlugInSciJava implements Command
                                     "cacheBlockSizeX", cacheBlockSizeX,
                                     "cacheBlockSizeY", cacheBlockSizeY,
                                     "cacheBlockSizeZ", cacheBlockSizeZ,
-                                    "letBioFormatDecideCacheBlockXY", letBioFormatDecideCacheBlockXY
+                                    "letBioFormatDecideCacheBlockXY", letBioFormatDecideCacheBlockXY,
+                                    "ignoreMetadata", ignoreMetadata,
+                                    "unit", unit
                             );
                             module.get();
                             module = cs.run(BioFormatsOpenPlugInSingleSourceSciJava.class, false,
@@ -165,7 +171,9 @@ public class BioFormatsOpenPlugInSciJava implements Command
                                     "cacheBlockSizeX", cacheBlockSizeX,
                                     "cacheBlockSizeY", cacheBlockSizeY,
                                     "cacheBlockSizeZ", cacheBlockSizeZ,
-                                    "letBioFormatDecideCacheBlockXY", letBioFormatDecideCacheBlockXY
+                                    "letBioFormatDecideCacheBlockXY", letBioFormatDecideCacheBlockXY,
+                                    "ignoreMetadata", ignoreMetadata,
+                                    "unit", unit
                             );
                             cm = module.get();
 

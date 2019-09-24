@@ -9,6 +9,7 @@ import net.imglib2.cache.img.DiskCachedCellImgOptions;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.view.Views;
+import ome.units.unit.Unit;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,8 +18,13 @@ import static net.imglib2.cache.img.DiskCachedCellImgOptions.options;
 
 public class BioFormatsBdvRGBSource extends BioFormatsBdvSource<ARGBType> {
 
-    public BioFormatsBdvRGBSource(IFormatReader reader, int image_index, int channel_index, boolean sw, FinalInterval cacheBlockSize, boolean useBioFormatsXYBlockSize) {
-        super(reader, image_index, channel_index, sw, cacheBlockSize, useBioFormatsXYBlockSize);
+    public BioFormatsBdvRGBSource(IFormatReader reader, int image_index, int channel_index,
+                                  boolean sw, FinalInterval cacheBlockSize, boolean useBioFormatsXYBlockSize,
+                                  boolean ignoreBioFormatsLocationMetaData,
+                                  boolean ignoreBioFormatsVoxelSizeMetaData, Unit u) {
+        super(reader, image_index, channel_index, sw, cacheBlockSize, useBioFormatsXYBlockSize,
+        ignoreBioFormatsLocationMetaData,
+        ignoreBioFormatsVoxelSizeMetaData, u);
     }
 
     /**
@@ -39,11 +45,6 @@ public class BioFormatsBdvRGBSource extends BioFormatsBdvSource<ARGBType> {
             int sx = reader.getSizeX();
             int sy = reader.getSizeY();
             int sz = (!is3D)?1:reader.getSizeZ();
-
-            /*cellDimensions = new int[] {
-                    useBioFormatsXYBlockSize?reader.getOptimalTileWidth():(int)cacheBlockSize.dimension(0),
-                    useBioFormatsXYBlockSize?reader.getOptimalTileHeight():(int)cacheBlockSize.dimension(1),
-                    (!is3D)?1:(int)cacheBlockSize.dimension(2)};*/
             
             // Cached Image Factory Options
             final DiskCachedCellImgOptions factoryOptions = options()

@@ -9,23 +9,25 @@ import net.imglib2.cache.img.DiskCachedCellImgOptions;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.view.Views;
+import ome.units.unit.Unit;
 
 import java.util.concurrent.ConcurrentHashMap;
 
 import static net.imglib2.cache.img.DiskCachedCellImgOptions.options;
 
-// TODO : say interleaved channels not supported
 public class BioFormatsBdvUnsignedShortSource extends BioFormatsBdvSource<UnsignedShortType> {
-    public BioFormatsBdvUnsignedShortSource(IFormatReader reader, int image_index, int channel_index, boolean sw, FinalInterval cacheBlockSize, boolean useBioFormatsXYBlockSize) {
-        super(reader, image_index, channel_index, sw, cacheBlockSize, useBioFormatsXYBlockSize);
-    }
 
+    public BioFormatsBdvUnsignedShortSource(IFormatReader reader, int image_index, int channel_index, boolean sw, FinalInterval cacheBlockSize, boolean useBioFormatsXYBlockSize,
+                                            boolean ignoreBioFormatsLocationMetaData,
+                                            boolean ignoreBioFormatsVoxelSizeMetaData, Unit u) {
+        super(reader, image_index, channel_index, sw, cacheBlockSize, useBioFormatsXYBlockSize,
+        ignoreBioFormatsLocationMetaData,
+        ignoreBioFormatsVoxelSizeMetaData,u);
+    }
 
     @Override
     public RandomAccessibleInterval<UnsignedShortType> createSource(int t, int level) {
-        //assert is8bit;
         synchronized(reader) {
-            //System.out.println("Building level "+level);
             if (!raiMap.containsKey(t)) {
                 raiMap.put(t, new ConcurrentHashMap<>());
             }
@@ -34,18 +36,10 @@ public class BioFormatsBdvUnsignedShortSource extends BioFormatsBdvSource<Unsign
 
             boolean littleEndian = reader.isLittleEndian();
 
-            //System.out.println("reader.getCoreIndex()="+reader.getCoreIndex());
-            //System.out.println(reader.getDatasetStructureDescription());
-
             int sx = reader.getSizeX();
             int sy = reader.getSizeY();
             int sz = (!is3D)?1:reader.getSizeZ();
 
-            /*cellDimensions = new int[] {
-                    useBioFormatsXYBlockSize?reader.getOptimalTileWidth():(int)cacheBlockSize.dimension(0),
-                    useBioFormatsXYBlockSize?reader.getOptimalTileHeight():(int)cacheBlockSize.dimension(1),
-                    (!is3D)?1:(int)cacheBlockSize.dimension(2)};*/
-            // Cached Image Factory Options
             final DiskCachedCellImgOptions factoryOptions = options()
                     .cellDimensions( cellDimensions )
                     .cacheType( DiskCachedCellImgOptions.CacheType.BOUNDED )
@@ -82,7 +76,7 @@ public class BioFormatsBdvUnsignedShortSource extends BioFormatsBdvSource<Unsign
 
                                 int totBytes = (w * h)*2;
 
-                                int idxPx = 0;//reader.getIndex(0,cChannel,0);//totBytes*cChannel;
+                                int idxPx = 0;
 
                                 byte[] bytes = reader.openBytes(switchZandC?reader.getIndex(cChannel,z,t):reader.getIndex(z,cChannel,t), minX, minY, w, h);
 
@@ -105,7 +99,6 @@ public class BioFormatsBdvUnsignedShortSource extends BioFormatsBdvSource<Unsign
 
             raiMap.get(t).put(level, rai);
 
-            //System.out.println("Building level "+level+" done!");
             return raiMap.get(t).get(level);
         }
     }

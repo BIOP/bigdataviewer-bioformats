@@ -36,7 +36,7 @@ import static ch.epfl.biop.bdv.scijava.command.Info.ScijavaBdvRootMenu;
  * @author nicolas.chiaruttini@epfl.ch
  */
 
-@Plugin(type = Command.class,menuPath = ScijavaBdvRootMenu+"Convert Files to Xml Dataset (SciJava)")
+@Plugin(type = Command.class,menuPath = ScijavaBdvRootMenu+"Export>Convert Files to Xml Dataset with Bioformats (SciJava)")
 public class BioFormatsConvertFilesToXmlDataset implements Command {
     @Parameter(label = "Image Files")
     public File[] inputFiles;

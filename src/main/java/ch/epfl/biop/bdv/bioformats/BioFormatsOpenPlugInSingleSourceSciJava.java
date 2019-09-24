@@ -21,6 +21,8 @@ import net.imglib2.type.volatiles.*;
 import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import ome.units.UNITS;
+import ome.units.quantity.Length;
+import ome.units.unit.Unit;
 import org.scijava.ItemIO;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
@@ -31,7 +33,7 @@ import java.io.File;
 import java.util.logging.Logger;
 import static ch.epfl.biop.bdv.scijava.command.Info.ScijavaBdvRootMenu;
 
-@Plugin(type = Command.class,menuPath = ScijavaBdvRootMenu+"Open single source with BioFormats in Bdv")
+@Plugin(type = Command.class,menuPath = ScijavaBdvRootMenu+"Open>Open single source with BioFormats in Bdv")
 public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
     private static final Logger LOGGER = Logger.getLogger( BioFormatsOpenPlugInSingleSourceSciJava.class.getName() );
 
@@ -73,6 +75,9 @@ public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
     public boolean letBioFormatDecideCacheBlockXY = true;
 
     @Parameter
+    public boolean ignoreMetadata = true;
+
+    @Parameter
     public int cacheBlockSizeX = 512;
 
     @Parameter
@@ -80,6 +85,9 @@ public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
 
     @Parameter
     public int cacheBlockSizeZ = 32;
+
+    @Parameter(choices = {"Millimeters", "Microns"})
+    public String unit;
 
     @Override
     public void run()
@@ -93,6 +101,18 @@ public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
             options.addTo(bdv_h);
         }
         try {
+
+
+            Unit<Length> u;
+
+            if (unit.equals("Millimeters")) {
+                u = UNITS.MILLIMETER;
+            } else if (unit.equals("Microns")) {
+                u = UNITS.MICROMETRE;
+            } else {
+                u = null;
+            }
+
             IFormatReader reader = new ImageReader();
             reader.setFlattenedResolutions(false);
             Memoizer memo = new Memoizer( reader );
@@ -114,23 +134,23 @@ public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
                             (long)cacheBlockSizeZ});
 
             if (h.is24bitsRGB) {
-                bdvSrc = new BioFormatsBdvRGBSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY);
+                bdvSrc = new BioFormatsBdvRGBSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY, ignoreMetadata, ignoreMetadata,u);
                 vSrc = new VolatileBdvSource<ARGBType, VolatileARGBType>(bdvSrc, new VolatileARGBType(), new SharedQueue(1));
             } else {
                 if (h.is8bits)  {
-                    bdvSrc = new BioFormatsBdvUnsignedByteSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY);
+                    bdvSrc = new BioFormatsBdvUnsignedByteSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY, ignoreMetadata, ignoreMetadata,u);
                     vSrc = new VolatileBdvSource<UnsignedByteType, VolatileUnsignedByteType>(bdvSrc, new VolatileUnsignedByteType(), new SharedQueue(1));
                 }
                 if (h.is16bits) {
-                    bdvSrc = new BioFormatsBdvUnsignedShortSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY);
+                    bdvSrc = new BioFormatsBdvUnsignedShortSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY, ignoreMetadata, ignoreMetadata,u);
                     vSrc = new VolatileBdvSource<UnsignedShortType, VolatileUnsignedShortType>(bdvSrc, new VolatileUnsignedShortType(), new SharedQueue(1));
                 }
                 if (h.is32bits) {
-                    bdvSrc = new BioFormatsBdvUnsignedIntSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY);
+                    bdvSrc = new BioFormatsBdvUnsignedIntSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY, ignoreMetadata, ignoreMetadata,u);
                     vSrc = new VolatileBdvSource<UnsignedIntType, VolatileUnsignedIntType>(bdvSrc, new VolatileUnsignedIntType(), new SharedQueue(1));
                 }
                 if (h.isFloat32bits) {
-                    bdvSrc = new BioFormatsBdvFloatSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY);
+                    bdvSrc = new BioFormatsBdvFloatSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY, ignoreMetadata, ignoreMetadata,u);
                     vSrc = new VolatileBdvSource<FloatType, VolatileFloatType>(bdvSrc, new VolatileFloatType(), new SharedQueue(1));
                 }
             }
