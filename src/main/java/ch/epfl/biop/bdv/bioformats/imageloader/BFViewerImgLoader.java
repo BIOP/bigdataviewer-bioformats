@@ -70,7 +70,7 @@ public class BFViewerImgLoader<T extends NumericType<T>,V extends Volatile<T> & 
         oss.cacheBlockSizeY=cacheBlockSizeY;
         oss.cacheBlockSizeZ=cacheBlockSizeZ;
         oss.ignoreMetadata=true; // because metadata is handled through the loader
-        oss.unit=null; // Ignored because metadata is ignored ?
+        oss.unit="Millimeters"; // Ignored because metadata is ignored ?
 
         oss.run();
 

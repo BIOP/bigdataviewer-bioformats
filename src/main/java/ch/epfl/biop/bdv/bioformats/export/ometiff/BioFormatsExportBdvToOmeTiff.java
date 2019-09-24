@@ -42,7 +42,7 @@ import static ch.epfl.biop.bdv.scijava.command.Info.ScijavaBdvRootMenu;
  * JUST NOT WORKING AT ALL WITH TILES
  */
 
-@Plugin(type = Command.class,menuPath = ScijavaBdvRootMenu+"Export>Save as OMETIFF (SciJava)")
+@Plugin(type = Command.class,menuPath = ScijavaBdvRootMenu+"Export>Save Sources as OMETIFF (SciJava)")
 public class BioFormatsExportBdvToOmeTiff implements Command{
 
     private static final Logger LOGGER = Logger.getLogger( BioFormatsExportBdvToOmeTiff.class.getName() );
