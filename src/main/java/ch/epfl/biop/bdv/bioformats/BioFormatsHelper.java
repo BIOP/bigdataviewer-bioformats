@@ -134,12 +134,12 @@ public class BioFormatsHelper {
 
         // In 3D if available
         if (omeMeta.getPixelsPhysicalSizeZ(iSerie)==null) {
-            dZmm=dXmm; // Assuming isotropic
+            dZmm=1; // Assuming isotropic
         } else {
             try {
                 dZmm = omeMeta.getPixelsPhysicalSizeZ(iSerie).value(u).doubleValue();
             }  catch(NullPointerException e2) {
-                dZmm=dXmm; // Assuming isotropic
+                dZmm=1; // Assuming isotropic
             }
         }
         return new double[]{dXmm, dYmm, dZmm};
