@@ -26,8 +26,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
-import static ch.epfl.biop.bdv.scijava.command.Info.ScijavaBdvRootMenu;
-
 /**
  * Converting BioFormats structure into an Xml Dataset, compatible for BigDataViewer and FIJI BIG Plugins
  * Limitation
@@ -36,7 +34,7 @@ import static ch.epfl.biop.bdv.scijava.command.Info.ScijavaBdvRootMenu;
  * @author nicolas.chiaruttini@epfl.ch
  */
 
-@Plugin(type = Command.class,menuPath = ScijavaBdvRootMenu+"Export>Convert Files to Xml Dataset with Bioformats (SciJava)")
+@Plugin(type = Command.class,menuPath = "BDV_SciJava>Export>Convert Files to Xml Dataset with Bioformats (SciJava)")
 public class BioFormatsConvertFilesToXmlDataset implements Command {
     @Parameter(label = "Image Files")
     public File[] inputFiles;

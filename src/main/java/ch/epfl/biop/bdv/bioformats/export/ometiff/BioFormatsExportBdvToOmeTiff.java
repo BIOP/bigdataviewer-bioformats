@@ -34,7 +34,6 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import static ch.epfl.biop.bdv.scijava.command.Info.ScijavaBdvRootMenu;
 
 /**
  * Inspired from https://github.com/ome/bio-formats-examples/blob/master/src/main/java/FileExport.java
@@ -42,7 +41,7 @@ import static ch.epfl.biop.bdv.scijava.command.Info.ScijavaBdvRootMenu;
  * JUST NOT WORKING AT ALL WITH TILES
  */
 
-@Plugin(type = Command.class,menuPath = ScijavaBdvRootMenu+"Export>Save Sources as OMETIFF (SciJava)")
+@Plugin(type = Command.class,menuPath = "BDV_SciJava>Export>Save Sources as OMETIFF (SciJava)")
 public class BioFormatsExportBdvToOmeTiff implements Command{
 
     private static final Logger LOGGER = Logger.getLogger( BioFormatsExportBdvToOmeTiff.class.getName() );

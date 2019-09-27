@@ -31,9 +31,8 @@ import org.scijava.plugin.Plugin;
 import java.awt.*;
 import java.io.File;
 import java.util.logging.Logger;
-import static ch.epfl.biop.bdv.scijava.command.Info.ScijavaBdvRootMenu;
 
-@Plugin(type = Command.class,menuPath = ScijavaBdvRootMenu+"Open>Open single source with BioFormats in Bdv")
+@Plugin(type = Command.class,menuPath = "BDV_SciJava>Open>Open single source with BioFormats in Bdv")
 public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
     private static final Logger LOGGER = Logger.getLogger( BioFormatsOpenPlugInSingleSourceSciJava.class.getName() );
 

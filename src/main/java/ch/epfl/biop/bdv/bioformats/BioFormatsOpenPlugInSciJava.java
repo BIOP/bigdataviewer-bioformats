@@ -8,9 +8,6 @@ import loci.formats.Memoizer;
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
 import net.imagej.ImageJ;
-import ome.units.UNITS;
-import ome.units.quantity.Length;
-import ome.units.unit.Unit;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.scijava.ItemIO;
@@ -26,11 +23,10 @@ import java.util.concurrent.Future;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.logging.Logger;
-import static ch.epfl.biop.bdv.scijava.command.Info.ScijavaBdvRootMenu;
 
 // TODO : add lookuptable
 
-@Plugin(type = Command.class,menuPath = ScijavaBdvRootMenu+"Open>Open with BioFormats in Bdv")
+@Plugin(type = Command.class,menuPath = "BDV_SciJava>Open>Open with BioFormats in Bdv")
 public class BioFormatsOpenPlugInSciJava implements Command
 {
 
