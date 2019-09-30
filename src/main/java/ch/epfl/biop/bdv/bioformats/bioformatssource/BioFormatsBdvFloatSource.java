@@ -26,7 +26,7 @@ public class BioFormatsBdvFloatSource extends BioFormatsBdvSource<FloatType> {
                                     boolean useBioFormatsXYBlockSize,
                                     boolean ignoreBioFormatsLocationMetaData,
                                     boolean ignoreBioFormatsVoxelSizeMetaData, Unit u) {
-        super(reader, image_index, channel_index, sw, cacheBlockSize, useBioFormatsXYBlockSize, ignoreBioFormatsLocationMetaData, ignoreBioFormatsVoxelSizeMetaData,u);
+        super(reader, image_index, channel_index, sw, cacheBlockSize, useBioFormatsXYBlockSize, ignoreBioFormatsLocationMetaData, ignoreBioFormatsVoxelSizeMetaData, u);
     }
 
 
