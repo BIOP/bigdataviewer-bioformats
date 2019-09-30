@@ -59,7 +59,7 @@ public class BioFormatsOpenPlugInSciJava implements Command
     @Parameter
     public boolean ignoreMetadata = true;
 
-    @Parameter(choices = {"Millimeters", Units.MICRONS})
+    @Parameter(choices = {Units.MILLIMETERS, Units.MICRONS})
     public String unit = Units.MICRONS;
 
     @Parameter

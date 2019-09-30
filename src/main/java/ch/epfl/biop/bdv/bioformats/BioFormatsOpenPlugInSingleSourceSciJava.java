@@ -105,9 +105,9 @@ public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
 
             Unit<Length> u;
             if (unit==null) {unit="";}
-            if (unit.equals("Millimeters")) {
+            if (unit.equals(Units.MILLIMETERS)) {
                 u = UNITS.MILLIMETER;
-            } else if (unit.equals("Microns")) {
+            } else if (unit.equals(Units.MICRONS)) {
                 u = UNITS.MICROMETRE;
             } else {
                 u = null;

@@ -1,6 +1,7 @@
 package explore;
 
 import ch.epfl.biop.bdv.bioformats.BioFormatsOpenPlugInSciJava;
+import ch.epfl.biop.bdv.bioformats.Units;
 import net.imagej.ImageJ;
 
 import java.io.File;
@@ -17,7 +18,7 @@ public class ExploreOpeningImages
 		command.createNewWindow = true;
 		command.inputFile = new File("/Users/tischer/Desktop/20x_g5_a1.nd2");
 		command.ignoreMetadata = false;
-		command.unit = "Microns";
+		command.unit = Units.MICRONS;
 		command.run();
 
 		final BioFormatsOpenPlugInSciJava command2 = new BioFormatsOpenPlugInSciJava();
@@ -26,6 +27,7 @@ public class ExploreOpeningImages
 		command2.createNewWindow = false;
 		command2.inputFile = new File("/Users/tischer/Desktop/60x_g5_a1.nd2");
 		command2.ignoreMetadata = false;
+		command.unit = Units.MICRONS;
 		command2.run();
 	}
 }
