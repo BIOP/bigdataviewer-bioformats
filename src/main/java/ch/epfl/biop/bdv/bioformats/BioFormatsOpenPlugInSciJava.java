@@ -29,7 +29,6 @@ import java.util.logging.Logger;
 @Plugin(type = Command.class,menuPath = "BDV_SciJava>Open>Open with BioFormats in Bdv")
 public class BioFormatsOpenPlugInSciJava implements Command
 {
-
     private static final Logger LOGGER = Logger.getLogger( BioFormatsOpenPlugInSciJava.class.getName() );
 
     @Parameter(label = "Image File")
@@ -64,7 +63,7 @@ public class BioFormatsOpenPlugInSciJava implements Command
     public String unit;
 
     @Parameter
-    CommandService cs;
+    public CommandService cs;
 
     @Parameter
     public boolean letBioFormatDecideCacheBlockXY = true;
@@ -77,8 +76,6 @@ public class BioFormatsOpenPlugInSciJava implements Command
 
     @Parameter
     public int cacheBlockSizeZ = 32;
-
-
 
     @Override
     public void run()
@@ -134,6 +131,11 @@ public class BioFormatsOpenPlugInSciJava implements Command
                                     "unit", unit
 
                             );
+
+                            final BioFormatsOpenPlugInSingleSourceSciJava command = new BioFormatsOpenPlugInSingleSourceSciJava();
+                            command.bdv_h = bdv_h;
+                            command.run();
+
                             cm = module.get();
                         } else {
                             Future<CommandModule> module = cs.run(BioFormatsOpenPlugInSingleSourceSciJava.class, false,

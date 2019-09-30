@@ -92,6 +92,7 @@ public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
     public void run()
     {
         BdvOptions options = BdvOptions.options();
+
         if (createNewWindow) {
             bdv_h=null;
         }
