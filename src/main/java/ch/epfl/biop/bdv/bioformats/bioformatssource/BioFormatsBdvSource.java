@@ -106,13 +106,14 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
                                boolean useBioFormatsXYBlockSize,
                                boolean ignoreBioFormatsLocationMetaData,
                                boolean ignoreBioFormatsVoxelSizeMetaData,
-                               Unit u) {
+                               Unit u)
+    {
         this.targetUnit = u;
         this.ignoreBioFormatsLocationMetaData = ignoreBioFormatsLocationMetaData;
         this.ignoreBioFormatsVoxelSizeMetaData = ignoreBioFormatsVoxelSizeMetaData;
-        this.useBioFormatsXYBlockSize=useBioFormatsXYBlockSize;
+        this.useBioFormatsXYBlockSize = useBioFormatsXYBlockSize;
         this.cacheBlockSize = cacheBlockSize;
-        this.switchZandC=swZC;
+        this.switchZandC = swZC;
         this.reader = reader;
         this.reader.setSeries(image_index);
         this.cChannel = channel_index;
