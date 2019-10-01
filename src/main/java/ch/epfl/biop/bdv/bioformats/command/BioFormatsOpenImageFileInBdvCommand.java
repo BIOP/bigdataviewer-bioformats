@@ -8,8 +8,6 @@ import loci.formats.Memoizer;
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
 import net.imagej.ImageJ;
-import ome.units.UNITS;
-import ome.units.unit.Unit;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.scijava.ItemIO;
@@ -28,10 +26,10 @@ import java.util.logging.Logger;
 
 // TODO : add lookuptable
 
-@Plugin(type = Command.class,menuPath = "BDV_SciJava>Open>Open with BioFormats in Bdv")
-public class BioFormatsOpenPlugInSciJava implements Command
+@Plugin(type = Command.class,menuPath = "BDV_SciJava>Open>Open image file with BioFormats in Bdv")
+public class BioFormatsOpenImageFileInBdvCommand implements Command
 {
-    private static final Logger LOGGER = Logger.getLogger( BioFormatsOpenPlugInSciJava.class.getName() );
+    private static final Logger LOGGER = Logger.getLogger( BioFormatsOpenImageFileInBdvCommand.class.getName() );
 
     @Parameter(label = "Image File")
     public File inputFile;
@@ -115,7 +113,7 @@ public class BioFormatsOpenPlugInSciJava implements Command
                         LOGGER.info("omeMetaOmeXml.getChannelCount("+p.getLeft()+")="+omeMetaOmeXml.getChannelCount(p.getLeft()));
                         CommandModule cm;
                         if (!appendMode.equals("Volatile + Standard")) {
-                            Future<CommandModule> module = cs.run(BioFormatsOpenPlugInSingleSourceSciJava.class, false,
+                            Future<CommandModule> module = cs.run( BioFormatsOpenSingleSourceInBdvCommand.class, false,
                                     "sourceIndex", p.getLeft(),
                                     "channelIndex", idCh,
                                     "bdv_h", bdv_h,
@@ -134,13 +132,13 @@ public class BioFormatsOpenPlugInSciJava implements Command
 
                             );
 
-                            final BioFormatsOpenPlugInSingleSourceSciJava command = new BioFormatsOpenPlugInSingleSourceSciJava();
+                            final BioFormatsOpenSingleSourceInBdvCommand command = new BioFormatsOpenSingleSourceInBdvCommand();
                             command.bdv_h = bdv_h;
                             command.run();
 
                             cm = module.get();
                         } else {
-                            Future<CommandModule> module = cs.run(BioFormatsOpenPlugInSingleSourceSciJava.class, false,
+                            Future<CommandModule> module = cs.run( BioFormatsOpenSingleSourceInBdvCommand.class, false,
                                     "sourceIndex", p.getLeft(),
                                     "channelIndex", idCh,
                                     "bdv_h", bdv_h,
@@ -158,7 +156,7 @@ public class BioFormatsOpenPlugInSciJava implements Command
                                     "unit", unit
                             );
                             module.get();
-                            module = cs.run(BioFormatsOpenPlugInSingleSourceSciJava.class, false,
+                            module = cs.run( BioFormatsOpenSingleSourceInBdvCommand.class, false,
                                     "sourceIndex", p.getLeft(),
                                     "channelIndex", idCh,
                                     "bdv_h", bdv_h,
@@ -338,7 +336,7 @@ public class BioFormatsOpenPlugInSciJava implements Command
         //  create the ImageJ application context with all available services
         final ImageJ ij = new ImageJ();
         ij.ui().showUI();
-        ij.command().run(BioFormatsOpenPlugInSciJava.class, true);
+        ij.command().run( BioFormatsOpenImageFileInBdvCommand.class, true);
 
     }
 }

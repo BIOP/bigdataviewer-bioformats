@@ -1,6 +1,6 @@
 package explore;
 
-import ch.epfl.biop.bdv.bioformats.BioFormatsOpenPlugInSciJava;
+import ch.epfl.biop.bdv.bioformats.BioFormatsOpenImageFileInBdvCommand;
 import ch.epfl.biop.bdv.bioformats.Units;
 import net.imagej.ImageJ;
 
@@ -13,7 +13,7 @@ public class ExploreOpeningImages
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 
-		final BioFormatsOpenPlugInSciJava command = new BioFormatsOpenPlugInSciJava();
+		final BioFormatsOpenImageFileInBdvCommand command = new BioFormatsOpenImageFileInBdvCommand();
 		command.cs = ij.command();
 		command.createNewWindow = true;
 		command.inputFile = new File("/Users/tischer/Desktop/20x_g5_a1.nd2");
@@ -21,7 +21,7 @@ public class ExploreOpeningImages
 		command.unit = Units.MICRONS;
 		command.run();
 
-		final BioFormatsOpenPlugInSciJava command2 = new BioFormatsOpenPlugInSciJava();
+		final BioFormatsOpenImageFileInBdvCommand command2 = new BioFormatsOpenImageFileInBdvCommand();
 		command2.bdv_h = command.bdv_h;
 		command2.cs = ij.command();
 		command2.createNewWindow = false;

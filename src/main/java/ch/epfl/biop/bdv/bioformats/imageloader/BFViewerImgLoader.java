@@ -2,34 +2,28 @@ package ch.epfl.biop.bdv.bioformats.imageloader;
 
 import bdv.AbstractViewerSetupImgLoader;
 import bdv.viewer.Source;
-import ch.epfl.biop.bdv.bioformats.BioFormatsOpenPlugInSingleSourceSciJava;
+import ch.epfl.biop.bdv.bioformats.BioFormatsOpenSingleSourceInBdvCommand;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
 import mpicbg.spim.data.generic.sequence.ImgLoaderHint;
 import mpicbg.spim.data.sequence.MultiResolutionSetupImgLoader;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.*;
 import net.imglib2.cache.img.DiskCachedCellImg;
-import net.imglib2.cache.img.DiskCachedCellImgFactory;
-import net.imglib2.cache.img.DiskCachedCellImgOptions;
 import net.imglib2.converter.Converter;
 import net.imglib2.converter.Converters;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.integer.AbstractIntegerType;
 import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.view.Views;
 
 import java.io.File;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
-import static net.imglib2.cache.img.DiskCachedCellImgOptions.options;
 
 public class BFViewerImgLoader<T extends NumericType<T>,V extends Volatile<T> & NumericType<V>> extends AbstractViewerSetupImgLoader<T, V> implements MultiResolutionSetupImgLoader< T > {
 
@@ -57,7 +51,7 @@ public class BFViewerImgLoader<T extends NumericType<T>,V extends Volatile<T> & 
                              Supplier<T> getT,
                              Supplier<V> getV) {
         super(getT.get(), getV.get() );
-        BioFormatsOpenPlugInSingleSourceSciJava oss = new BioFormatsOpenPlugInSingleSourceSciJava();
+        BioFormatsOpenSingleSourceInBdvCommand oss = new BioFormatsOpenSingleSourceInBdvCommand();
 
         oss.inputFile=inputFile;
         oss.appendMode="No Show";

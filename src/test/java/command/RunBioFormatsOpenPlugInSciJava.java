@@ -1,6 +1,6 @@
 package command;
 
-import ch.epfl.biop.bdv.bioformats.BioFormatsOpenPlugInSciJava;
+import ch.epfl.biop.bdv.bioformats.BioFormatsOpenImageFileInBdvCommand;
 import net.imagej.ImageJ;
 
 public class RunBioFormatsOpenPlugInSciJava
@@ -10,6 +10,6 @@ public class RunBioFormatsOpenPlugInSciJava
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 
-		ij.command().run( BioFormatsOpenPlugInSciJava.class, true );
+		ij.command().run( BioFormatsOpenImageFileInBdvCommand.class, true );
 	}
 }
