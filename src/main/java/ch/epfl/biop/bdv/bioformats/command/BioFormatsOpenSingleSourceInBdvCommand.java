@@ -1,4 +1,4 @@
-package ch.epfl.biop.bdv.bioformats;
+package ch.epfl.biop.bdv.bioformats.command;
 
 import bdv.util.BdvFunctions;
 import bdv.util.BdvHandle;
@@ -6,6 +6,8 @@ import bdv.util.BdvOptions;
 import bdv.util.BdvStackSource;
 import bdv.util.volatiles.SharedQueue;
 import bdv.viewer.Source;
+import ch.epfl.biop.bdv.bioformats.BioFormatsHelper;
+import ch.epfl.biop.bdv.bioformats.Units;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.*;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;
@@ -33,8 +35,8 @@ import java.io.File;
 import java.util.logging.Logger;
 
 @Plugin(type = Command.class,menuPath = "BDV_SciJava>Open>Open single source with BioFormats in Bdv")
-public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
-    private static final Logger LOGGER = Logger.getLogger( BioFormatsOpenPlugInSingleSourceSciJava.class.getName() );
+public class BioFormatsOpenSingleSourceInBdvCommand implements Command {
+    private static final Logger LOGGER = Logger.getLogger( BioFormatsOpenSingleSourceInBdvCommand.class.getName() );
 
     @Parameter(label = "Image File")
     public File inputFile;
