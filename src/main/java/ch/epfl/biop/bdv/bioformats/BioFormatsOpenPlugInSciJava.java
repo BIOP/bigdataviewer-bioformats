@@ -8,6 +8,8 @@ import loci.formats.Memoizer;
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
 import net.imagej.ImageJ;
+import ome.units.UNITS;
+import ome.units.unit.Unit;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.scijava.ItemIO;
@@ -29,7 +31,6 @@ import java.util.logging.Logger;
 @Plugin(type = Command.class,menuPath = "BDV_SciJava>Open>Open with BioFormats in Bdv")
 public class BioFormatsOpenPlugInSciJava implements Command
 {
-
     private static final Logger LOGGER = Logger.getLogger( BioFormatsOpenPlugInSciJava.class.getName() );
 
     @Parameter(label = "Image File")
@@ -60,11 +61,11 @@ public class BioFormatsOpenPlugInSciJava implements Command
     @Parameter
     public boolean ignoreMetadata = true;
 
-    @Parameter(choices = {"Millimeters", "Microns"})
-    public String unit;
+    @Parameter(choices = { Units.MILLIMETERS, Units.MICRONS })
+    public String unit = Units.MICRONS;
 
     @Parameter
-    CommandService cs;
+    public CommandService cs;
 
     @Parameter
     public boolean letBioFormatDecideCacheBlockXY = true;
@@ -77,8 +78,6 @@ public class BioFormatsOpenPlugInSciJava implements Command
 
     @Parameter
     public int cacheBlockSizeZ = 32;
-
-
 
     @Override
     public void run()
@@ -134,6 +133,11 @@ public class BioFormatsOpenPlugInSciJava implements Command
                                     "unit", unit
 
                             );
+
+                            final BioFormatsOpenPlugInSingleSourceSciJava command = new BioFormatsOpenPlugInSingleSourceSciJava();
+                            command.bdv_h = bdv_h;
+                            command.run();
+
                             cm = module.get();
                         } else {
                             Future<CommandModule> module = cs.run(BioFormatsOpenPlugInSingleSourceSciJava.class, false,
