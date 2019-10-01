@@ -8,6 +8,8 @@ import loci.formats.Memoizer;
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
 import net.imagej.ImageJ;
+import ome.units.UNITS;
+import ome.units.unit.Unit;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.scijava.ItemIO;
@@ -59,7 +61,7 @@ public class BioFormatsOpenPlugInSciJava implements Command
     @Parameter
     public boolean ignoreMetadata = true;
 
-    @Parameter(choices = {Units.MILLIMETERS, Units.MICRONS})
+    @Parameter(choices = { Units.MILLIMETERS, Units.MICRONS })
     public String unit = Units.MICRONS;
 
     @Parameter

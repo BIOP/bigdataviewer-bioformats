@@ -85,7 +85,7 @@ public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
     @Parameter
     public int cacheBlockSizeZ = 32;
 
-    @Parameter( choices = { Units.MILLIMETERS, Units.MICRONS} )
+    @Parameter( choices = { Units.MILLIMETERS, Units.MICRONS } )
     public String unit = Units.MICRONS;
 
     @Override
@@ -102,16 +102,7 @@ public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
         }
         try {
 
-
-            Unit<Length> u;
-            if (unit==null) {unit="";}
-            if (unit.equals(Units.MILLIMETERS)) {
-                u = UNITS.MILLIMETER;
-            } else if (unit.equals(Units.MICRONS)) {
-                u = UNITS.MICROMETRE;
-            } else {
-                u = null;
-            }
+            Unit< Length > unit = Units.getLengthUnit( this.unit );
 
             IFormatReader reader = new ImageReader();
             reader.setFlattenedResolutions(false);
@@ -134,23 +125,23 @@ public class BioFormatsOpenPlugInSingleSourceSciJava implements Command {
                             (long)cacheBlockSizeZ});
 
             if (h.is24bitsRGB) {
-                bdvSrc = new BioFormatsBdvRGBSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY, ignoreMetadata, ignoreMetadata,u);
+                bdvSrc = new BioFormatsBdvRGBSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY, ignoreMetadata, ignoreMetadata,unit);
                 vSrc = new VolatileBdvSource<ARGBType, VolatileARGBType>(bdvSrc, new VolatileARGBType(), new SharedQueue(1));
             } else {
                 if (h.is8bits)  {
-                    bdvSrc = new BioFormatsBdvUnsignedByteSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY, ignoreMetadata, ignoreMetadata, u);
+                    bdvSrc = new BioFormatsBdvUnsignedByteSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY, ignoreMetadata, ignoreMetadata, unit);
                     vSrc = new VolatileBdvSource<UnsignedByteType, VolatileUnsignedByteType>(bdvSrc, new VolatileUnsignedByteType(), new SharedQueue(1));
                 }
                 if (h.is16bits) {
-                    bdvSrc = new BioFormatsBdvUnsignedShortSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY, ignoreMetadata, ignoreMetadata, u);
+                    bdvSrc = new BioFormatsBdvUnsignedShortSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY, ignoreMetadata, ignoreMetadata, unit);
                     vSrc = new VolatileBdvSource<UnsignedShortType, VolatileUnsignedShortType>(bdvSrc, new VolatileUnsignedShortType(), new SharedQueue(1));
                 }
                 if (h.is32bits) {
-                    bdvSrc = new BioFormatsBdvUnsignedIntSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY, ignoreMetadata, ignoreMetadata, u);
+                    bdvSrc = new BioFormatsBdvUnsignedIntSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY, ignoreMetadata, ignoreMetadata, unit);
                     vSrc = new VolatileBdvSource<UnsignedIntType, VolatileUnsignedIntType>(bdvSrc, new VolatileUnsignedIntType(), new SharedQueue(1));
                 }
                 if (h.isFloat32bits) {
-                    bdvSrc = new BioFormatsBdvFloatSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY, ignoreMetadata, ignoreMetadata, u);
+                    bdvSrc = new BioFormatsBdvFloatSource(readerIdx, sourceIndex, channelIndex, switchZandC, cacheBlockSize, letBioFormatDecideCacheBlockXY, ignoreMetadata, ignoreMetadata, unit);
                     vSrc = new VolatileBdvSource<FloatType, VolatileFloatType>(bdvSrc, new VolatileFloatType(), new SharedQueue(1));
                 }
             }
