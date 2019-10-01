@@ -2,7 +2,7 @@ package ch.epfl.biop.bdv.bioformats.imageloader;
 
 import bdv.AbstractViewerSetupImgLoader;
 import bdv.viewer.Source;
-import ch.epfl.biop.bdv.bioformats.BioFormatsOpenSingleSourceInBdvCommand;
+import ch.epfl.biop.bdv.bioformats.command.BioFormatsOpenSingleSourceInBdvCommand;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
 import mpicbg.spim.data.generic.sequence.ImgLoaderHint;
 import mpicbg.spim.data.sequence.MultiResolutionSetupImgLoader;

@@ -1,4 +1,4 @@
-package ch.epfl.biop.bdv.bioformats;
+package ch.epfl.biop.bdv.bioformats.command;
 
 import bdv.util.BdvFunctions;
 import bdv.util.BdvHandle;
@@ -6,6 +6,8 @@ import bdv.util.BdvOptions;
 import bdv.util.BdvStackSource;
 import bdv.util.volatiles.SharedQueue;
 import bdv.viewer.Source;
+import ch.epfl.biop.bdv.bioformats.BioFormatsHelper;
+import ch.epfl.biop.bdv.bioformats.Units;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.*;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;

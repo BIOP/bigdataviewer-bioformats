@@ -1,6 +1,7 @@
-package ch.epfl.biop.bdv.bioformats;
+package ch.epfl.biop.bdv.bioformats.command;
 
 import bdv.util.BdvHandle;
+import ch.epfl.biop.bdv.bioformats.Units;
 import loci.common.DebugTools;
 import loci.formats.IFormatReader;
 import loci.formats.ImageReader;

@@ -1,6 +1,6 @@
 package command;
 
-import ch.epfl.biop.bdv.bioformats.BioFormatsOpenImageFileInBdvCommand;
+import ch.epfl.biop.bdv.bioformats.command.BioFormatsOpenImageFileInBdvCommand;
 import net.imagej.ImageJ;
 
 public class RunBioFormatsOpenPlugInSciJava

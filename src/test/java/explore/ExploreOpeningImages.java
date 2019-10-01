@@ -1,6 +1,6 @@
 package explore;
 
-import ch.epfl.biop.bdv.bioformats.BioFormatsOpenImageFileInBdvCommand;
+import ch.epfl.biop.bdv.bioformats.command.BioFormatsOpenImageFileInBdvCommand;
 import ch.epfl.biop.bdv.bioformats.Units;
 import net.imagej.ImageJ;
 
