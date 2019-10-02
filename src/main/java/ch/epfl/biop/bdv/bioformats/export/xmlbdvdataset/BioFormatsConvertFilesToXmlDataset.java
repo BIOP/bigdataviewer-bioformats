@@ -1,6 +1,6 @@
 package ch.epfl.biop.bdv.bioformats.export.xmlbdvdataset;
 
-import ch.epfl.biop.bdv.bioformats.BioFormatsHelper;
+import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
 import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsImageLoader;
 import ch.epfl.biop.bdv.bioformats.imageloader.FileSerieChannel;
 import ch.epfl.biop.bdv.bioformats.imageloader.SeriesTps;
@@ -121,8 +121,8 @@ public class BioFormatsConvertFilesToXmlDataset implements Command {
                         maxTimepoints = omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue();
                     }
                     String imageName = omeMeta.getImageName(iSerie);
-                    Dimensions dims = BioFormatsHelper.getDimensions(omeMeta, iSerie, UNITS.MILLIMETER);
-                    VoxelDimensions voxDims = BioFormatsHelper.getVoxelDimensions(omeMeta, iSerie, UNITS.MILLIMETER);
+                    Dimensions dims = BioFormatsMetaDataHelper.getDimensions(omeMeta, iSerie, UNITS.MILLIMETER);
+                    VoxelDimensions voxDims = BioFormatsMetaDataHelper.getVoxelDimensions(omeMeta, iSerie, UNITS.MILLIMETER);
                     // Register Setups (one per channel and one per timepoint)
                     channels.forEach(
                             iCh -> {
@@ -184,7 +184,7 @@ public class BioFormatsConvertFilesToXmlDataset implements Command {
                                 .stream()
                                 .filter(viewSetupId -> (viewSetupToBFFileSerieChannel.get(viewSetupId).iFile == iFile))
                                 .filter(viewSetupId -> (viewSetupToBFFileSerieChannel.get(viewSetupId).iSerie == iSerie))
-                                .forEach(viewSetupId -> registrations.add(new ViewRegistration(iTp.getId(), viewSetupId, BioFormatsHelper.getRootTransform(omeMeta,iSerie,UNITS.MILLIMETER)))//new AffineTransform3D()))//
+                                .forEach(viewSetupId -> registrations.add(new ViewRegistration(iTp.getId(), viewSetupId, BioFormatsMetaDataHelper.getRootTransform(omeMeta,iSerie,UNITS.MILLIMETER)))//new AffineTransform3D()))//
                                 );
                     });
                 });
@@ -214,7 +214,7 @@ public class BioFormatsConvertFilesToXmlDataset implements Command {
     }
 
     int getChannelId(IMetadata omeMeta, int iSerie, int iChannel) {
-        int channelHash = BioFormatsHelper.getChannelHashFromBFMeta(omeMeta, iSerie, iChannel);
+        int channelHash = BioFormatsMetaDataHelper.getChannelHashFromBFMeta(omeMeta, iSerie, iChannel);
         if (!channelHashToId.containsKey(channelHash)) {
             // No : add it in the channel hashmap
             channelHashToId.put(channelHash,channelCounter);

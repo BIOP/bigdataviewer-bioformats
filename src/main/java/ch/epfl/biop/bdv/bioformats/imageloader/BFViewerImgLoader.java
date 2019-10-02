@@ -2,7 +2,6 @@ package ch.epfl.biop.bdv.bioformats.imageloader;
 
 import bdv.AbstractViewerSetupImgLoader;
 import bdv.viewer.Source;
-import ch.epfl.biop.bdv.bioformats.command.BioFormatsOpenSingleSourceInBdvCommand;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
 import mpicbg.spim.data.generic.sequence.ImgLoaderHint;
 import mpicbg.spim.data.sequence.MultiResolutionSetupImgLoader;
@@ -19,8 +18,11 @@ import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.integer.AbstractIntegerType;
 import net.imglib2.type.numeric.real.FloatType;
+import ome.units.UNITS;
+import ome.units.unit.Unit;
 
 import java.io.File;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -48,33 +50,25 @@ public class BFViewerImgLoader<T extends NumericType<T>,V extends Volatile<T> & 
                              int cacheBlockSizeX,
                              int cacheBlockSizeY,
                              int cacheBlockSizeZ,
-                             Supplier<T> getT,
-                             Supplier<V> getV) {
-        super(getT.get(), getV.get() );
-        BioFormatsOpenSingleSourceInBdvCommand oss = new BioFormatsOpenSingleSourceInBdvCommand();
+                             T t,
+                             V v) {
+        super(t, v);
 
-        oss.inputFile=inputFile;
-        oss.appendMode="No Show";
-        oss.sourceIndex=sourceIndex;
-        oss.channelIndex=channelIndex;
-        oss.switchZandC=switchZandC;
-        oss.autoscale=autoscale;
-        oss.letBioFormatDecideCacheBlockXY=letBioFormatDecideCacheBlockXY;
-        oss.cacheBlockSizeX=cacheBlockSizeX;
-        oss.cacheBlockSizeY=cacheBlockSizeY;
-        oss.cacheBlockSizeZ=cacheBlockSizeZ;
-        oss.ignoreMetadata=true; // because metadata is handled through the loader
-        oss.unit="Millimeters"; // Ignored because metadata is ignored ?
+        Map<String, Source> sources = (new BioFormatsBdvSource.Opener())
+                .file(inputFile)
+                .cacheBlockSize(cacheBlockSizeX,cacheBlockSizeY,cacheBlockSizeZ)
+                .useCacheBlockSizeFromBioFormats(letBioFormatDecideCacheBlockXY)
+                .switchZandC(switchZandC)
+                .ignoreMetadata()
+                .unit(UNITS.MILLIMETER)
+                .getConcreteAndVolatileSources(sourceIndex, channelIndex);
 
-        oss.run();
-
-        bdvSrc = (Source<T>) oss.bdvSrc;
-        vSrc = (Source<V>) oss.vSrc;
-
+        bdvSrc = (Source<T>) sources.get(BioFormatsBdvSource.CONCRETE);
+        vSrc = (Source<V>) sources.get(BioFormatsBdvSource.VOLATILE);
 
         cellDimensions = ((BioFormatsBdvSource) bdvSrc).cellDimensions;
 
-        T t = getT.get();
+        //T t = getT.get();
 
         if (t instanceof FloatType) {
             cvt = null;
@@ -82,10 +76,10 @@ public class BFViewerImgLoader<T extends NumericType<T>,V extends Volatile<T> & 
         }else if (t instanceof ARGBType) {
             // Average of RGB value
             cvt = (input, output) -> {
-                int v = ((ARGBType) input).get();
-                int r = ARGBType.red(v);
-                int g = ARGBType.green(v);
-                int b = ARGBType.blue(v);
+                int val = ((ARGBType) input).get();
+                int r = ARGBType.red(val);
+                int g = ARGBType.green(val);
+                int b = ARGBType.blue(val);
                 output.set(r+g+b);
             };
             cvtRaiToFloatRai = rai -> Converters.convert( rai, cvt, new FloatType());
@@ -108,69 +102,8 @@ public class BFViewerImgLoader<T extends NumericType<T>,V extends Volatile<T> & 
 
     @Override
     public RandomAccessibleInterval<FloatType> getFloatImage(int timepointId, int level, boolean normalize, ImgLoaderHint... hints) {
-
-        //System.out.println("type float ----------------- = "+getImage(timepointId,level));
-
-        //return cvtRaiToFloatRai.apply(getImage(timepointId,level));
-        // Again not working with bg stitcher! Let's compute it completely
-
-        //RandomAccessibleInterval<FloatType> raifloat = cvtRaiToFloatRai.apply(getImage(timepointId,level));
-        // Casting works because of the image loader
-        DiskCachedCellImg originalImage = (DiskCachedCellImg) getImage(timepointId, level);
-        //originalImage.
-
-
-       /* final DiskCachedCellImgOptions factoryOptions = options()
-                .cellDimensions( cellDimensions )
-                .cacheType( DiskCachedCellImgOptions.CacheType.BOUNDED )
-                .maxCacheSize( 1000 );
-
-
-        final CellImgFactory<FloatType> factory = new ArrayImgFactory<>( new FloatType()) );*/
-        Img< FloatType > img = copyImageCorrect((Img<T>)originalImage,new ArrayImgFactory<>( new FloatType()) );
-
-
-        return  img;//Views.extendZero(img);
-
+        return cvtRaiToFloatRai.apply(getImage(timepointId,level));
     }
-
-
-    /** Necessary to avoid BigStitcher wrapping poroblem when computing interest points
-     *
-     */
-
-    /**
-     * This method copies the image correctly, using a RandomAccess.
-     */
-    Img< FloatType > copyImageCorrect(final Img< T > input,
-                                      final ImgFactory< FloatType > imgFactory )
-    {
-        // create a new Image with the same dimensions but the other imgFactory
-        // note that the input provides the size for the new image by implementing the Interval interface
-        Img< FloatType > output = imgFactory.create( input );
-
-        // create a cursor that automatically localizes itself on every move
-        Cursor< T > cursorInput = input.localizingCursor();
-        RandomAccess< FloatType > randomAccess = output.randomAccess();
-
-        // iterate over the input cursor
-        while ( cursorInput.hasNext())
-        {
-            // move input cursor forward
-            cursorInput.fwd();
-
-            // set the output cursor to the position of the input cursor
-            randomAccess.setPosition( cursorInput );
-
-            // set the value of this pixel of the output image, every Type supports T.set( T type )
-            cvt.convert(cursorInput.get(), randomAccess.get());
-            //randomAccess.get().set( cursorInput.get() );
-        }
-
-        // return the copy
-        return output;
-    }
-
 
     @Override
     public Dimensions getImageSize(int timepointId, int level) {

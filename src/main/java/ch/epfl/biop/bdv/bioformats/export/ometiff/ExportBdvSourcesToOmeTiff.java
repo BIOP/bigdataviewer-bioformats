@@ -1,6 +1,5 @@
 package ch.epfl.biop.bdv.bioformats.export.ometiff;
 
-import bdv.util.BdvHandle;
 import bdv.viewer.Source;
 import loci.common.DebugTools;
 import loci.common.services.ServiceFactory;
@@ -32,25 +31,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
 
 /**
  * Inspired from https://github.com/ome/bio-formats-examples/blob/master/src/main/java/FileExport.java
  *
+ * VERY LIMITED
  * JUST NOT WORKING AT ALL WITH TILES
  */
 
 @Plugin(type = Command.class,menuPath = "BDV_SciJava>Export>Save Sources as OMETIFF (SciJava)")
-public class BioFormatsExportBdvToOmeTiff implements Command{
+public class ExportBdvSourcesToOmeTiff implements Command{
 
-    private static final Logger LOGGER = Logger.getLogger( BioFormatsExportBdvToOmeTiff.class.getName() );
+    private static final Logger LOGGER = Logger.getLogger( ExportBdvSourcesToOmeTiff.class.getName() );
 
-    @Parameter(label="Sources to save ('2,3-5'), starts at 0")
-    String index_srcs_to_save;
-
-    @Parameter(label = "BigDataViewer Frame")
-    public BdvHandle bdv_h;
+    @Parameter(label="Bdv Sources to save")
+    List<Source> srcs;
 
     /** The file format writer. */
     private IFormatWriter writer;
@@ -75,23 +70,11 @@ public class BioFormatsExportBdvToOmeTiff implements Command{
     public int resolutions = 4;
 
     @Parameter(label = "time point")
-    public int timePoint = 4;
+    public int timePoint = 0;
 
     @Override
     public void run() {
-        //DebugTools.enableLogging("INFO");
         DebugTools.setRootLevel("OFF");
-        ArrayList<Integer> idx_src = expressionToArray(index_srcs_to_save, i -> {
-            if (i>=0) {
-                return i;
-            } else {
-                return bdv_h.getViewerPanel().getState().getSources().size()+i;
-            }});
-
-        List<Source<?>> srcs = idx_src
-                .stream()
-                .map(idx -> bdv_h.getViewerPanel().getState().getSources().get(idx).getSpimSource())
-                .collect(Collectors.toList());
 
         try {
             ServiceFactory factory = new ServiceFactory();

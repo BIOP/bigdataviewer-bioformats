@@ -3,20 +3,15 @@ package ch.epfl.biop.bdv.bioformats.imageloader;
 import bdv.ViewerImgLoader;
 import bdv.cache.CacheControl;
 import bdv.img.cache.VolatileGlobalCellCache;
-import ch.epfl.biop.bdv.bioformats.*;
+import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.sequence.*;
 import net.imglib2.Volatile;
 import net.imglib2.cache.queue.BlockingFetchQueues;
-import net.imglib2.type.numeric.ARGBType;
+import net.imglib2.type.Type;
 import net.imglib2.type.numeric.NumericType;
-import net.imglib2.type.numeric.integer.UnsignedByteType;
-import net.imglib2.type.numeric.integer.UnsignedIntType;
-import net.imglib2.type.numeric.integer.UnsignedShortType;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.type.volatiles.*;
 
 import java.io.File;
 import java.util.HashMap;
@@ -24,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImgLoader {
@@ -39,9 +33,9 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
 
     int viewSetupCounter = 0;
 
-    Map<Integer,Map<Integer,Supplier<NumericType>>> tTypeGetter = new HashMap<>();
+    Map<Integer,Map<Integer,NumericType>> tTypeGetter = new HashMap<>();
 
-    Map<Integer,Map<Integer,Supplier<Volatile>>> vTypeGetter = new HashMap<>();
+    Map<Integer,Map<Integer,Volatile>> vTypeGetter = new HashMap<>();
 
     HashMap<Integer, BFViewerImgLoader> imgLoaders = new HashMap<>();
 
@@ -98,34 +92,10 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
                                                     viewSetupCounter++;
                                                 });
                                     });
-
-                            try {
-                                BioFormatsHelper h = new BioFormatsHelper(reader, iSerie);
-                                if (h.is24bitsRGB) {
-                                    tTypeGetter.get(iF).put(iSerie, () -> new ARGBType());
-                                    vTypeGetter.get(iF).put(iSerie, () -> new VolatileARGBType());
-                                } else {
-                                    if (h.is8bits) {
-                                        tTypeGetter.get(iF).put(iSerie, () -> new UnsignedByteType());
-                                        vTypeGetter.get(iF).put(iSerie, () -> new VolatileUnsignedByteType());
-                                    }
-                                    if (h.is16bits) {
-                                        tTypeGetter.get(iF).put(iSerie, () -> new UnsignedShortType());
-                                        vTypeGetter.get(iF).put(iSerie, () -> new VolatileUnsignedShortType());
-                                    }
-                                    if (h.is32bits) {
-                                        tTypeGetter.get(iF).put(iSerie, () -> new UnsignedIntType());
-                                        vTypeGetter.get(iF).put(iSerie, () -> new VolatileUnsignedIntType());
-                                    }
-                                    if (h.isFloat32bits) {
-                                        tTypeGetter.get(iF).put(iSerie, () -> new FloatType());
-                                        vTypeGetter.get(iF).put(iSerie, () -> new VolatileFloatType());
-                                    }
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-
+                            Type t = BioFormatsBdvSource.getBioformatsBdvSourceType(reader, iSerie);
+                            tTypeGetter.get(iF).put(iSerie,(NumericType)t);
+                            Volatile v = BioFormatsBdvSource.getVolatileOf((NumericType)t);
+                            vTypeGetter.get(iF).put(iSerie, v);
                         });
                         reader.close();
                 } catch (Exception e) {
