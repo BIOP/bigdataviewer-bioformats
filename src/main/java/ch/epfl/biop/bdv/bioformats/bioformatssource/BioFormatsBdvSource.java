@@ -1,10 +1,11 @@
 package ch.epfl.biop.bdv.bioformats.bioformatssource;
 
 import bdv.util.DefaultInterpolators;
+import bdv.util.volatiles.SharedQueue;
 import bdv.viewer.Interpolation;
 import bdv.viewer.Source;
-import ch.epfl.biop.bdv.bioformats.BioFormatsHelper;
-import loci.formats.IFormatReader;
+import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
+import loci.formats.*;
 import loci.formats.meta.IMetadata;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.FinalInterval;
@@ -13,14 +14,30 @@ import net.imglib2.RealRandomAccessible;
 import net.imglib2.Volatile;
 import net.imglib2.img.Img;
 import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.type.Type;
+import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.NumericType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.integer.UnsignedIntType;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.type.volatiles.*;
 import net.imglib2.view.ExtendedRandomAccessibleInterval;
 import net.imglib2.view.Views;
 import ome.units.UNITS;
 import ome.units.quantity.Length;
 import ome.units.unit.Unit;
+import ome.xml.model.enums.PixelType;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+import static ome.xml.model.enums.PixelType.FLOAT;
+import static ome.xml.model.enums.PixelType.UINT8;
 
 /**
  * BigDataViewer multiresolution source built from BioFormat reader
@@ -182,7 +199,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
         if (ignoreBioFormatsLocationMetaData) {
             rootTransform.identity();
         } else {
-            rootTransform.set(BioFormatsHelper.getRootTransform(omeMeta, image_index, targetUnit));
+            rootTransform.set(BioFormatsMetaDataHelper.getRootTransform(omeMeta, image_index, targetUnit));
         }
     }
 
@@ -198,7 +215,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
 
     /**
      * The core function of the source -> implemented in subclasses
-     * @see BioFormatsBdvRGBSource
+     * @see BioFormatsBdvRGB24bitsSource
      * @see BioFormatsBdvUnsignedByteSource
      * @see BioFormatsBdvUnsignedShortSource
      * @param t // timepoint
@@ -320,6 +337,184 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
     @Override
     public int getNumMipmapLevels() {
         return reader.getResolutionCount();
+    }
+
+    final public static String CONCRETE = "CONCRETE";
+    final public static String VOLATILE = "VOLATILE";
+
+    public static class Opener {
+        private File inputFile;
+        private boolean swZC;
+        private FinalInterval cacheBlockSize;
+        private boolean useBioFormatsXYBlockSize = true;
+        private boolean ignoreBioFormatsLocationMetaData = false;
+        private boolean ignoreBioFormatsVoxelSizeMetaData = false;
+        private boolean volatiteType = false;
+        private Unit u;
+
+        public Opener with(Consumer<Opener> builderFunction) {
+            builderFunction.accept(this);
+            return this;
+        }
+
+        public Opener file(File f) {
+            this.inputFile=f;
+            return this;
+        }
+
+        public Opener unit(Unit u) {
+            this.u=u;
+            return this;
+        }
+
+        public Opener millimeter() {
+            this.u= UNITS.MILLIMETER;
+            return this;
+        }
+
+        public Opener micron(Unit u) {
+            this.u= UNITS.MICROMETER;
+            return this;
+        }
+
+        public Opener ignoreMetadata() {
+            this.ignoreBioFormatsLocationMetaData=true;
+            this.ignoreBioFormatsVoxelSizeMetaData=true;
+            return this;
+        }
+
+        public Opener useCacheBlockSizeFromBioFormats(boolean flag) {
+            useBioFormatsXYBlockSize = flag;
+            return this;
+        }
+
+        public Opener switchZandC(boolean flag) {
+            this.swZC = flag;
+            return this;
+        }
+
+        public Opener cacheBlockSize(int sx, int sy, int sz) {
+            useBioFormatsXYBlockSize = false;
+            cacheBlockSize = new FinalInterval(sx, sy, sz);
+            return this;
+        }
+
+        public Source getConcreteSource(int image_index, int channel_index) {
+            try {
+                IFormatReader reader = new ImageReader();
+                reader.setFlattenedResolutions(false);
+                Memoizer memo = new Memoizer( reader );
+                final IMetadata omeMetaIdxOmeXml = MetadataTools.createOMEXMLMetadata();
+                memo.setMetadataStore(omeMetaIdxOmeXml);
+                memo.setId( inputFile.getAbsolutePath() );
+                final IFormatReader readerIdx = memo;
+
+                Class<? extends BioFormatsBdvSource> c = getBioformatsBdvSourceClass(readerIdx, image_index);
+
+                    Source bdvSrc = c.getConstructor(
+                            IFormatReader.class,
+                            int.class,
+                            int.class,
+                            boolean.class,
+                            FinalInterval.class,
+                            boolean.class,
+                            boolean.class,
+                            boolean.class,
+                            Unit.class
+                        ).newInstance(
+                            readerIdx,
+                            image_index,
+                            channel_index,
+                            swZC,
+                            cacheBlockSize,
+                            useBioFormatsXYBlockSize,
+                            ignoreBioFormatsLocationMetaData,
+                            ignoreBioFormatsVoxelSizeMetaData,
+                            u);
+                return bdvSrc;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        public Source getVolatileSource(int image_index, int channel_index) {
+            Source concreteSource = this.getConcreteSource(image_index, channel_index);
+            Source volatileSource = new VolatileBdvSource(concreteSource,
+                    getVolatileOf((NumericType)concreteSource.getType()),
+                    new SharedQueue(1));
+            return volatileSource;
+        }
+
+        public Map<String, Source> getConcreteAndVolatileSources(int image_index, int channel_index) {
+            Source concreteSource = this.getConcreteSource(image_index, channel_index);
+            Source volatileSource = new VolatileBdvSource(concreteSource,
+                    getVolatileOf((NumericType)concreteSource.getType()),
+                    new SharedQueue(1));
+            Map<String, Source> sources = new HashMap();
+            sources.put(CONCRETE,concreteSource);
+            sources.put(VOLATILE,volatileSource);
+            return sources;
+        }
+
+    }
+
+
+    /**
+     * Does this method exits somewhere else ??
+     * @param t
+     * @return
+     */
+
+    static public Volatile getVolatileOf(NumericType t) {
+        if (t instanceof UnsignedShortType) return new VolatileUnsignedShortType();
+
+        if (t instanceof UnsignedIntType) return new VolatileUnsignedIntType();
+
+        if (t instanceof UnsignedByteType) return new VolatileUnsignedByteType();
+
+        if (t instanceof FloatType) return new VolatileFloatType();
+
+        if (t instanceof ARGBType) return new VolatileARGBType();
+        return null;
+    }
+
+    static public Class<? extends BioFormatsBdvSource> getBioformatsBdvSourceClass(IFormatReader reader, int image_index) throws UnsupportedOperationException {
+        final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
+        reader.setSeries(image_index);
+        if (reader.isRGB()) {
+            if (omeMeta.getPixelsType(image_index)== UINT8) {
+                return BioFormatsBdvRGB24bitsSource.class;
+            } else {
+                throw new UnsupportedOperationException("Unhandled 16 bits RGB images");
+            }
+        } else {
+            PixelType pt = omeMeta.getPixelsType(image_index);
+            if  (pt == PixelType.UINT8) {return BioFormatsBdvUnsignedByteSource.class;}
+            if  (pt == PixelType.UINT16) {return BioFormatsBdvUnsignedShortSource.class;}
+            if  (pt == PixelType.UINT32) {return BioFormatsBdvUnsignedIntSource.class;}
+            if  (pt == FLOAT) {return BioFormatsBdvFloatSource.class;}
+        }
+        throw new UnsupportedOperationException("Unhandled pixel type for serie "+image_index+": "+omeMeta.getPixelsType(image_index));
+    }
+
+    static public Type getBioformatsBdvSourceType(IFormatReader reader, int image_index) throws UnsupportedOperationException {
+        final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
+        reader.setSeries(image_index);
+        if (reader.isRGB()) {
+            if (omeMeta.getPixelsType(image_index)== UINT8) {
+                return new ARGBType();
+            } else {
+                throw new UnsupportedOperationException("Unhandled 16 bits RGB images");
+            }
+        } else {
+            PixelType pt = omeMeta.getPixelsType(image_index);
+            if  (pt == PixelType.UINT8) {return new UnsignedByteType();}
+            if  (pt == PixelType.UINT16) {return new UnsignedShortType();}
+            if  (pt == PixelType.UINT32) {return new UnsignedIntType();}
+            if  (pt == FLOAT) {return new FloatType();}
+        }
+        throw new UnsupportedOperationException("Unhandled pixel type for serie "+image_index+": "+omeMeta.getPixelsType(image_index));
     }
 
 }
