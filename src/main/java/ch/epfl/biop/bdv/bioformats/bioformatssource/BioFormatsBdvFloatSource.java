@@ -25,8 +25,11 @@ public class BioFormatsBdvFloatSource extends BioFormatsBdvSource<FloatType> {
                                     FinalInterval cacheBlockSize,
                                     boolean useBioFormatsXYBlockSize,
                                     boolean ignoreBioFormatsLocationMetaData,
-                                    boolean ignoreBioFormatsVoxelSizeMetaData, Unit u) {
-        super(reader, image_index, channel_index, sw, cacheBlockSize, useBioFormatsXYBlockSize, ignoreBioFormatsLocationMetaData, ignoreBioFormatsVoxelSizeMetaData, u);
+                                    boolean ignoreBioFormatsVoxelSizeMetaData,
+                                    boolean positionConventionIsCenter, Unit u) {
+        super(reader, image_index, channel_index, sw, cacheBlockSize, useBioFormatsXYBlockSize,
+                ignoreBioFormatsLocationMetaData, ignoreBioFormatsVoxelSizeMetaData,
+                positionConventionIsCenter,u);
     }
 
 

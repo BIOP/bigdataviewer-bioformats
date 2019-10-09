@@ -16,12 +16,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import static net.imglib2.cache.img.DiskCachedCellImgOptions.options;
 
 public class BioFormatsBdvUnsignedByteSource extends BioFormatsBdvSource<UnsignedByteType> {
-    public BioFormatsBdvUnsignedByteSource(IFormatReader reader, int image_index, int channel_index, boolean sw, FinalInterval cacheBlockSize, boolean useBioFormatsXYBlockSize,
+    public BioFormatsBdvUnsignedByteSource(IFormatReader reader,
+                                           int image_index,
+                                           int channel_index,
+                                           boolean sw,
+                                           FinalInterval cacheBlockSize,
+                                           boolean useBioFormatsXYBlockSize,
                                            boolean ignoreBioFormatsLocationMetaData,
-                                           boolean ignoreBioFormatsVoxelSizeMetaData, Unit u) {
+                                           boolean ignoreBioFormatsVoxelSizeMetaData,
+                                           boolean positionConventionIsCenter, Unit u) {
         super(reader, image_index, channel_index, sw, cacheBlockSize, useBioFormatsXYBlockSize,
-        ignoreBioFormatsLocationMetaData,
-        ignoreBioFormatsVoxelSizeMetaData,u);
+                ignoreBioFormatsLocationMetaData, ignoreBioFormatsVoxelSizeMetaData,
+                positionConventionIsCenter,u);
     }
 
     @Override
