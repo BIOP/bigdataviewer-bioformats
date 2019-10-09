@@ -2,6 +2,7 @@ package ch.epfl.biop.bdv.bioformats.imageloader;
 
 import bdv.AbstractViewerSetupImgLoader;
 import bdv.viewer.Source;
+import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
 import mpicbg.spim.data.generic.sequence.ImgLoaderHint;
 import mpicbg.spim.data.sequence.MultiResolutionSetupImgLoader;
@@ -54,7 +55,7 @@ public class BFViewerImgLoader<T extends NumericType<T>,V extends Volatile<T> & 
                              V v) {
         super(t, v);
 
-        Map<String, Source> sources = (new BioFormatsBdvSource.Opener())
+        Map<String, Source> sources = BioFormatsBdvOpener.getOpener()
                 .file(inputFile)
                 .cacheBlockSize(cacheBlockSizeX,cacheBlockSizeY,cacheBlockSizeZ)
                 .useCacheBlockSizeFromBioFormats(letBioFormatDecideCacheBlockXY)
