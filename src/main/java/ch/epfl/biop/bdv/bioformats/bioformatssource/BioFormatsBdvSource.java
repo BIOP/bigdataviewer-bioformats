@@ -209,7 +209,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
         if (ignoreBioFormatsLocationMetaData) {
             rootTransform.identity();
         } else {
-            rootTransform.set(BioFormatsMetaDataHelper.getRootTransform(omeMeta, image_index, targetUnit));
+            rootTransform.set(BioFormatsMetaDataHelper.getRootTransform(omeMeta, image_index, targetUnit, positionConventionIsCenter));
         }
     }
 
