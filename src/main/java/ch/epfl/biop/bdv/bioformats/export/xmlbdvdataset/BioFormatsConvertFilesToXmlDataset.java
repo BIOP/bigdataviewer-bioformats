@@ -46,7 +46,10 @@ public class BioFormatsConvertFilesToXmlDataset implements Command {
     public String xmlFileName;
 
     @Parameter
-    boolean verbose;
+    public boolean positionConventionIsCenter = false;
+
+    @Parameter
+    public boolean verbose;
 
     public Consumer<String> log = s -> {};
 
@@ -184,7 +187,7 @@ public class BioFormatsConvertFilesToXmlDataset implements Command {
                                 .stream()
                                 .filter(viewSetupId -> (viewSetupToBFFileSerieChannel.get(viewSetupId).iFile == iFile))
                                 .filter(viewSetupId -> (viewSetupToBFFileSerieChannel.get(viewSetupId).iSerie == iSerie))
-                                .forEach(viewSetupId -> registrations.add(new ViewRegistration(iTp.getId(), viewSetupId, BioFormatsMetaDataHelper.getRootTransform(omeMeta,iSerie,UNITS.MILLIMETER)))//new AffineTransform3D()))//
+                                .forEach(viewSetupId -> registrations.add(new ViewRegistration(iTp.getId(), viewSetupId, BioFormatsMetaDataHelper.getRootTransform(omeMeta,iSerie,UNITS.MILLIMETER, positionConventionIsCenter)))//new AffineTransform3D()))//
                                 );
                     });
                 });

@@ -104,7 +104,7 @@ public class BioFormatsMetaDataHelper {
         return new double[]{dXmm, dYmm, dZmm};
     }
 
-    public static AffineTransform3D getRootTransform(IMetadata omeMeta, int iSerie, Unit u) {
+    public static AffineTransform3D getRootTransform(IMetadata omeMeta, int iSerie, Unit u, boolean isCenterConvention) {
 
         AffineTransform3D rootTransform = new AffineTransform3D();
 
@@ -119,6 +119,12 @@ public class BioFormatsMetaDataHelper {
                 0   ,0   ,d[2],0,
                 0   ,0   ,0   ,1
         );
+        if (isCenterConvention) {
+            Dimensions dims = getDimensions(omeMeta, iSerie, u);
+            p[0]-=(dims.dimension(0)/2d)*d[0];
+            p[1]-=(dims.dimension(1)/2d)*d[1];
+            p[2]-=(dims.dimension(2)/2d)*d[2];
+        }
         rootTransform.translate(p[0], p[1], p[2]);
         return rootTransform;
     }

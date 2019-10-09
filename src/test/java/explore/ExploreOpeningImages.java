@@ -21,7 +21,7 @@ public class ExploreOpeningImages
 
 		List<VolatileBdvSource> sources = BioFormatsBdvOpener.getOpener()
 															   .file(f)
-															   .auto()
+															   .centerPositionConvention()
 															   .getVolatileSources("0:-2.*");
 
 		// Because we cannot create an empty viewer
