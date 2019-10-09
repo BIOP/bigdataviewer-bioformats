@@ -4,6 +4,7 @@ import bdv.util.BdvHandle;
 import bdv.util.BdvOptions;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
+import ch.epfl.biop.bdv.bioformats.bioformatssource.VolatileBdvSource;
 import net.imagej.ImageJ;
 
 import java.io.File;
@@ -16,11 +17,12 @@ public class ExploreOpeningImages
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 
-		File f = new File("C:\\Users\\nicol\\Dropbox\\BIOP\\19-05-24 VSI Samples\\Fluo3DFluoImage2Channels_01.vsi");
+		File f = new File("C:\\Users\\nicol\\Desktop\\DemoWSR\\Run31_EB1.vsi");
 
-		List<BioFormatsBdvSource> sources = BioFormatsBdvOpener.getOpener()
+		List<VolatileBdvSource> sources = BioFormatsBdvOpener.getOpener()
 															   .file(f)
-															   .getConcreteSources("*.*");
+															   .auto()
+															   .getVolatileSources("0:-2.*");
 
 		// Because we cannot create an empty viewer
 		BdvHandle bdvh = BdvFunctions.show(sources.get(0)).getBdvHandle();

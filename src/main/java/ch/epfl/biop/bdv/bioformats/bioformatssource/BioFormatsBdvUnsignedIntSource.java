@@ -17,12 +17,18 @@ import static net.imglib2.cache.img.DiskCachedCellImgOptions.options;
 
 // TODO : say interleaved channels not supported
 public class BioFormatsBdvUnsignedIntSource extends BioFormatsBdvSource<UnsignedIntType> {
-    public BioFormatsBdvUnsignedIntSource(IFormatReader reader, int image_index, int channel_index, boolean sw, FinalInterval cacheBlockSize, boolean useBioFormatsXYBlockSize,
+    public BioFormatsBdvUnsignedIntSource(IFormatReader reader,
+                                          int image_index,
+                                          int channel_index,
+                                          boolean sw,
+                                          FinalInterval cacheBlockSize,
+                                          boolean useBioFormatsXYBlockSize,
                                           boolean ignoreBioFormatsLocationMetaData,
-                                          boolean ignoreBioFormatsVoxelSizeMetaData, Unit u) {
+                                          boolean ignoreBioFormatsVoxelSizeMetaData,
+                                          boolean positionConventionIsCenter, Unit u) {
         super(reader, image_index, channel_index, sw, cacheBlockSize, useBioFormatsXYBlockSize,
-        ignoreBioFormatsLocationMetaData,
-        ignoreBioFormatsVoxelSizeMetaData,u);
+                ignoreBioFormatsLocationMetaData, ignoreBioFormatsVoxelSizeMetaData,
+                positionConventionIsCenter,u);
     }
 
 

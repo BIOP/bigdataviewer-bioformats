@@ -24,12 +24,13 @@ import java.util.stream.Collectors;
 
 public class BioFormatsBdvOpener {
     //public File inputFile;
-    public String dataLocation; // URL or File
+    public String dataLocation=null; // URL or File
     public boolean swZC;
     public FinalInterval cacheBlockSize;
     public boolean useBioFormatsXYBlockSize = true;
     public boolean ignoreBioFormatsLocationMetaData = false;
     public boolean ignoreBioFormatsVoxelSizeMetaData = false;
+    public boolean positionConventionIsCenter = false;
     public Unit u;
 
     public String getDataLocation() {
@@ -43,6 +44,35 @@ public class BioFormatsBdvOpener {
 
     public BioFormatsBdvOpener file(File f) {
         this.dataLocation=f.getAbsolutePath();
+        return this;
+    }
+
+    public BioFormatsBdvOpener auto() {
+        // Special cases based on File formats are handled here
+        if (this.dataLocation==null) {
+            // dataLocation not set -> we can't do anything
+            return this;
+        }
+        IFormatReader readerIdx = new ImageReader();
+
+        readerIdx.setFlattenedResolutions(false);
+        Memoizer memo = new Memoizer( readerIdx );
+
+        final IMetadata omeMetaOmeXml = MetadataTools.createOMEXMLMetadata();
+        memo.setMetadataStore(omeMetaOmeXml);
+
+        try {
+            memo.setId( dataLocation );
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        final IFormatReader reader = memo;
+
+        System.out.println("Attempts to set opener settings for file format "+reader.getFormat());
+
+        // Adjustements here! Especially center convention
+
         return this;
     }
 
@@ -71,6 +101,16 @@ public class BioFormatsBdvOpener {
         return this;
     }
 
+    public BioFormatsBdvOpener centerPositionConvention() {
+        this.positionConventionIsCenter = true;
+        return this;
+    }
+
+    public BioFormatsBdvOpener cornerPositionConvention() {
+        this.positionConventionIsCenter = false;
+        return this;
+    }
+
     public BioFormatsBdvOpener ignoreMetadata() {
         this.ignoreBioFormatsLocationMetaData=true;
         this.ignoreBioFormatsVoxelSizeMetaData=true;
@@ -93,7 +133,7 @@ public class BioFormatsBdvOpener {
         return this;
     }
 
-    public Source getConcreteSource(int image_index, int channel_index) {
+    public BioFormatsBdvSource getConcreteSource(int image_index, int channel_index) {
         try {
 
             System.out.println("Serie:\t"+image_index+"\t Channel:\t"+channel_index);
@@ -107,12 +147,13 @@ public class BioFormatsBdvOpener {
 
             Class<? extends BioFormatsBdvSource> c = BioFormatsBdvSource.getBioformatsBdvSourceClass(readerIdx, image_index);
 
-            Source bdvSrc = c.getConstructor(
+            BioFormatsBdvSource bdvSrc = c.getConstructor(
                     IFormatReader.class,
                     int.class,
                     int.class,
                     boolean.class,
                     FinalInterval.class,
+                    boolean.class,
                     boolean.class,
                     boolean.class,
                     boolean.class,
@@ -126,6 +167,7 @@ public class BioFormatsBdvOpener {
                     useBioFormatsXYBlockSize,
                     ignoreBioFormatsLocationMetaData,
                     ignoreBioFormatsVoxelSizeMetaData,
+                    positionConventionIsCenter,
                     u);
             return bdvSrc;
         } catch (Exception e) {
@@ -134,17 +176,17 @@ public class BioFormatsBdvOpener {
         }
     }
 
-    public Source getVolatileSource(int image_index, int channel_index) {
-        Source concreteSource = this.getConcreteSource(image_index, channel_index);
-        Source volatileSource = new VolatileBdvSource(concreteSource,
+    public VolatileBdvSource getVolatileSource(int image_index, int channel_index) {
+        BioFormatsBdvSource concreteSource = this.getConcreteSource(image_index, channel_index);
+        VolatileBdvSource volatileSource = new VolatileBdvSource(concreteSource,
                 BioFormatsBdvSource.getVolatileOf((NumericType)concreteSource.getType()),
                 new SharedQueue(1));
         return volatileSource;
     }
 
     public Map<String, Source> getConcreteAndVolatileSources(int image_index, int channel_index) {
-        Source concreteSource = this.getConcreteSource(image_index, channel_index);
-        Source volatileSource = new VolatileBdvSource(concreteSource,
+        BioFormatsBdvSource concreteSource = this.getConcreteSource(image_index, channel_index);
+        VolatileBdvSource volatileSource = new VolatileBdvSource(concreteSource,
                 BioFormatsBdvSource.getVolatileOf((NumericType)concreteSource.getType()),
                 new SharedQueue(1));
         Map<String, Source> sources = new HashMap();
@@ -153,12 +195,12 @@ public class BioFormatsBdvOpener {
         return sources;
     }
 
-    public List<BioFormatsBdvSource> getVolatileSources(String codeSerieChannel) {
-        List<BioFormatsBdvSource> sources = BioFormatsMetaDataHelper.getListOfSeriesAndChannels(dataLocation,codeSerieChannel)
+    public List<VolatileBdvSource> getVolatileSources(String codeSerieChannel) {
+        List<VolatileBdvSource> sources = BioFormatsMetaDataHelper.getListOfSeriesAndChannels(dataLocation,codeSerieChannel)
                 .stream()
                 .map(sc ->
                         sc.getRight().stream().map(
-                                ch -> (BioFormatsBdvSource) this.getVolatileSource(sc.getLeft(),ch)
+                                ch -> this.getVolatileSource(sc.getLeft(),ch)
                         ).collect(Collectors.toList())
                 ).collect(Collectors.toList())
                 .stream()

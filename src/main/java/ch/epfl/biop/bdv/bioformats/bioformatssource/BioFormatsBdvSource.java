@@ -109,6 +109,8 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
 
     public boolean ignoreBioFormatsLocationMetaData;
 
+    boolean positionConventionIsCenter;
+
     public int[] cellDimensions;
 
     final Unit<Length> targetUnit;
@@ -128,6 +130,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
                                boolean useBioFormatsXYBlockSize,
                                boolean ignoreBioFormatsLocationMetaData,
                                boolean ignoreBioFormatsVoxelSizeMetaData,
+                               boolean positionConventionIsCenter,
                                Unit u)
     {
         this.targetUnit = u;
@@ -141,6 +144,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
         this.cSerie = image_index;
         this.cChannel = channel_index;
         this.numberOfTimePoints = this.reader.getSizeT();
+        this.positionConventionIsCenter=positionConventionIsCenter;
 
         // MetaData
         final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();

@@ -231,7 +231,10 @@ public class BioFormatsMetaDataHelper {
                         (idxSeries, idxChannel) ->
                                 (idxChannel>=0)?idxChannel:omeMetaOmeXml.getChannelCount(idxSeries)+idxChannel
                 );
-
+        System.out.println("Number of series: "+reader.getSeriesCount());
+        for (int i=0;i<reader.getSeriesCount();i++) {
+            System.out.println("Number of channels series: "+i+" : "+omeMetaOmeXml.getChannelCount(i));
+        }
         return listOfSources;
     }
 
