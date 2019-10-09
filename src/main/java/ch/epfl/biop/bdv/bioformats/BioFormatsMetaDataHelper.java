@@ -1,16 +1,20 @@
 package ch.epfl.biop.bdv.bioformats;
 
+import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.Dimensions;
 import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.type.numeric.ARGBType;
+import net.imglib2.type.numeric.NumericType;
+import net.imglib2.type.volatiles.VolatileARGBType;
+import net.imglib2.type.volatiles.VolatileNumericType;
 import ome.units.UNITS;
 import ome.units.quantity.Length;
 import ome.units.unit.Unit;
 
-import java.io.File;
-import java.io.IOException;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -83,7 +87,6 @@ public class BioFormatsMetaDataHelper {
             dYmm = omeMeta.getPixelsPhysicalSizeY(iSerie).value(u).doubleValue();
         } catch(NullPointerException e1) { // Beurk
             //System.out.print("NullPointerException Caught");
-
                 dXmm=1;
                 dYmm=1;
         }
@@ -203,20 +206,7 @@ public class BioFormatsMetaDataHelper {
         return dimensions;
     }
 
-
-    /**
-     * ArrayList<Pair<Integer, ArrayList<Integer>>>
-     *                 listOfSources =
-     *                     commaSeparatedListToArrayOfArray(
-     *                         sourceIndexStringNewFull,
-     *                         idxSeries ->(idxSeries>=0)?idxSeries:reader.getSeriesCount()+idxSeries, // apparently -1 is necessary -> I don't really understand
-     *                         (idxSeries, idxChannel) ->
-     *                                 (idxChannel>=0)?idxChannel:omeMetaOmeXml.getChannelCount(idxSeries)+idxChannel
-     *                     );
-     */
-
-
-    public static ArrayList<Pair<Integer, ArrayList<Integer>>> getListOfSeriesAndChannels(File f, String code) {
+    public static ArrayList<Pair<Integer, ArrayList<Integer>>> getListOfSeriesAndChannels(String dataLocation, String code) {
 
         IFormatReader readerIdx = new ImageReader();
 
@@ -227,7 +217,7 @@ public class BioFormatsMetaDataHelper {
         memo.setMetadataStore(omeMetaOmeXml);
 
         try {
-            memo.setId( f.getAbsolutePath() );
+            memo.setId( dataLocation );
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -241,6 +231,7 @@ public class BioFormatsMetaDataHelper {
                         (idxSeries, idxChannel) ->
                                 (idxChannel>=0)?idxChannel:omeMetaOmeXml.getChannelCount(idxSeries)+idxChannel
                 );
+
         return listOfSources;
     }
 
@@ -335,7 +326,6 @@ public class BioFormatsMetaDataHelper {
      * @param expression
      * @return list of indexes in ArrayList
      */
-
     static public ArrayList<Integer> expressionToArray(String expression, Function<Integer, Integer> fbounds) {
         String[] splitIndexes = expression.split(",");
         ArrayList<Integer> arrayOfIndexes = new ArrayList<>();
@@ -381,6 +371,104 @@ public class BioFormatsMetaDataHelper {
             }
         }
         return arrayOfIndexes;
+    }
+
+    public static ARGBType getSourceColor(BioFormatsBdvSource src) {
+        // Get color based on emission wavelength
+        IFormatReader reader = src.getReader();
+
+        final IMetadata omeMetaIdxOmeXml = MetadataTools.createOMEXMLMetadata();
+        reader.setMetadataStore(omeMetaIdxOmeXml);
+        ARGBType color = null;
+        if ((src.getType() instanceof ARGBType)||(src.getType() instanceof VolatileARGBType)) {
+
+        } else {
+            if ((src.getType() instanceof NumericType)||(src.getType() instanceof VolatileNumericType)) {
+
+                ome.xml.model.primitives.Color c = omeMetaIdxOmeXml.getChannelColor(src.cSerie, src.cChannel);
+                if (c != null) {
+                    color = new ARGBType(ARGBType.rgba(c.getRed(), c.getGreen(), c.getBlue(), 255));
+                } else {
+                    if (omeMetaIdxOmeXml.getChannelEmissionWavelength(src.cSerie, src.cChannel) != null) {
+                        int emission = omeMetaIdxOmeXml.getChannelEmissionWavelength(src.cSerie, src.cChannel)
+                                .value(UNITS.NANOMETER)
+                                .intValue();
+                        Color cAwt = getColorFromWavelength(emission);
+                        color = new ARGBType(ARGBType.rgba(cAwt.getRed(), cAwt.getGreen(), cAwt.getBlue(), 255));
+                    }
+                }
+            }
+        }
+        return color;
+    }
+
+    static private double Gamma = 0.80;
+    static private double IntensityMax = 255;
+
+    /** Taken from Earl F. Glynn's web page:
+     * <a href="http://www.efg2.com/Lab/ScienceAndEngineering/Spectra.htm">Spectra Lab Report</a>
+     * */
+    public static int[] waveLengthToRGB(double Wavelength){
+        double factor;
+        double Red,Green,Blue;
+
+        if((Wavelength >= 380) && (Wavelength<440)){
+            Red = -(Wavelength - 440) / (440 - 380);
+            Green = 0.0;
+            Blue = 1.0;
+        }else if((Wavelength >= 440) && (Wavelength<490)){
+            Red = 0.0;
+            Green = (Wavelength - 440) / (490 - 440);
+            Blue = 1.0;
+        }else if((Wavelength >= 490) && (Wavelength<510)){
+            Red = 0.0;
+            Green = 1.0;
+            Blue = -(Wavelength - 510) / (510 - 490);
+        }else if((Wavelength >= 510) && (Wavelength<580)){
+            Red = (Wavelength - 510) / (580 - 510);
+            Green = 1.0;
+            Blue = 0.0;
+        }else if((Wavelength >= 580) && (Wavelength<645)){
+            Red = 1.0;
+            Green = -(Wavelength - 645) / (645 - 580);
+            Blue = 0.0;
+        }else if((Wavelength >= 645) && (Wavelength<781)){
+            Red = 1.0;
+            Green = 0.0;
+            Blue = 0.0;
+        }else{
+            Red = 0.0;
+            Green = 0.0;
+            Blue = 0.0;
+        };
+
+        // Let the intensity fall off near the vision limits
+
+        if((Wavelength >= 380) && (Wavelength<420)){
+            factor = 0.3 + 0.7*(Wavelength - 380) / (420 - 380);
+        }else if((Wavelength >= 420) && (Wavelength<701)){
+            factor = 1.0;
+        }else if((Wavelength >= 701) && (Wavelength<781)){
+            factor = 0.3 + 0.7*(780 - Wavelength) / (780 - 700);
+        }else{
+            factor = 0.0;
+        };
+
+
+        int[] rgb = new int[3];
+
+        // Don't want 0^x = 1 for x <> 0
+        rgb[0] = Red==0.0 ? 0 : (int) Math.round(IntensityMax * Math.pow(Red * factor, Gamma));
+        rgb[1] = Green==0.0 ? 0 : (int) Math.round(IntensityMax * Math.pow(Green * factor, Gamma));
+        rgb[2] = Blue==0.0 ? 0 : (int) Math.round(IntensityMax * Math.pow(Blue * factor, Gamma));
+
+        return rgb;
+    }
+
+    public static Color getColorFromWavelength(int wv) {
+        //https://stackoverflow.com/questions/1472514/convert-light-frequency-to-rgb
+        int[] res = waveLengthToRGB(wv);
+        return new Color(res[0], res[1], res[2]);
     }
 
 }
