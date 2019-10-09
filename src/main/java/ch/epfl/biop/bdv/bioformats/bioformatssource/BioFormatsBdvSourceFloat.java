@@ -7,25 +7,26 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.cache.img.DiskCachedCellImgFactory;
 import net.imglib2.cache.img.DiskCachedCellImgOptions;
 import net.imglib2.img.Img;
-import net.imglib2.type.numeric.integer.UnsignedIntType;
+import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 import ome.units.unit.Unit;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static net.imglib2.cache.img.DiskCachedCellImgOptions.options;
 
-// TODO : say interleaved channels not supported
-public class BioFormatsBdvUnsignedIntSource extends BioFormatsBdvSource<UnsignedIntType> {
-    public BioFormatsBdvUnsignedIntSource(IFormatReader reader,
-                                          int image_index,
-                                          int channel_index,
-                                          boolean sw,
-                                          FinalInterval cacheBlockSize,
-                                          boolean useBioFormatsXYBlockSize,
-                                          boolean ignoreBioFormatsLocationMetaData,
-                                          boolean ignoreBioFormatsVoxelSizeMetaData,
-                                          boolean positionConventionIsCenter, Unit u) {
+public class BioFormatsBdvSourceFloat extends BioFormatsBdvSource<FloatType> {
+    public BioFormatsBdvSourceFloat(IFormatReader reader,
+                                    int image_index,
+                                    int channel_index,
+                                    boolean sw,
+                                    FinalInterval cacheBlockSize,
+                                    boolean useBioFormatsXYBlockSize,
+                                    boolean ignoreBioFormatsLocationMetaData,
+                                    boolean ignoreBioFormatsVoxelSizeMetaData,
+                                    boolean positionConventionIsCenter, Unit u) {
         super(reader, image_index, channel_index, sw, cacheBlockSize, useBioFormatsXYBlockSize,
                 ignoreBioFormatsLocationMetaData, ignoreBioFormatsVoxelSizeMetaData,
                 positionConventionIsCenter,u);
@@ -33,7 +34,7 @@ public class BioFormatsBdvUnsignedIntSource extends BioFormatsBdvSource<Unsigned
 
 
     @Override
-    public RandomAccessibleInterval<UnsignedIntType> createSource(int t, int level) {
+    public RandomAccessibleInterval<FloatType> createSource(int t, int level) {
         synchronized(reader) {
             if (!raiMap.containsKey(t)) {
                 raiMap.put(t, new ConcurrentHashMap<>());
@@ -54,18 +55,19 @@ public class BioFormatsBdvUnsignedIntSource extends BioFormatsBdvSource<Unsigned
 
 
             // Creates cached image factory of Type Byte
-            final DiskCachedCellImgFactory<UnsignedIntType> factory = new DiskCachedCellImgFactory<>( new UnsignedIntType() , factoryOptions );
+            final DiskCachedCellImgFactory<FloatType> factory = new DiskCachedCellImgFactory<>( new FloatType() , factoryOptions );
 
             int xc = cellDimensions[0];
             int yc = cellDimensions[1];
             int zc = cellDimensions[2];
 
             // Creates border image, with cell Consumer method, which creates the image
-            final Img<UnsignedIntType> rai = factory.create(new FinalInterval(new long[]{sx, sy, sz}),
+
+            final Img<FloatType> rai = factory.create(new FinalInterval(new long[]{sx, sy, sz}),
                     cell -> {
                         synchronized(reader) {
                             reader.setResolution(level);
-                            Cursor<UnsignedIntType> out = Views.flatIterable(cell).cursor();
+                            Cursor<FloatType> out = Views.flatIterable(cell).cursor();
                             int minZ = (int) cell.min(2);
                             int maxZ = Math.min(minZ + zc, reader.getSizeZ());
 
@@ -86,16 +88,26 @@ public class BioFormatsBdvUnsignedIntSource extends BioFormatsBdvSource<Unsigned
 
                                 byte[] bytes = reader.openBytes(switchZandC?reader.getIndex(cChannel,z,t):reader.getIndex(z,cChannel,t), minX, minY, w, h);
 
+                                byte[] curBytes = new byte[4];
                                 if (littleEndian) { // TODO improve this dirty switch block
                                     while ((out.hasNext()) && (idxPx < totBytes)) {
-                                        int v = ( (bytes[idxPx + 3] & 0xff) << 24) | ((bytes[idxPx + 2] & 0xff) << 16) | ((bytes[idxPx + 1] & 0xff) << 8) | (bytes[idxPx] & 0xff);
-                                        out.next().set(v);
+                                        curBytes[0]= bytes[idxPx];
+                                        curBytes[1]= bytes[idxPx+1];
+                                        curBytes[2]= bytes[idxPx+2];
+                                        curBytes[3]= bytes[idxPx+3];
+                                        out.next().set( ByteBuffer.wrap(curBytes).order(ByteOrder.LITTLE_ENDIAN).getFloat());
+
                                         idxPx += 4;
                                     }
                                 } else {
                                     while ((out.hasNext()) && (idxPx < totBytes)) {
-                                        int v = ( (bytes[idxPx] & 0xff) << 24) | ((bytes[idxPx + 1] & 0xff) << 16) | ((bytes[idxPx + 2] & 0xff) << 8) | (bytes[idxPx + 3] & 0xff);
-                                        out.next().set(v);
+
+                                        curBytes[0]= bytes[idxPx];
+                                        curBytes[1]= bytes[idxPx+1];
+                                        curBytes[2]= bytes[idxPx+2];
+                                        curBytes[3]= bytes[idxPx+3];
+                                        out.next().set( ByteBuffer.wrap(curBytes).order(ByteOrder.BIG_ENDIAN).getFloat());
+
                                         idxPx += 4;
                                     }
                                 }
@@ -110,7 +122,7 @@ public class BioFormatsBdvUnsignedIntSource extends BioFormatsBdvSource<Unsigned
     }
 
     @Override
-    public UnsignedIntType getType() {
-        return new UnsignedIntType();
+    public FloatType getType() {
+        return new FloatType();
     }
 }
