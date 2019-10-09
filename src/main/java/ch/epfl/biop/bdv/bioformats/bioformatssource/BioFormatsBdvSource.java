@@ -1,7 +1,6 @@
 package ch.epfl.biop.bdv.bioformats.bioformatssource;
 
 import bdv.util.DefaultInterpolators;
-import bdv.util.volatiles.SharedQueue;
 import bdv.viewer.Interpolation;
 import bdv.viewer.Source;
 import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
@@ -24,19 +23,11 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.type.volatiles.*;
 import net.imglib2.view.ExtendedRandomAccessibleInterval;
 import net.imglib2.view.Views;
-import ome.units.UNITS;
 import ome.units.quantity.Length;
 import ome.units.unit.Unit;
 import ome.xml.model.enums.PixelType;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static ome.xml.model.enums.PixelType.FLOAT;
 import static ome.xml.model.enums.PixelType.UINT8;
@@ -229,9 +220,9 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
 
     /**
      * The core function of the source -> implemented in subclasses
-     * @see BioFormatsBdvRGB24bitsSource
-     * @see BioFormatsBdvUnsignedByteSource
-     * @see BioFormatsBdvUnsignedShortSource
+     * @see BioFormatsBdvSourceRGB24bits
+     * @see BioFormatsBdvSourceUnsignedByte
+     * @see BioFormatsBdvSourceUnsignedShort
      * @param t // timepoint
      * @param level // resolution level
      * @return
@@ -380,16 +371,16 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
         reader.setSeries(image_index);
         if (reader.isRGB()) {
             if (omeMeta.getPixelsType(image_index)== UINT8) {
-                return BioFormatsBdvRGB24bitsSource.class;
+                return BioFormatsBdvSourceRGB24bits.class;
             } else {
                 throw new UnsupportedOperationException("Unhandled 16 bits RGB images");
             }
         } else {
             PixelType pt = omeMeta.getPixelsType(image_index);
-            if  (pt == PixelType.UINT8) {return BioFormatsBdvUnsignedByteSource.class;}
-            if  (pt == PixelType.UINT16) {return BioFormatsBdvUnsignedShortSource.class;}
-            if  (pt == PixelType.UINT32) {return BioFormatsBdvUnsignedIntSource.class;}
-            if  (pt == FLOAT) {return BioFormatsBdvFloatSource.class;}
+            if  (pt == PixelType.UINT8) {return BioFormatsBdvSourceUnsignedByte.class;}
+            if  (pt == PixelType.UINT16) {return BioFormatsBdvSourceUnsignedShort.class;}
+            if  (pt == PixelType.UINT32) {return BioFormatsBdvSourceUnsignedInt.class;}
+            if  (pt == FLOAT) {return BioFormatsBdvSourceFloat.class;}
         }
         throw new UnsupportedOperationException("Unhandled pixel type for serie "+image_index+": "+omeMeta.getPixelsType(image_index));
     }

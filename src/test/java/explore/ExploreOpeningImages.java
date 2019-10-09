@@ -12,6 +12,8 @@ import java.util.List;
 
 public class ExploreOpeningImages
 {
+	// Todo : sample images
+	// Color conversion
 	public static void main( String[] args )
 	{
 		final ImageJ ij = new ImageJ();
@@ -21,11 +23,11 @@ public class ExploreOpeningImages
 
 		List<VolatileBdvSource> sources = BioFormatsBdvOpener.getOpener()
 															   .file(f)
-															   .centerPositionConvention()
 															   .getVolatileSources("0:-2.*");
 
 		// Because we cannot create an empty viewer
-		BdvHandle bdvh = BdvFunctions.show(sources.get(0)).getBdvHandle();
+		BdvHandle bdvh = BdvFunctions.show(sources.get(0)).
+				getBdvHandle();
 
 		BdvOptions options = BdvOptions.options().addTo(bdvh);
 
@@ -35,22 +37,9 @@ public class ExploreOpeningImages
 			}
 		}
 		/*
-		final BioFormatsOpenImageFileInBdvCommand command = new BioFormatsOpenImageFileInBdvCommand();
-		command.cs = ij.command();
-		command.createNewWindow = true;
-		command.inputFile = new File("/Users/tischer/Desktop/20x_g5_a1.nd2");
-		command.ignoreMetadata = false;
-		command.unit = BioFormatsMetaDataHelper.MICROMETER;
-		command.run();
-
-		final BioFormatsOpenImageFileInBdvCommand command2 = new BioFormatsOpenImageFileInBdvCommand();
-		command2.bdv_h = command.bdv_h;
-		command2.cs = ij.command();
-		command2.createNewWindow = false;
-		command2.inputFile = new File("/Users/tischer/Desktop/60x_g5_a1.nd2");
-		command2.ignoreMetadata = false;
-		command.unit = BioFormatsMetaDataHelper.MICROMETER;
-		command2.run();
-		*/
+                    bdv_h_out = BdvFunctions.show(src_out_first).getBdvHandle();
+                    bdv_h_out.getViewerPanel().addSource(new SourceAndConverter<>(src_out_first, cvt));
+                    bdv_h_out.getViewerPanel().remove(0);
+		 */
 	}
 }

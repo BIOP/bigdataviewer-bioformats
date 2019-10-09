@@ -16,9 +16,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import static net.imglib2.cache.img.DiskCachedCellImgOptions.options;
 
 
-public class BioFormatsBdvRGB24bitsSource extends BioFormatsBdvSource<ARGBType> {
+public class BioFormatsBdvSourceRGB24bits extends BioFormatsBdvSource<ARGBType> {
 
-    public BioFormatsBdvRGB24bitsSource(IFormatReader reader,
+    public BioFormatsBdvSourceRGB24bits(IFormatReader reader,
                                         int image_index,
                                         int channel_index,
                                         boolean sw,
