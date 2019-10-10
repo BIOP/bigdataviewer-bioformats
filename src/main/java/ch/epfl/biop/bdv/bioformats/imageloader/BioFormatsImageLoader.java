@@ -37,7 +37,7 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
 
     Map<Integer,Map<Integer,Volatile>> vTypeGetter = new HashMap<>();
 
-    HashMap<Integer, BFViewerImgLoader> imgLoaders = new HashMap<>();
+    HashMap<Integer, BioFormatsSetupLoader> imgLoaders = new HashMap<>();
 
     protected VolatileGlobalCellCache cache;
 
@@ -108,14 +108,14 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
         cache = new VolatileGlobalCellCache(queue);
     }
 
-    public BFViewerImgLoader getSetupImgLoader(int setupId) {
+    public BioFormatsSetupLoader getSetupImgLoader(int setupId) {
         if (imgLoaders.containsKey(setupId)) {
             return imgLoaders.get(setupId);
         } else {
             int iF = viewSetupToBFFileSerieChannel.get(setupId).iFile;
             int iS = viewSetupToBFFileSerieChannel.get(setupId).iSerie;
             int iC = viewSetupToBFFileSerieChannel.get(setupId).iChannel;
-            BFViewerImgLoader imgL = new BFViewerImgLoader(
+            BioFormatsSetupLoader imgL = new BioFormatsSetupLoader(
                     files.get(iF),
                     iS,
                     iC,
