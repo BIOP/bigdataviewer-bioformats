@@ -8,27 +8,21 @@ import mpicbg.spim.data.generic.sequence.ImgLoaderHint;
 import mpicbg.spim.data.sequence.MultiResolutionSetupImgLoader;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.*;
-import net.imglib2.cache.img.DiskCachedCellImg;
 import net.imglib2.converter.Converter;
 import net.imglib2.converter.Converters;
-import net.imglib2.img.Img;
-import net.imglib2.img.ImgFactory;
-import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.integer.AbstractIntegerType;
 import net.imglib2.type.numeric.real.FloatType;
 import ome.units.UNITS;
-import ome.units.unit.Unit;
 
 import java.io.File;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
-public class BFViewerImgLoader<T extends NumericType<T>,V extends Volatile<T> & NumericType<V>> extends AbstractViewerSetupImgLoader<T, V> implements MultiResolutionSetupImgLoader< T > {
+public class BioFormatsSetupLoader<T extends NumericType<T>,V extends Volatile<T> & NumericType<V>> extends AbstractViewerSetupImgLoader<T, V> implements MultiResolutionSetupImgLoader< T > {
 
     Source<T> bdvSrc;
 
@@ -40,19 +34,19 @@ public class BFViewerImgLoader<T extends NumericType<T>,V extends Volatile<T> & 
 
     final Converter<T,FloatType> cvt;
 
-    Consumer<String> errlog = s -> System.err.println(BFViewerImgLoader.class+" error:"+s);
+    Consumer<String> errlog = s -> System.err.println(BioFormatsSetupLoader.class+" error:"+s);
 
-    public BFViewerImgLoader(File inputFile,
-                             int sourceIndex,
-                             int channelIndex,
-                             boolean switchZandC,
-                             boolean autoscale,
-                             boolean letBioFormatDecideCacheBlockXY,
-                             int cacheBlockSizeX,
-                             int cacheBlockSizeY,
-                             int cacheBlockSizeZ,
-                             T t,
-                             V v) {
+    public BioFormatsSetupLoader(File inputFile,
+                                 int sourceIndex,
+                                 int channelIndex,
+                                 boolean switchZandC,
+                                 boolean autoscale,
+                                 boolean letBioFormatDecideCacheBlockXY,
+                                 int cacheBlockSizeX,
+                                 int cacheBlockSizeY,
+                                 int cacheBlockSizeZ,
+                                 T t,
+                                 V v) {
         super(t, v);
 
         Map<String, Source> sources = BioFormatsBdvOpener.getOpener()

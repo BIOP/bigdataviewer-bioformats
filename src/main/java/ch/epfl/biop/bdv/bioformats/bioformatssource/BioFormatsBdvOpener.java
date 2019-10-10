@@ -230,9 +230,4 @@ public class BioFormatsBdvOpener {
         return opener;
     }
 
-    /**
-     * Does this method exits somewhere else ??
-     * @param t
-     * @return
-     */
 }

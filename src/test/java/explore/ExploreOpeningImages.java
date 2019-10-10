@@ -1,4 +1,5 @@
 package explore;
+import bdv.tools.brightness.ConverterSetup;
 import bdv.util.BdvFunctions;
 import bdv.util.BdvHandle;
 import bdv.util.BdvOptions;
@@ -36,6 +37,8 @@ public class ExploreOpeningImages
 				BdvFunctions.show(sources.get(i),options);
 			}
 		}
+
+		ConverterSetup cs = new ConverterSetup();
 		/*
                     bdv_h_out = BdvFunctions.show(src_out_first).getBdvHandle();
                     bdv_h_out.getViewerPanel().addSource(new SourceAndConverter<>(src_out_first, cvt));

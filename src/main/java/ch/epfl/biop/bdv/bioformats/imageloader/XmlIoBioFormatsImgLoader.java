@@ -18,12 +18,13 @@ public class XmlIoBioFormatsImgLoader implements XmlIoBasicImgLoader< BioFormats
     public static final String DIRECTORY_TAG = "imagedirectory";
     public static final String FILE_NUMBER_TAG = "files_number";
     public static final String FILE_TAG = "filename";
+    public static final String SERIALIZED_OPENER_TAG = "opener";
 
     @Override
     public Element toXml(BioFormatsImageLoader imgLoader, File basePath) {
         final Element elem = new Element( "ImageLoader" );
         elem.setAttribute( IMGLOADER_FORMAT_ATTRIBUTE_NAME, this.getClass().getAnnotation( ImgLoaderIo.class ).format() );
-        elem.addContent( XmlHelpers.pathElement( DIRECTORY_TAG, imgLoader.files.get(0).getParentFile(), basePath ) );
+        elem.addContent(XmlHelpers.pathElement( DIRECTORY_TAG, imgLoader.files.get(0).getParentFile(), basePath ) );
         elem.addContent(XmlHelpers.intElement( FILE_NUMBER_TAG, imgLoader.files.size()));
         for (int i=0;i<imgLoader.files.size();i++) {
             elem.addContent(XmlHelpers.textElement(FILE_TAG+"_"+i, imgLoader.files.get(i).getName()));
@@ -44,7 +45,6 @@ public class XmlIoBioFormatsImgLoader implements XmlIoBasicImgLoader< BioFormats
                 File f = new File( path, masterFile );
                 files.add(f);
             }
-
             return new BioFormatsImageLoader( files, sequenceDescription);
         }
         catch ( final Exception e )
