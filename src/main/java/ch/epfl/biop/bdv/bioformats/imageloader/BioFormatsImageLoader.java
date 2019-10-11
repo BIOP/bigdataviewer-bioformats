@@ -3,6 +3,7 @@ package ch.epfl.biop.bdv.bioformats.imageloader;
 import bdv.ViewerImgLoader;
 import bdv.cache.CacheControl;
 import bdv.img.cache.VolatileGlobalCellCache;
+import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;
@@ -23,7 +24,10 @@ import java.util.stream.IntStream;
 
 public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImgLoader {
 
-    public List<File> files;
+    //public List<File> files;
+
+
+    public List<BioFormatsBdvOpener> openers;
 
     final AbstractSequenceDescription<?, ?, ?> sequenceDescription;
 
@@ -41,8 +45,8 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
 
     protected VolatileGlobalCellCache cache;
 
-    public BioFormatsImageLoader(List<File> files, final AbstractSequenceDescription<?, ?, ?> sequenceDescription) {
-        this.files = files;
+    public BioFormatsImageLoader(List<BioFormatsBdvOpener> openers, final AbstractSequenceDescription<?, ?, ?> sequenceDescription) {
+        this.openers = openers;
         this.sequenceDescription = sequenceDescription;
         IFormatReader readerIdx = new ImageReader();
 
@@ -52,52 +56,53 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
         final IMetadata omeMetaOmeXml = MetadataTools.createOMEXMLMetadata();
         memo.setMetadataStore(omeMetaOmeXml);
 
-        IntStream filesIdxStream = IntStream.range(0, files.size());
+        IntStream openersIdxStream = IntStream.range(0, openers.size());
         if ((sequenceDescription!=null)) {
-            filesIdxStream.forEach(iF -> {
+            openersIdxStream.forEach(idxOpener -> {
                 try {
-                        File f = files.get(iF);
-                        memo.setId(f.getAbsolutePath());
+                    BioFormatsBdvOpener opener = openers.get(idxOpener);
+                    //File f = files.get(idxOpener);
+                    memo.setId(opener.getDataLocation());
 
-                        tTypeGetter.put(iF,new HashMap<>());
-                        vTypeGetter.put(iF,new HashMap<>());
+                    tTypeGetter.put(idxOpener,new HashMap<>());
+                    vTypeGetter.put(idxOpener,new HashMap<>());
 
-                        final IFormatReader reader = memo;
+                    final IFormatReader reader = memo;
 
-                        log.accept("Number of Series : " + reader.getSeriesCount());
-                        final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
+                    log.accept("Number of Series : " + reader.getSeriesCount());
+                    final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
 
-                        // -------------------------- SETUPS For each Series : one per timepoint and one per channel
+                    // -------------------------- SETUPS For each Series : one per timepoint and one per channel
 
-                        IntStream series = IntStream.range(0, reader.getSeriesCount());
+                    IntStream series = IntStream.range(0, reader.getSeriesCount());
 
-                        series.forEach(iSerie -> {
-                            reader.setSeries(iSerie);
-                            // One serie = one Tile
-                            // ---------- Serie >
-                            // ---------- Serie > Timepoints
-                            log.accept("\t Serie " + iSerie + " Number of timesteps = " + omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
-                            // ---------- Serie > Channels
-                            log.accept("\t Serie " + iSerie + " Number of channels = " + omeMeta.getChannelCount(iSerie));
-                            // Properties of the serie
-                            IntStream channels = IntStream.range(0, omeMeta.getChannelCount(iSerie));
-                            // Register Setups (one per channel and one per timepoint)
-                            channels.forEach(
-                                    iCh -> {
-                                        IntStream timepoints = IntStream.range(0, omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
-                                        FileSerieChannel fsc = new FileSerieChannel(iF, iSerie, iCh);
-                                        timepoints.forEach(
-                                                iTp -> {
-                                                    viewSetupToBFFileSerieChannel.put(viewSetupCounter,fsc);
-                                                    viewSetupCounter++;
-                                                });
-                                    });
-                            Type t = BioFormatsBdvSource.getBioformatsBdvSourceType(reader, iSerie);
-                            tTypeGetter.get(iF).put(iSerie,(NumericType)t);
-                            Volatile v = BioFormatsBdvSource.getVolatileOf((NumericType)t);
-                            vTypeGetter.get(iF).put(iSerie, v);
-                        });
-                        reader.close();
+                    series.forEach(iSerie -> {
+                        reader.setSeries(iSerie);
+                        // One serie = one Tile
+                        // ---------- Serie >
+                        // ---------- Serie > Timepoints
+                        log.accept("\t Serie " + iSerie + " Number of timesteps = " + omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
+                        // ---------- Serie > Channels
+                        log.accept("\t Serie " + iSerie + " Number of channels = " + omeMeta.getChannelCount(iSerie));
+                        // Properties of the serie
+                        IntStream channels = IntStream.range(0, omeMeta.getChannelCount(iSerie));
+                        // Register Setups (one per channel and one per timepoint)
+                        channels.forEach(
+                                iCh -> {
+                                    IntStream timepoints = IntStream.range(0, omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
+                                    FileSerieChannel fsc = new FileSerieChannel(idxOpener, iSerie, iCh);
+                                    timepoints.forEach(
+                                            iTp -> {
+                                                viewSetupToBFFileSerieChannel.put(viewSetupCounter,fsc);
+                                                viewSetupCounter++;
+                                            });
+                                });
+                        Type t = BioFormatsBdvSource.getBioformatsBdvSourceType(reader, iSerie);
+                        tTypeGetter.get(idxOpener).put(iSerie,(NumericType)t);
+                        Volatile v = BioFormatsBdvSource.getVolatileOf((NumericType)t);
+                        vTypeGetter.get(idxOpener).put(iSerie, v);
+                    });
+                    reader.close();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -108,6 +113,7 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
         cache = new VolatileGlobalCellCache(queue);
     }
 
+
     public BioFormatsSetupLoader getSetupImgLoader(int setupId) {
         if (imgLoaders.containsKey(setupId)) {
             return imgLoaders.get(setupId);
@@ -115,19 +121,15 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
             int iF = viewSetupToBFFileSerieChannel.get(setupId).iFile;
             int iS = viewSetupToBFFileSerieChannel.get(setupId).iSerie;
             int iC = viewSetupToBFFileSerieChannel.get(setupId).iChannel;
+
             BioFormatsSetupLoader imgL = new BioFormatsSetupLoader(
-                    files.get(iF),
+                    openers.get(iF),
                     iS,
                     iC,
-                    false,
-                    false,
-                    true,
-                    -1,
-                    -1,
-                    -1,
                     tTypeGetter.get(iF).get(iS),
                     vTypeGetter.get(iF).get(iS)
             );
+
             imgLoaders.put(setupId,imgL);
             return imgL;
         }

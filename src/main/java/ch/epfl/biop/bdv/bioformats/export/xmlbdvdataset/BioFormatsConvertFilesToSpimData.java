@@ -1,6 +1,7 @@
 package ch.epfl.biop.bdv.bioformats.export.xmlbdvdataset;
 
 import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
+import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsImageLoader;
 import ch.epfl.biop.bdv.bioformats.imageloader.FileSerieChannel;
 import ch.epfl.biop.bdv.bioformats.imageloader.SeriesTps;
@@ -8,12 +9,14 @@ import loci.formats.*;
 import loci.formats.meta.IMetadata;
 import mpicbg.spim.data.SpimData;
 import mpicbg.spim.data.XmlIoSpimData;
+import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.*;
 import net.imglib2.Dimensions;
 import ome.units.UNITS;
 import org.apache.commons.io.FilenameUtils;
+import org.scijava.ItemIO;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -35,18 +38,41 @@ import java.util.stream.IntStream;
  */
 
 @Plugin(type = Command.class,menuPath = "BDV_SciJava>Export>Convert Files to Xml Dataset with Bioformats (SciJava)")
-public class BioFormatsConvertFilesToXmlDataset implements Command {
+public class BioFormatsConvertFilesToSpimData implements Command {
+
+    public static final String MILLIMETER = "millimeter"; // Should match UNITS.MICROMETER.getSymbol() but cannot be used in choices if defined like that cf tischi's test
+    public static final String MICROMETER = "micrometer";
+    public static final String NANOMETER = "nanometer";
+
     @Parameter(label = "Image Files")
     public File[] inputFiles;
 
     @Parameter(required=false, label = "output path, empty = same folder as input", style = "directory") // To append datasets potentially
     public File xmlFilePath;
 
-    @Parameter(required=false, label = "output file name") // To append datasets potentially
-    public String xmlFileName;
+    @Parameter
+    public boolean useBioFormatsCacheBlockSize = true;
+
+    @Parameter(required = false)
+    public int cacheSizeX, cacheSizeY, cacheSizeZ;
+
+    @Parameter(choices = {MILLIMETER,MICROMETER,NANOMETER})
+    String unit;
 
     @Parameter
     public boolean positionConventionIsCenter = false;
+
+    @Parameter
+    public boolean switchZandC = false;
+
+    @Parameter(required=false, label = "output file name") // To append datasets potentially
+    public String xmlFileName;
+
+    @Parameter(type = ItemIO.OUTPUT)
+    public AbstractSpimData asd;
+
+    @Parameter
+    public boolean saveDataset=true;
 
     @Parameter
     public boolean verbose;
@@ -162,7 +188,35 @@ public class BioFormatsConvertFilesToXmlDataset implements Command {
             }
             List<TimePoint> timePoints = new ArrayList<>();
             IntStream.range(0,maxTimepoints).forEach(tp -> timePoints.add(new TimePoint(tp)));
-            SequenceDescription sd = new SequenceDescription( new TimePoints( timePoints ), viewSetups , new BioFormatsImageLoader(inputFilesArray,null), null);
+
+            /*---  Creates an Opener for each file */
+
+            List<BioFormatsBdvOpener> openers = new ArrayList<>();
+
+            inputFilesArray.forEach(f -> {
+                BioFormatsBdvOpener opener = BioFormatsBdvOpener.getOpener()
+                        .file(f)
+                        .auto()
+                        .ignoreMetadata()
+                        .switchZandC(switchZandC);
+
+                if (!useBioFormatsCacheBlockSize) {
+                    opener = opener.cacheBlockSize(cacheSizeX,cacheSizeY,cacheSizeZ);
+                }
+
+                // Not sure it is useful here because the metadata location is handled somewhere else
+                if (positionConventionIsCenter) {
+                    opener=opener.centerPositionConvention();
+                } else {
+                    opener=opener.cornerPositionConvention();
+                }
+
+                opener = opener.unit(BioFormatsMetaDataHelper.getUnitFromString(unit));
+
+                openers.add(opener);
+            });
+
+            SequenceDescription sd = new SequenceDescription( new TimePoints( timePoints ), viewSetups , new BioFormatsImageLoader(openers,null), null);
 
             final ArrayList<ViewRegistration> registrations = new ArrayList<>();
 
@@ -209,7 +263,8 @@ public class BioFormatsConvertFilesToXmlDataset implements Command {
                 }
             } else {
                 final SpimData spimData = new SpimData( xmlFilePath, sd, new ViewRegistrations( registrations ) );
-                new XmlIoSpimData().save( spimData, new File(xmlFilePath,xmlFileName).getAbsolutePath() );
+                asd = spimData;
+                if (saveDataset) new XmlIoSpimData().save( spimData, new File(xmlFilePath,xmlFileName).getAbsolutePath() );
             }
         } catch (Exception e) {
             e.printStackTrace();
