@@ -15,6 +15,7 @@ import ome.units.quantity.Length;
 import ome.units.unit.Unit;
 
 import java.awt.*;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -479,5 +480,32 @@ public class BioFormatsMetaDataHelper {
         int[] res = waveLengthToRGB(wv);
         return new Color(res[0], res[1], res[2]);
     }
+
+    /**
+     * Look into Fields of BioFormats UNITS class that matches the input string
+     * Return the corresponding Unit Field
+     * Case insensitive
+     * @param unit
+     * @return
+     */
+    public static Unit getUnitFromString(String unit) {
+        Field[] bfUnits = UNITS.class.getFields();
+        for (Field f:bfUnits) {
+            if (f.getType().equals(Unit.class)) {
+                if (f.getName().toUpperCase().equals(unit.trim().toUpperCase())) {
+                    try {
+                        // Field found
+                        Unit u = (Unit) f.get(null); // Field is assumed to be static
+                        return u;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+        // Field not found
+        return null;
+    }
+
 
 }

@@ -70,7 +70,7 @@ public class ExploreReadingPixelSizeBioFormats
 					|| unit.equals( "micrometer" )
 					|| unit.equals( "micrometers" )
 					|| unit.equals( "microns" )
-					|| unit.equals( "micron" ) )
+					|| unit.equals( "micronmeter" ) )
 			{
 				voxelSize = value * 1000D;
 			}

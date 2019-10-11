@@ -6,6 +6,7 @@ import bdv.util.BdvOptions;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.VolatileBdvSource;
+import com.google.gson.Gson;
 import net.imagej.ImageJ;
 
 import java.io.File;
@@ -20,11 +21,12 @@ public class ExploreOpeningImages
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 
-		File f = new File("C:\\Users\\nicol\\Desktop\\DemoWSR\\Run31_EB1.vsi");
+		File f = new File("C:\\Users\\nicol\\Dropbox\\BIOP\\QuPath Formation\\qpath\\Image_06.vsi");
 
-		List<VolatileBdvSource> sources = BioFormatsBdvOpener.getOpener()
-															   .file(f)
-															   .getVolatileSources("0:-2.*");
+		List<VolatileBdvSource> sources =
+				BioFormatsBdvOpener.getOpener()
+						           .file(f)
+						           .getVolatileSources("0:-2.*");
 
 		// Because we cannot create an empty viewer
 		BdvHandle bdvh = BdvFunctions.show(sources.get(0)).
@@ -38,7 +40,6 @@ public class ExploreOpeningImages
 			}
 		}
 
-		ConverterSetup cs = new ConverterSetup();
 		/*
                     bdv_h_out = BdvFunctions.show(src_out_first).getBdvHandle();
                     bdv_h_out.getViewerPanel().addSource(new SourceAndConverter<>(src_out_first, cvt));

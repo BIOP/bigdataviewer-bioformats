@@ -15,9 +15,7 @@ import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.integer.AbstractIntegerType;
 import net.imglib2.type.numeric.real.FloatType;
-import ome.units.UNITS;
 
-import java.io.File;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -36,34 +34,19 @@ public class BioFormatsSetupLoader<T extends NumericType<T>,V extends Volatile<T
 
     Consumer<String> errlog = s -> System.err.println(BioFormatsSetupLoader.class+" error:"+s);
 
-    public BioFormatsSetupLoader(File inputFile,
+    public BioFormatsSetupLoader(BioFormatsBdvOpener opener,
                                  int sourceIndex,
                                  int channelIndex,
-                                 boolean switchZandC,
-                                 boolean autoscale,
-                                 boolean letBioFormatDecideCacheBlockXY,
-                                 int cacheBlockSizeX,
-                                 int cacheBlockSizeY,
-                                 int cacheBlockSizeZ,
                                  T t,
                                  V v) {
         super(t, v);
 
-        Map<String, Source> sources = BioFormatsBdvOpener.getOpener()
-                .file(inputFile)
-                .cacheBlockSize(cacheBlockSizeX,cacheBlockSizeY,cacheBlockSizeZ)
-                .useCacheBlockSizeFromBioFormats(letBioFormatDecideCacheBlockXY)
-                .switchZandC(switchZandC)
-                .ignoreMetadata()
-                .unit(UNITS.MILLIMETER)
-                .getConcreteAndVolatileSources(sourceIndex, channelIndex);
+        Map<String, Source> sources = opener.getConcreteAndVolatileSources(sourceIndex, channelIndex);
 
         bdvSrc = (Source<T>) sources.get(BioFormatsBdvSource.CONCRETE);
         vSrc = (Source<V>) sources.get(BioFormatsBdvSource.VOLATILE);
 
         cellDimensions = ((BioFormatsBdvSource) bdvSrc).cellDimensions;
-
-        //T t = getT.get();
 
         if (t instanceof FloatType) {
             cvt = null;

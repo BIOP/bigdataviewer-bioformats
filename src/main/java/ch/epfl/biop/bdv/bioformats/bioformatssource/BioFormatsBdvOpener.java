@@ -23,8 +23,8 @@ import java.util.stream.Collectors;
 
 
 public class BioFormatsBdvOpener {
-    //public File inputFile;
-    public String dataLocation=null; // URL or File
+
+    public String dataLocation = null; // URL or File
     public boolean swZC;
     public FinalInterval cacheBlockSize;
     public boolean useBioFormatsXYBlockSize = true;
@@ -43,33 +43,38 @@ public class BioFormatsBdvOpener {
     }
 
     public BioFormatsBdvOpener file(File f) {
-        this.dataLocation=f.getAbsolutePath();
+        this.dataLocation = f.getAbsolutePath();
+        return this;
+    }
+
+    public BioFormatsBdvOpener file(String filePath) {
+        this.dataLocation = filePath;
         return this;
     }
 
     public BioFormatsBdvOpener auto() {
         // Special cases based on File formats are handled here
-        if (this.dataLocation==null) {
+        if (this.dataLocation == null) {
             // dataLocation not set -> we can't do anything
             return this;
         }
         IFormatReader readerIdx = new ImageReader();
 
         readerIdx.setFlattenedResolutions(false);
-        Memoizer memo = new Memoizer( readerIdx );
+        Memoizer memo = new Memoizer(readerIdx);
 
         final IMetadata omeMetaOmeXml = MetadataTools.createOMEXMLMetadata();
         memo.setMetadataStore(omeMetaOmeXml);
 
         try {
-            memo.setId( dataLocation );
+            memo.setId(dataLocation);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
         final IFormatReader reader = memo;
 
-        System.out.println("Attempts to set opener settings for file format "+reader.getFormat());
+        System.out.println("Attempts to set opener settings for file format " + reader.getFormat());
 
         // Adjustements here! Especially center convention
 
@@ -77,27 +82,32 @@ public class BioFormatsBdvOpener {
     }
 
     public BioFormatsBdvOpener url(URL url) {
-        this.dataLocation=url.toString();
+        this.dataLocation = url.toString();
         return this;
     }
 
     public BioFormatsBdvOpener location(String location) {
-        this.dataLocation=location;
+        this.dataLocation = location;
         return this;
     }
 
     public BioFormatsBdvOpener unit(Unit u) {
-        this.u=u;
+        this.u = u;
         return this;
     }
 
     public BioFormatsBdvOpener millimeter() {
-        this.u= UNITS.MILLIMETER;
+        this.u = UNITS.MILLIMETER;
         return this;
     }
 
-    public BioFormatsBdvOpener micron() {
-        this.u= UNITS.MICROMETER;
+    public BioFormatsBdvOpener micronmeter() {
+        this.u = UNITS.MICROMETER;
+        return this;
+    }
+
+    public BioFormatsBdvOpener nanometer() {
+        this.u = UNITS.NANOMETER;
         return this;
     }
 
@@ -112,8 +122,8 @@ public class BioFormatsBdvOpener {
     }
 
     public BioFormatsBdvOpener ignoreMetadata() {
-        this.ignoreBioFormatsLocationMetaData=true;
-        this.ignoreBioFormatsVoxelSizeMetaData=true;
+        this.ignoreBioFormatsLocationMetaData = true;
+        this.ignoreBioFormatsVoxelSizeMetaData = true;
         return this;
     }
 
@@ -136,13 +146,13 @@ public class BioFormatsBdvOpener {
     public BioFormatsBdvSource getConcreteSource(int image_index, int channel_index) {
         try {
 
-            System.out.println("Serie:\t"+image_index+"\t Channel:\t"+channel_index);
+            System.out.println("Serie:\t" + image_index + "\t Channel:\t" + channel_index);
             IFormatReader reader = new ImageReader();
             reader.setFlattenedResolutions(false);
-            Memoizer memo = new Memoizer( reader );
+            Memoizer memo = new Memoizer(reader);
             final IMetadata omeMetaIdxOmeXml = MetadataTools.createOMEXMLMetadata();
             memo.setMetadataStore(omeMetaIdxOmeXml);
-            memo.setId( dataLocation );
+            memo.setId(dataLocation);
             final IFormatReader readerIdx = memo;
 
             Class<? extends BioFormatsBdvSource> c = BioFormatsBdvSource.getBioformatsBdvSourceClass(readerIdx, image_index);
@@ -179,7 +189,7 @@ public class BioFormatsBdvOpener {
     public VolatileBdvSource getVolatileSource(int image_index, int channel_index) {
         BioFormatsBdvSource concreteSource = this.getConcreteSource(image_index, channel_index);
         VolatileBdvSource volatileSource = new VolatileBdvSource(concreteSource,
-                BioFormatsBdvSource.getVolatileOf((NumericType)concreteSource.getType()),
+                BioFormatsBdvSource.getVolatileOf((NumericType) concreteSource.getType()),
                 new SharedQueue(1));
         return volatileSource;
     }
@@ -187,26 +197,34 @@ public class BioFormatsBdvOpener {
     public Map<String, Source> getConcreteAndVolatileSources(int image_index, int channel_index) {
         BioFormatsBdvSource concreteSource = this.getConcreteSource(image_index, channel_index);
         VolatileBdvSource volatileSource = new VolatileBdvSource(concreteSource,
-                BioFormatsBdvSource.getVolatileOf((NumericType)concreteSource.getType()),
+                BioFormatsBdvSource.getVolatileOf((NumericType) concreteSource.getType()),
                 new SharedQueue(1));
         Map<String, Source> sources = new HashMap();
-        sources.put(BioFormatsBdvSource.CONCRETE,concreteSource);
-        sources.put(BioFormatsBdvSource.VOLATILE,volatileSource);
+        sources.put(BioFormatsBdvSource.CONCRETE, concreteSource);
+        sources.put(BioFormatsBdvSource.VOLATILE, volatileSource);
         return sources;
     }
 
     public List<VolatileBdvSource> getVolatileSources(String codeSerieChannel) {
-        List<VolatileBdvSource> sources = BioFormatsMetaDataHelper.getListOfSeriesAndChannels(dataLocation,codeSerieChannel)
+        List<VolatileBdvSource> sources = BioFormatsMetaDataHelper.getListOfSeriesAndChannels(dataLocation, codeSerieChannel)
                 .stream()
                 .map(sc ->
                         sc.getRight().stream().map(
-                                ch -> this.getVolatileSource(sc.getLeft(),ch)
+                                ch -> this.getVolatileSource(sc.getLeft(), ch)
                         ).collect(Collectors.toList())
                 ).collect(Collectors.toList())
                 .stream()
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
         return sources;
+    }
+
+    public List<VolatileBdvSource> getVolatileSources() {
+        return getVolatileSources("*.*");
+    }
+
+    public List<BioFormatsBdvSource> getConcreteSources() {
+        return getConcreteSources("*.*");
     }
 
     public List<BioFormatsBdvSource> getConcreteSources(String codeSerieChannel) {

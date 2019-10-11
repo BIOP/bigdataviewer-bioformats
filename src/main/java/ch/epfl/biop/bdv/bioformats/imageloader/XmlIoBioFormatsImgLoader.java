@@ -1,6 +1,7 @@
 package ch.epfl.biop.bdv.bioformats.imageloader;
 
-import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsImageLoader;
+import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
+import com.google.gson.Gson;
 import mpicbg.spim.data.XmlHelpers;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.ImgLoaderIo;
@@ -9,25 +10,29 @@ import org.jdom2.Element;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 import static mpicbg.spim.data.XmlKeys.IMGLOADER_FORMAT_ATTRIBUTE_NAME;
 
 @ImgLoaderIo( format = "spimreconstruction.biop_bioformatsimageloader", type = BioFormatsImageLoader.class )
 public class XmlIoBioFormatsImgLoader implements XmlIoBasicImgLoader< BioFormatsImageLoader > {
 
-    public static final String DIRECTORY_TAG = "imagedirectory";
-    public static final String FILE_NUMBER_TAG = "files_number";
-    public static final String FILE_TAG = "filename";
-    public static final String SERIALIZED_OPENER_TAG = "opener";
+    public static final String OPENER_CLASS_TAG = "opener_class";
+    public static final String OPENER_TAG = "opener";
+    public static final String DATASET_NUMBER_TAG = "dataset_number";
 
     @Override
     public Element toXml(BioFormatsImageLoader imgLoader, File basePath) {
         final Element elem = new Element( "ImageLoader" );
         elem.setAttribute( IMGLOADER_FORMAT_ATTRIBUTE_NAME, this.getClass().getAnnotation( ImgLoaderIo.class ).format() );
-        elem.addContent(XmlHelpers.pathElement( DIRECTORY_TAG, imgLoader.files.get(0).getParentFile(), basePath ) );
-        elem.addContent(XmlHelpers.intElement( FILE_NUMBER_TAG, imgLoader.files.size()));
-        for (int i=0;i<imgLoader.files.size();i++) {
-            elem.addContent(XmlHelpers.textElement(FILE_TAG+"_"+i, imgLoader.files.get(i).getName()));
+        // For potential extensibility
+        elem.addContent(XmlHelpers.textElement( OPENER_CLASS_TAG, BioFormatsBdvOpener.class.getName()));
+        elem.addContent(XmlHelpers.intElement( DATASET_NUMBER_TAG, imgLoader.openers.size()));
+
+        Gson gson = new Gson();
+        for (int i=0;i<imgLoader.openers.size();i++) {
+            // Opener serialization
+            elem.addContent(XmlHelpers.textElement(OPENER_TAG+"_"+i, gson.toJson(imgLoader.openers.get(i))));
         }
         return elem;
     }
@@ -36,16 +41,24 @@ public class XmlIoBioFormatsImgLoader implements XmlIoBasicImgLoader< BioFormats
     public BioFormatsImageLoader fromXml(Element elem, File basePath, AbstractSequenceDescription<?, ?, ?> sequenceDescription) {
         try
         {
-            final File path = XmlHelpers.loadPath( elem, DIRECTORY_TAG, basePath );
-            final int number_of_files = XmlHelpers.getInt( elem, FILE_NUMBER_TAG );
-            ArrayList<File> files = new ArrayList<>();
-            for (int i=0;i<number_of_files;i++) {
+            final int number_of_datasets = XmlHelpers.getInt( elem, DATASET_NUMBER_TAG );
+            List<BioFormatsBdvOpener> openers = new ArrayList<>();
 
-                final String masterFile = XmlHelpers.getText( elem, FILE_TAG+"_"+i );
-                File f = new File( path, masterFile );
-                files.add(f);
+            String openerClassName = XmlHelpers.getText( elem, OPENER_CLASS_TAG );
+
+            if (!openerClassName.equals(BioFormatsBdvOpener.class.getName())) {
+                throw new UnsupportedOperationException("Error class "+openerClassName+" not recognized.");
             }
-            return new BioFormatsImageLoader( files, sequenceDescription);
+
+            Gson gson = new Gson();
+            for (int i=0;i<number_of_datasets;i++) {
+                // Opener de-serialization
+                String jsonInString = XmlHelpers.getText( elem, OPENER_TAG+"_"+i );
+                BioFormatsBdvOpener opener = gson.fromJson(jsonInString, BioFormatsBdvOpener.class);
+                openers.add(opener);
+            }
+
+            return new BioFormatsImageLoader( openers, sequenceDescription);
         }
         catch ( final Exception e )
         {
