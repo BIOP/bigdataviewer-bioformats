@@ -383,6 +383,14 @@ public class BioFormatsMetaDataHelper {
         return arrayOfIndexes;
     }
 
+    /**
+     * Looks into BioFormats metadata to find the color corresponding to the source
+     * If source is RGB null is returned
+     * First attempt: from IMetaData.getChannelColor
+     * Second attempt: from IMetaData.getChannelEmissionWavelength
+     * @param src Bdv Source
+     * @return ARGBType instance containing a color code for the source
+     */
     public static ARGBType getSourceColor(BioFormatsBdvSource src) {
         // Get color based on emission wavelength
         IFormatReader reader = src.getReader();
@@ -412,12 +420,12 @@ public class BioFormatsMetaDataHelper {
         return color;
     }
 
-    static private double Gamma = 0.80;
-    static private double IntensityMax = 255;
-
     /** Taken from Earl F. Glynn's web page:
      * <a href="http://www.efg2.com/Lab/ScienceAndEngineering/Spectra.htm">Spectra Lab Report</a>
+     * Return a RGB array encoding a color from an input wavelength in nm
      * */
+    static private double Gamma = 0.80;
+    static private double IntensityMax = 255;
     public static int[] waveLengthToRGB(double Wavelength){
         double factor;
         double Red,Green,Blue;
@@ -485,14 +493,14 @@ public class BioFormatsMetaDataHelper {
      * Look into Fields of BioFormats UNITS class that matches the input string
      * Return the corresponding Unit Field
      * Case insensitive
-     * @param unit
-     * @return
+     * @param unit_string
+     * @return corresponding BF Unit object
      */
-    public static Unit getUnitFromString(String unit) {
+    public static Unit getUnitFromString(String unit_string) {
         Field[] bfUnits = UNITS.class.getFields();
         for (Field f:bfUnits) {
             if (f.getType().equals(Unit.class)) {
-                if (f.getName().toUpperCase().equals(unit.trim().toUpperCase())) {
+                if (f.getName().toUpperCase().equals(unit_string.trim().toUpperCase())) {
                     try {
                         // Field found
                         Unit u = (Unit) f.get(null); // Field is assumed to be static
