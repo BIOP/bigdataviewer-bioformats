@@ -1,4 +1,4 @@
-package ch.epfl.biop.bdv.bioformats.export.xmlbdvdataset;
+package ch.epfl.biop.bdv.bioformats.export.spimdata;
 
 import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
@@ -57,7 +57,7 @@ public class BioFormatsConvertFilesToSpimData implements Command {
     public int cacheSizeX, cacheSizeY, cacheSizeZ;
 
     @Parameter(choices = {MILLIMETER,MICROMETER,NANOMETER})
-    String unit;
+    public String unit;
 
     @Parameter
     public boolean positionConventionIsCenter = false;
@@ -216,7 +216,8 @@ public class BioFormatsConvertFilesToSpimData implements Command {
                 openers.add(opener);
             });
 
-            SequenceDescription sd = new SequenceDescription( new TimePoints( timePoints ), viewSetups , new BioFormatsImageLoader(openers,null), null);
+            SequenceDescription sd = new SequenceDescription( new TimePoints( timePoints ), viewSetups , null, null);
+            sd.setImgLoader(new BioFormatsImageLoader(openers,sd));
 
             final ArrayList<ViewRegistration> registrations = new ArrayList<>();
 
@@ -254,11 +255,13 @@ public class BioFormatsConvertFilesToSpimData implements Command {
                     String outputPath = FilenameUtils.removeExtension(inputFile.getAbsolutePath())+".xml";
                     System.out.println(outputPath);
                     final SpimData spimData = new SpimData( inputFile.getParentFile(), sd, new ViewRegistrations( registrations ) );
+                    asd = spimData;
                     new XmlIoSpimData().save( spimData, outputPath );
                 } else {
                     String outputFileName = FilenameUtils.getBaseName(inputFile.getAbsolutePath())+".xml";
                     System.out.println(outputFileName);
                     final SpimData spimData = new SpimData( xmlFilePath, sd, new ViewRegistrations( registrations ) );
+                    asd = spimData;
                     new XmlIoSpimData().save( spimData, new File(xmlFilePath,outputFileName).getAbsolutePath() );
                 }
             } else {

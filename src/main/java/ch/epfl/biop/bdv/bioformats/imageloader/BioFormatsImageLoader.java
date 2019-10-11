@@ -14,7 +14,6 @@ import net.imglib2.cache.queue.BlockingFetchQueues;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.NumericType;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

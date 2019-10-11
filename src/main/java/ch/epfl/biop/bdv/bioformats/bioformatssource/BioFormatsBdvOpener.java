@@ -26,7 +26,7 @@ public class BioFormatsBdvOpener {
 
     public String dataLocation = null; // URL or File
     public boolean swZC;
-    public FinalInterval cacheBlockSize;
+    public FinalInterval cacheBlockSize = new FinalInterval(new long[]{0,0,0}, new long[]{512,512,1}); // needs a default size for z
     public boolean useBioFormatsXYBlockSize = true;
     public boolean ignoreBioFormatsLocationMetaData = false;
     public boolean ignoreBioFormatsVoxelSizeMetaData = false;

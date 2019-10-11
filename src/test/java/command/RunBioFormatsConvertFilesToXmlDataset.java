@@ -1,6 +1,6 @@
 package command;
 
-import ch.epfl.biop.bdv.bioformats.export.xmlbdvdataset.BioFormatsConvertFilesToSpimData;
+import ch.epfl.biop.bdv.bioformats.export.spimdata.BioFormatsConvertFilesToSpimData;
 import net.imagej.ImageJ;
 
 public class RunBioFormatsConvertFilesToXmlDataset

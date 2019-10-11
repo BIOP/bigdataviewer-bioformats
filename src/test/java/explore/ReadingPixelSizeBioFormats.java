@@ -8,7 +8,7 @@ import loci.formats.services.OMEXMLService;
 
 import java.io.File;
 
-public class ExploreReadingPixelSizeBioFormats
+public class ReadingPixelSizeBioFormats
 {
 	public static void main( String[] args )
 	{
