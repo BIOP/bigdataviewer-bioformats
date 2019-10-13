@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 public class BioFormatsBdvOpener {
 
+    // All serializable fields
     public String dataLocation = null; // URL or File
     public boolean swZC;
     public FinalInterval cacheBlockSize = new FinalInterval(new long[]{0,0,0}, new long[]{512,512,1}); // needs a default size for z
@@ -81,6 +82,10 @@ public class BioFormatsBdvOpener {
         System.out.println("Attempts to set opener settings for file format " + reader.getFormat());
 
         // Adjustements here! Especially center convention
+
+        if (reader.getFormat().equals("nd2")) {
+            positionConventionIsCenter=true;
+        }
 
         return this;
     }

@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static net.imglib2.cache.img.DiskCachedCellImgOptions.options;
 
-// TODO : say interleaved channels not supported
+// TODO : interleaved channels not supported
 public class BioFormatsBdvSourceUnsignedInt extends BioFormatsBdvSource<UnsignedIntType> {
     public BioFormatsBdvSourceUnsignedInt(IFormatReader reader,
                                           int image_index,

@@ -1,21 +1,14 @@
 package ch.epfl.biop.bdv.bioformats;
 
-import bdv.viewer.Source;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.VolatileBdvSource;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.Dimensions;
-import net.imglib2.Volatile;
-import net.imglib2.converter.Converter;
-import net.imglib2.display.RealARGBColorConverter;
-import net.imglib2.display.ScaledARGBConverter;
 import net.imglib2.realtransform.AffineTransform3D;
-import net.imglib2.type.Type;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.NumericType;
-import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.volatiles.VolatileARGBType;
 import net.imglib2.type.volatiles.VolatileNumericType;
 import ome.units.UNITS;
@@ -25,7 +18,6 @@ import ome.units.unit.Unit;
 import java.awt.*;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -224,24 +216,6 @@ public class BioFormatsMetaDataHelper {
 
     public static ArrayList<Pair<Integer, ArrayList<Integer>>> getListOfSeriesAndChannels(
             IFormatReader reader, String code) {
-
-        /*IFormatReader readerIdx = new ImageReader();
-
-        readerIdx.setFlattenedResolutions(false);
-        Memoizer memo = new Memoizer( readerIdx );
-
-        final IMetadata omeMetaOmeXml = MetadataTools.createOMEXMLMetadata();
-        memo.setMetadataStore(omeMetaOmeXml);
-
-        try {
-            memo.setId( dataLocation );
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-        final IFormatReader reader = memo;*/
-        //final IMetadata omeMetaOmeXml = MetadataTools.createOMEXMLMetadata();
-        //reader.setMetadataStore(omeMetaOmeXml);
         ArrayList<Pair<Integer, ArrayList<Integer>>>
                 listOfSources =
                 commaSeparatedListToArrayOfArray(
@@ -250,10 +224,10 @@ public class BioFormatsMetaDataHelper {
                         (idxSeries, idxChannel) ->
                                 (idxChannel>=0)?idxChannel:((IMetadata)reader.getMetadataStore()).getChannelCount(idxSeries)+idxChannel
                 );
-        System.out.println("Number of series: "+reader.getSeriesCount());
+        /*System.out.println("Number of series: "+reader.getSeriesCount());
         for (int i=0;i<reader.getSeriesCount();i++) {
             System.out.println("Number of channels series: "+i+" : "+((IMetadata)reader.getMetadataStore()).getChannelCount(i));
-        }
+        }*/
         return listOfSources;
     }
 
@@ -394,54 +368,6 @@ public class BioFormatsMetaDataHelper {
         }
         return arrayOfIndexes;
     }
-
-    public static Converter getConverter(Source src) {
-        if (src instanceof BioFormatsBdvSource) {
-
-        } else {
-            if (src instanceof VolatileBdvSource) {
-                src = ((VolatileBdvSource) src).source;
-            }
-        }
-        Type type = (Type) src.getType();
-        if ( type instanceof RealType) {
-            final double typeMin = Math.max( 0, Math.min( ((RealType)type).getMinValue(), 65535 ) );
-            final double typeMax = Math.max( 0, Math.min( ((RealType)type).getMaxValue(), 3000 ) );
-            final RealARGBColorConverter converter;
-            if ( src.getType() instanceof Volatile)
-                converter = new RealARGBColorConverter.Imp0<>( typeMin, typeMax );
-            else
-                converter = new RealARGBColorConverter.Imp1<>( typeMin, typeMax );
-            converter.setColor( getSourceColor((BioFormatsBdvSource)src) );
-            return converter;
-        } else if ( type instanceof ARGBType ) {
-
-            final ScaledARGBConverter.ARGB converter = new ScaledARGBConverter.ARGB( 0, 255 );
-            return converter;
-        } else if ( type instanceof VolatileARGBType ) {
-
-            final ScaledARGBConverter.VolatileARGB converter = new ScaledARGBConverter.VolatileARGB( 0, 255 );
-            return converter;
-        } else {
-            return null;
-        }
-    }
-
-
-    public static double[] getSourceMinMax(BioFormatsBdvSource src) {
-
-        // Get color based on emission wavelength
-        IFormatReader reader = src.getReader();
-
-        //final IMetadata omeMetaIdxOmeXml = MetadataTools.createOMEXMLMetadata();
-        //reader.setMetadataStore(omeMetaIdxOmeXml);
-
-        final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
-
-
-        return null;
-    }
-
 
     public static ARGBType getSourceColor(VolatileBdvSource src) {
         return getSourceColor((BioFormatsBdvSource) src.source);

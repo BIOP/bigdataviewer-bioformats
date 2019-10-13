@@ -14,7 +14,7 @@ import java.util.List;
  * Example of opening and displaying a file by using conversion to SpimData beforehand
  */
 
-public class OpenImageWithSpimData
+public class OpenAndDisplayImageWithSpimData
 {
 	public static void main( String[] args )
 	{
@@ -24,7 +24,9 @@ public class OpenImageWithSpimData
 		DatasetHelper.getSampleVSIDataset(); // Cached : no need to worry about double download
 
 		BioFormatsConvertFilesToSpimData cvt = new BioFormatsConvertFilesToSpimData();
-		File f = DatasetHelper.getDataset(DatasetHelper.VSI);
+		//File f = DatasetHelper.getDataset(DatasetHelper.VSI);
+		//File f = DatasetHelper.getDataset(DatasetHelper.JPG_RGB);
+		File f = DatasetHelper.getDataset("https://www.terroir-fribourg.ch/Media/s/87db6c74daa2645f54a3fa1773662d3a5caed8ae93b1e0.01095846/747.398.1.70/terroir-fribourg-2019-fondue-02-web@2x.jpg");
 
 		cvt.inputFiles = new File[] {f};
 		cvt.xmlFilePath = new File(f.getParent());
@@ -37,14 +39,15 @@ public class OpenImageWithSpimData
 
 		cvt.run();
 
-		List<BdvStackSource<?>> bsss = BdvFunctions.show(cvt.asd);
+		List<BdvStackSource<?>> lbss = BdvFunctions.show(cvt.asd);
 
 		cvt.asd.getSequenceDescription().getViewSetupsOrdered().forEach(id_vs ->{
 					int idx = ((mpicbg.spim.data.sequence.ViewSetup)id_vs).getId();
 					BioFormatsSetupLoader bfsl = (BioFormatsSetupLoader) cvt.asd.getSequenceDescription().getImgLoader().getSetupImgLoader(idx);
-					bsss.get(idx).setColor(
+					lbss.get(idx).setColor(
 							BioFormatsMetaDataHelper.getSourceColor((BioFormatsBdvSource) bfsl.concreteSource)
 					);
+					lbss.get(idx).setDisplayRange(0,255);
 					}
 				);
 	}

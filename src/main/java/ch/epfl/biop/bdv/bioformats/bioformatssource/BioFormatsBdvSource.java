@@ -29,9 +29,6 @@ import ome.xml.model.enums.PixelType;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-import static ome.xml.model.enums.PixelType.FLOAT;
-import static ome.xml.model.enums.PixelType.UINT8;
-
 /**
  * BigDataViewer multiresolution source built from BioFormat reader
  *
@@ -355,7 +352,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
         final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
         reader.setSeries(image_index);
         if (reader.isRGB()) {
-            if (omeMeta.getPixelsType(image_index)== UINT8) {
+            if (omeMeta.getPixelsType(image_index)== PixelType.UINT8) {
                 return new ARGBType();
             } else {
                 throw new UnsupportedOperationException("Unhandled 16 bits RGB images");
@@ -365,7 +362,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
             if  (pt == PixelType.UINT8) {return new UnsignedByteType();}
             if  (pt == PixelType.UINT16) {return new UnsignedShortType();}
             if  (pt == PixelType.UINT32) {return new UnsignedIntType();}
-            if  (pt == FLOAT) {return new FloatType();}
+            if  (pt == PixelType.FLOAT) {return new FloatType();}
         }
         throw new UnsupportedOperationException("Unhandled pixel type for serie "+image_index+": "+omeMeta.getPixelsType(image_index));
     }
@@ -374,7 +371,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
         final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
         reader.setSeries(image_index);
         if (reader.isRGB()) {
-            if (omeMeta.getPixelsType(image_index)== UINT8) {
+            if (omeMeta.getPixelsType(image_index)== PixelType.UINT8) {
                 return BioFormatsBdvSourceRGB24bits.class;
             } else {
                 throw new UnsupportedOperationException("Unhandled 16 bits RGB images");
@@ -384,7 +381,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
             if  (pt == PixelType.UINT8) {return BioFormatsBdvSourceUnsignedByte.class;}
             if  (pt == PixelType.UINT16) {return BioFormatsBdvSourceUnsignedShort.class;}
             if  (pt == PixelType.UINT32) {return BioFormatsBdvSourceUnsignedInt.class;}
-            if  (pt == FLOAT) {return BioFormatsBdvSourceFloat.class;}
+            if  (pt == PixelType.FLOAT) {return BioFormatsBdvSourceFloat.class;}
         }
         throw new UnsupportedOperationException("Unhandled pixel type for serie "+image_index+": "+omeMeta.getPixelsType(image_index));
     }
