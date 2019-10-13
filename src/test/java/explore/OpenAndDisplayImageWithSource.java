@@ -26,9 +26,10 @@ public class OpenAndDisplayImageWithSource
 
 		List<VolatileBdvSource> sources =
 				BioFormatsBdvOpener.getOpener()
-                        //.location(DatasetHelper.getDataset(DatasetHelper.VSI))
+                        .location(DatasetHelper.getDataset(DatasetHelper.VSI))
 						//.location(DatasetHelper.getDataset(DatasetHelper.JPG_RGB))
-						.location(DatasetHelper.getDataset(DatasetHelper.OLYMPUS_OIR))
+						//.location(DatasetHelper.getDataset(DatasetHelper.OLYMPUS_OIR))
+						//.location(DatasetHelper.getDataset(DatasetHelper.LIF))
 						.auto() // patches opener based on specific file formats (-> PR to be  modified)
 						//.splitRGBChannels() // split RGB channels into 3 channels
 						//.switchZandC(true) // switch Z and C
