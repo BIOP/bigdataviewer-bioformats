@@ -151,6 +151,10 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
             this.sourceName = omeMeta.getImageName(image_index);
         }
 
+        if (this.sourceName==null) {
+            this.sourceName="null";
+        }
+
         setRootTransform(omeMeta, image_index);
 
         if (reader.getSizeZ()>1) {

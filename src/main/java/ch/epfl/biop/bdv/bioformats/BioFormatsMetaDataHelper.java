@@ -1,7 +1,5 @@
 package ch.epfl.biop.bdv.bioformats;
 
-import bdv.tools.brightness.ConverterSetup;
-import bdv.tools.brightness.RealARGBColorConverterSetup;
 import bdv.viewer.Source;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.VolatileBdvSource;
@@ -11,7 +9,6 @@ import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.Dimensions;
 import net.imglib2.Volatile;
 import net.imglib2.converter.Converter;
-import net.imglib2.display.ColorConverter;
 import net.imglib2.display.RealARGBColorConverter;
 import net.imglib2.display.ScaledARGBConverter;
 import net.imglib2.realtransform.AffineTransform3D;
@@ -21,7 +18,6 @@ import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.volatiles.VolatileARGBType;
 import net.imglib2.type.volatiles.VolatileNumericType;
-import net.imglib2.util.Util;
 import ome.units.UNITS;
 import ome.units.quantity.Length;
 import ome.units.unit.Unit;
@@ -86,7 +82,7 @@ public class BioFormatsMetaDataHelper {
         } else {
             try {
                 pZmm = omeMeta.getPlanePositionZ(iSerie, 0).value(u).doubleValue();
-            }  catch(NullPointerException e2) { // Beurk
+            }  catch(NullPointerException | IndexOutOfBoundsException e2 ) { // Beurk
                 pZmm=0;
             }
         }
