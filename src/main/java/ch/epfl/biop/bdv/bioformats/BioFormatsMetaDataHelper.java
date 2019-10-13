@@ -226,9 +226,10 @@ public class BioFormatsMetaDataHelper {
         return dimensions;
     }
 
-    public static ArrayList<Pair<Integer, ArrayList<Integer>>> getListOfSeriesAndChannels(String dataLocation, String code) {
+    public static ArrayList<Pair<Integer, ArrayList<Integer>>> getListOfSeriesAndChannels(
+            IFormatReader reader, String code) {
 
-        IFormatReader readerIdx = new ImageReader();
+        /*IFormatReader readerIdx = new ImageReader();
 
         readerIdx.setFlattenedResolutions(false);
         Memoizer memo = new Memoizer( readerIdx );
@@ -242,18 +243,20 @@ public class BioFormatsMetaDataHelper {
             e.printStackTrace();
             return null;
         }
-        final IFormatReader reader = memo;
+        final IFormatReader reader = memo;*/
+        //final IMetadata omeMetaOmeXml = MetadataTools.createOMEXMLMetadata();
+        //reader.setMetadataStore(omeMetaOmeXml);
         ArrayList<Pair<Integer, ArrayList<Integer>>>
                 listOfSources =
                 commaSeparatedListToArrayOfArray(
                         code,
                         idxSeries ->(idxSeries>=0)?idxSeries:reader.getSeriesCount()+idxSeries, // apparently -1 is necessary -> I don't really understand
                         (idxSeries, idxChannel) ->
-                                (idxChannel>=0)?idxChannel:omeMetaOmeXml.getChannelCount(idxSeries)+idxChannel
+                                (idxChannel>=0)?idxChannel:((IMetadata)reader.getMetadataStore()).getChannelCount(idxSeries)+idxChannel
                 );
         System.out.println("Number of series: "+reader.getSeriesCount());
         for (int i=0;i<reader.getSeriesCount();i++) {
-            System.out.println("Number of channels series: "+i+" : "+omeMetaOmeXml.getChannelCount(i));
+            System.out.println("Number of channels series: "+i+" : "+((IMetadata)reader.getMetadataStore()).getChannelCount(i));
         }
         return listOfSources;
     }
@@ -465,13 +468,12 @@ public class BioFormatsMetaDataHelper {
 
         final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
 
-        ARGBType color = null;
+        ARGBType color = new ARGBType(ARGBType.rgba(255,255,255,255)); // default is white
         if ((src.getType() instanceof ARGBType)||(src.getType() instanceof VolatileARGBType)) {
 
         } else {
             if ((src.getType() instanceof NumericType)||(src.getType() instanceof VolatileNumericType)) {
-
-                ome.xml.model.primitives.Color c = null;//omeMetaIdxOmeXml.getChannelColor(src.cSerie, src.cChannel);
+                ome.xml.model.primitives.Color c = omeMeta.getChannelColor(src.cSerie, src.cChannel);
                 if (c != null) {
                     color = new ARGBType(ARGBType.rgba(c.getRed(), c.getGreen(), c.getBlue(), 255));
                 } else {
