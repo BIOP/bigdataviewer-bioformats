@@ -15,7 +15,7 @@ import net.imglib2.type.numeric.NumericType;
 import java.util.function.Supplier;
 
 public class VolatileBdvSource< T extends NumericType< T >, V extends Volatile< T > & NumericType< V >> extends AbstractSource< V > {
-    private final Source< T > source;
+    public final Source< T > source;
 
     private SharedQueue queue;
 

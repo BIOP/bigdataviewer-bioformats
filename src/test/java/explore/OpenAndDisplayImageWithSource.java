@@ -2,6 +2,8 @@ package explore;
 import bdv.util.BdvFunctions;
 import bdv.util.BdvHandle;
 import bdv.util.BdvOptions;
+import bdv.util.BdvStackSource;
+import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.VolatileBdvSource;
 import net.imagej.ImageJ;
@@ -24,18 +26,20 @@ public class OpenAndDisplayImageWithSource
 		List<VolatileBdvSource> sources =
 				BioFormatsBdvOpener.getOpener()
                                    .location("https://biop.epfl.ch/img/splash/physicsTemporal_byRGUIETcrop.jpg")
+						           .location("C:\\Users\\nicol\\Dropbox\\BIOP\\QuPath Formation\\qpath\\Image_06.vsi")
 						           .getVolatileSources();
 
-		BdvHandle bdvh = BdvFunctions.show(sources.get(0)).
-				getBdvHandle();
+		BdvStackSource<?> bss = BdvFunctions.show(sources.get(0));
+		bss.setColor(BioFormatsMetaDataHelper.getSourceColor(sources.get(0)));
+
+		BdvHandle bdvh = bss.getBdvHandle();
 
 		BdvOptions options = BdvOptions.options().addTo(bdvh);
 
-		if (sources.size()>1) {
-			for (int i=1;i<sources.size();i++) {
-				BdvFunctions.show(sources.get(i),options);
-			}
-		}
+		for (int i=1;i<sources.size();i++) {
+			bss = BdvFunctions.show(sources.get(i), options);
+			bss.setColor(BioFormatsMetaDataHelper.getSourceColor(sources.get(i)));
 
+		}
 	}
 }
