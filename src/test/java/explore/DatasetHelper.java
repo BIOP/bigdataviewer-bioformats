@@ -17,15 +17,36 @@ public class DatasetHelper {
     public static File cachedSampleDir = new File(System.getProperty("user.home"),"CachedSamples");
 
     final public static String JPG_RGB = "https://biop.epfl.ch/img/splash/physicsTemporal_byRGUIETcrop.jpg";
-    final public static String OME_TIF = "https://downloads.openmicroscopy.org/images/Olympus-OIR/etienne/venus%20stack.ome.tif";
+    final public static String OLYMPUS_OIR = "https://downloads.openmicroscopy.org/images/Olympus-OIR/etienne/venus%20stack.ome.tif";
+    final public static String VSI ="https://github.com/NicoKiaru/TestImages/raw/master/VSI/Fluo3DFluoImage2Channels_01.vsi";
+
     public static void main(String... args) {
         System.out.println("Downloading all sample datasets.");
         ASyncDL(JPG_RGB);
-        ASyncDL(OME_TIF);
+        ASyncDL(OLYMPUS_OIR);
+        getSampleVSIDataset();
     }
 
-    public static void ASyncDL(String str) {
-        new Thread(() -> urlToFile(str)).start();
+    public static String getSampleVSIDataset() {
+        Thread t0 =ASyncDL(VSI);
+        Thread t1 = ASyncDL("https://github.com/NicoKiaru/TestImages/raw/master/VSI/_Fluo3DFluoImage2Channels_01_/stack1/frame_t_0.ets");
+        Thread t2 = ASyncDL("https://github.com/NicoKiaru/TestImages/raw/master/VSI/_Fluo3DFluoImage2Channels_01_/stack10001/frame_t_0.ets");
+        Thread t3 = ASyncDL("https://github.com/NicoKiaru/TestImages/raw/master/VSI/_Fluo3DFluoImage2Channels_01_/stack10004/frame_t_0.ets");
+        try {
+            t0.join();
+            t1.join();
+            t2.join();
+            t3.join();
+        } catch (Exception e) {
+
+        }
+        return getDataset(VSI).getAbsolutePath();
+    }
+
+    public static Thread ASyncDL(String str) {
+        Thread thread = new Thread(() -> getDataset(str));
+        thread.start();
+        return thread;
     }
 
     public static File urlToFile(URL url) {
@@ -48,7 +69,7 @@ public class DatasetHelper {
         }
     }
 
-    public static File urlToFile(String urlString) {
+    public static File getDataset(String urlString) {
         URL url = null;
         try {
             url = new URL(urlString);

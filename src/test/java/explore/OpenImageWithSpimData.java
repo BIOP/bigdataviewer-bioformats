@@ -16,15 +16,15 @@ import java.util.List;
 
 public class OpenImageWithSpimData
 {
-	// Todo : sample images
 	public static void main( String[] args )
 	{
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 
-		File f = new File("C:\\Users\\nicol\\Dropbox\\BIOP\\QuPath Formation\\qpath\\Image_06.vsi");
+		DatasetHelper.getSampleVSIDataset(); // Cached : no need to worry about double download
 
 		BioFormatsConvertFilesToSpimData cvt = new BioFormatsConvertFilesToSpimData();
+		File f = DatasetHelper.getDataset(DatasetHelper.VSI);
 
 		cvt.inputFiles = new File[] {f};
 		cvt.xmlFilePath = new File(f.getParent());
