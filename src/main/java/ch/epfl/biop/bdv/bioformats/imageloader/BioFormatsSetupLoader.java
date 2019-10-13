@@ -4,6 +4,7 @@ import bdv.AbstractViewerSetupImgLoader;
 import bdv.viewer.Source;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
+import loci.formats.IFormatReader;
 import mpicbg.spim.data.generic.sequence.ImgLoaderHint;
 import mpicbg.spim.data.sequence.MultiResolutionSetupImgLoader;
 import mpicbg.spim.data.sequence.VoxelDimensions;
@@ -22,9 +23,9 @@ import java.util.function.Function;
 
 public class BioFormatsSetupLoader<T extends NumericType<T>,V extends Volatile<T> & NumericType<V>> extends AbstractViewerSetupImgLoader<T, V> implements MultiResolutionSetupImgLoader< T > {
 
-    Source<T> bdvSrc;
+    public Source<T> concreteSource;
 
-    Source<V> vSrc;
+    public Source<V> volatileSource;
 
     int[] cellDimensions;
 
@@ -33,6 +34,10 @@ public class BioFormatsSetupLoader<T extends NumericType<T>,V extends Volatile<T
     final Converter<T,FloatType> cvt;
 
     Consumer<String> errlog = s -> System.err.println(BioFormatsSetupLoader.class+" error:"+s);
+
+    public IFormatReader getReader() {
+        return ((BioFormatsBdvSource) concreteSource).getReader();
+    }
 
     public BioFormatsSetupLoader(BioFormatsBdvOpener opener,
                                  int sourceIndex,
@@ -43,10 +48,10 @@ public class BioFormatsSetupLoader<T extends NumericType<T>,V extends Volatile<T
 
         Map<String, Source> sources = opener.getConcreteAndVolatileSources(sourceIndex, channelIndex);
 
-        bdvSrc = (Source<T>) sources.get(BioFormatsBdvSource.CONCRETE);
-        vSrc = (Source<V>) sources.get(BioFormatsBdvSource.VOLATILE);
+        concreteSource = (Source<T>) sources.get(BioFormatsBdvSource.CONCRETE);
+        volatileSource = (Source<V>) sources.get(BioFormatsBdvSource.VOLATILE);
 
-        cellDimensions = ((BioFormatsBdvSource) bdvSrc).cellDimensions;
+        cellDimensions = ((BioFormatsBdvSource) concreteSource).cellDimensions;
 
         if (t instanceof FloatType) {
             cvt = null;
@@ -75,7 +80,7 @@ public class BioFormatsSetupLoader<T extends NumericType<T>,V extends Volatile<T
 
     @Override
     public RandomAccessibleInterval<V> getVolatileImage(int timepointId, int level, ImgLoaderHint... hints) {
-        return vSrc.getSource(timepointId,level);
+        return volatileSource.getSource(timepointId,level);
     }
 
     @Override
@@ -88,37 +93,37 @@ public class BioFormatsSetupLoader<T extends NumericType<T>,V extends Volatile<T
         return new Dimensions() {
             @Override
             public void dimensions(long[] dimensions) {
-                bdvSrc.getSource(timepointId,level).dimensions(dimensions);
+                concreteSource.getSource(timepointId,level).dimensions(dimensions);
             }
 
             @Override
             public long dimension(int d) {
-                return bdvSrc.getSource(timepointId,level).dimension(d);
+                return concreteSource.getSource(timepointId,level).dimension(d);
             }
 
             @Override
             public int numDimensions() {
-                return bdvSrc.getSource(timepointId,level).numDimensions();
+                return concreteSource.getSource(timepointId,level).numDimensions();
             }
         };
     }
 
     @Override
     public RandomAccessibleInterval<T> getImage(int timepointId, int level, ImgLoaderHint... hints) {
-        return bdvSrc.getSource(timepointId,level);
+        return concreteSource.getSource(timepointId,level);
     }
 
     @Override
     public double[][] getMipmapResolutions() {
         // Needs to compute mipmap resolutions... pfou
-        double [][] mmResolutions = new double[bdvSrc.getNumMipmapLevels()][3];
+        double [][] mmResolutions = new double[concreteSource.getNumMipmapLevels()][3];
         mmResolutions[0][0]=1;
         mmResolutions[0][1]=1;
         mmResolutions[0][2]=1;
 
-        RandomAccessibleInterval srcL0 = bdvSrc.getSource(0,0);
-        for (int iLevel=1;iLevel<bdvSrc.getNumMipmapLevels();iLevel++) {
-            RandomAccessibleInterval srcLi = bdvSrc.getSource(0,iLevel);
+        RandomAccessibleInterval srcL0 = concreteSource.getSource(0,0);
+        for (int iLevel = 1; iLevel< concreteSource.getNumMipmapLevels(); iLevel++) {
+            RandomAccessibleInterval srcLi = concreteSource.getSource(0,iLevel);
             mmResolutions[iLevel][0] = (double)srcL0.dimension(0)/(double)srcLi.dimension(0);
             mmResolutions[iLevel][1] = (double)srcL0.dimension(1)/(double)srcLi.dimension(1);
             mmResolutions[iLevel][2] = (double)srcL0.dimension(2)/(double)srcLi.dimension(2);
@@ -128,11 +133,11 @@ public class BioFormatsSetupLoader<T extends NumericType<T>,V extends Volatile<T
 
     @Override
     public AffineTransform3D[] getMipmapTransforms() {
-        AffineTransform3D[] ats = new AffineTransform3D[bdvSrc.getNumMipmapLevels()];
+        AffineTransform3D[] ats = new AffineTransform3D[concreteSource.getNumMipmapLevels()];
 
-        for (int iLevel=0;iLevel<bdvSrc.getNumMipmapLevels();iLevel++) {
+        for (int iLevel = 0; iLevel< concreteSource.getNumMipmapLevels(); iLevel++) {
             AffineTransform3D at = new AffineTransform3D();
-            bdvSrc.getSourceTransform(0,iLevel,at);
+            concreteSource.getSourceTransform(0,iLevel,at);
             ats[iLevel] = at;
         }
 
@@ -141,7 +146,7 @@ public class BioFormatsSetupLoader<T extends NumericType<T>,V extends Volatile<T
 
     @Override
     public int numMipmapLevels() {
-        return bdvSrc.getNumMipmapLevels();
+        return concreteSource.getNumMipmapLevels();
     }
 
     @Override
@@ -156,6 +161,6 @@ public class BioFormatsSetupLoader<T extends NumericType<T>,V extends Volatile<T
 
     @Override
     public VoxelDimensions getVoxelSize(int timepointId) {
-        return bdvSrc.getVoxelDimensions();
+        return concreteSource.getVoxelDimensions();
     }
 }
