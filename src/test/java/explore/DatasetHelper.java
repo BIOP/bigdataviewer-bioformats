@@ -19,6 +19,8 @@ public class DatasetHelper {
     final public static String JPG_RGB = "https://biop.epfl.ch/img/splash/physicsTemporal_byRGUIETcrop.jpg";
     final public static String OLYMPUS_OIR = "https://downloads.openmicroscopy.org/images/Olympus-OIR/etienne/venus%20stack.ome.tif";
     final public static String VSI ="https://github.com/NicoKiaru/TestImages/raw/master/VSI/Fluo3DFluoImage2Channels_01.vsi";
+    final public static String LIF = "https://downloads.openmicroscopy.org/images/Leica-LIF/michael/PR2729_frameOrderCombinedScanTypes.lif";
+
 
     public static void main(String... args) {
         System.out.println("Downloading all sample datasets.");
