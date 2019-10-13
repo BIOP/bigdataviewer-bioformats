@@ -27,7 +27,7 @@ public class OpenAndDisplayImageWithSource
 				BioFormatsBdvOpener.getOpener()
                                    .location("https://biop.epfl.ch/img/splash/physicsTemporal_byRGUIETcrop.jpg")
 						           .location("C:\\Users\\nicol\\Dropbox\\BIOP\\QuPath Formation\\qpath\\Image_06.vsi")
-						           .getVolatileSources();
+								   .getVolatileSources();
 
 		BdvStackSource<?> bss = BdvFunctions.show(sources.get(0));
 		bss.setColor(BioFormatsMetaDataHelper.getSourceColor(sources.get(0)));

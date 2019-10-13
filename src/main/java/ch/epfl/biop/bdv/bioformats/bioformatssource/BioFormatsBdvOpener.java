@@ -3,10 +3,7 @@ package ch.epfl.biop.bdv.bioformats.bioformatssource;
 import bdv.util.volatiles.SharedQueue;
 import bdv.viewer.Source;
 import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
-import loci.formats.IFormatReader;
-import loci.formats.ImageReader;
-import loci.formats.Memoizer;
-import loci.formats.MetadataTools;
+import loci.formats.*;
 import loci.formats.meta.IMetadata;
 import net.imglib2.FinalInterval;
 import net.imglib2.type.numeric.NumericType;
@@ -14,6 +11,7 @@ import ome.units.UNITS;
 import ome.units.unit.Unit;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +29,7 @@ public class BioFormatsBdvOpener {
     public boolean ignoreBioFormatsLocationMetaData = false;
     public boolean ignoreBioFormatsVoxelSizeMetaData = false;
     public boolean positionConventionIsCenter = false;
+    public boolean splitRGBChannels = false;
     public Unit u;
 
     public String getDataLocation() {
@@ -49,6 +48,11 @@ public class BioFormatsBdvOpener {
 
     public BioFormatsBdvOpener file(String filePath) {
         this.dataLocation = filePath;
+        return this;
+    }
+
+    public BioFormatsBdvOpener splitRGBChannels() {
+        splitRGBChannels = true;
         return this;
     }
 
@@ -143,17 +147,48 @@ public class BioFormatsBdvOpener {
         return this;
     }
 
+    public IFormatReader getNewReader() {
+        //System.out.println("Serie:\t" + image_index + "\t Channel:\t" + channel_index);
+        IFormatReader reader = new ImageReader();
+        reader.setFlattenedResolutions(false);
+        if (splitRGBChannels) {reader = new ChannelSeparator(reader);}
+        Memoizer memo = new Memoizer(reader);
+        final IMetadata omeMetaIdxOmeXml = MetadataTools.createOMEXMLMetadata();
+        memo.setMetadataStore(omeMetaIdxOmeXml);
+        try {
+            memo.setId(dataLocation);
+        } catch (FormatException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        final IFormatReader readerIdx = memo;
+        return readerIdx;
+    }
+
+    IFormatReader reusableReader=null;
+
+    public IFormatReader getCachedReader() {
+        if (reusableReader==null) {
+            reusableReader = getNewReader();
+        }
+        return reusableReader;
+    }
+
     public BioFormatsBdvSource getConcreteSource(int image_index, int channel_index) {
         try {
 
-            System.out.println("Serie:\t" + image_index + "\t Channel:\t" + channel_index);
+            /*System.out.println("Serie:\t" + image_index + "\t Channel:\t" + channel_index);
             IFormatReader reader = new ImageReader();
             reader.setFlattenedResolutions(false);
+            if (splitRGBChannels) {reader = new ChannelSeparator(reader);}
             Memoizer memo = new Memoizer(reader);
             final IMetadata omeMetaIdxOmeXml = MetadataTools.createOMEXMLMetadata();
             memo.setMetadataStore(omeMetaIdxOmeXml);
             memo.setId(dataLocation);
-            final IFormatReader readerIdx = memo;
+            final IFormatReader readerIdx = memo;*/
+
+            final IFormatReader readerIdx = getNewReader();
 
             Class<? extends BioFormatsBdvSource> c = BioFormatsBdvSource.getBioformatsBdvSourceClass(readerIdx, image_index);
 
@@ -206,7 +241,7 @@ public class BioFormatsBdvOpener {
     }
 
     public List<VolatileBdvSource> getVolatileSources(String codeSerieChannel) {
-        List<VolatileBdvSource> sources = BioFormatsMetaDataHelper.getListOfSeriesAndChannels(dataLocation, codeSerieChannel)
+        List<VolatileBdvSource> sources = BioFormatsMetaDataHelper.getListOfSeriesAndChannels(getCachedReader(), codeSerieChannel)
                 .stream()
                 .map(sc ->
                         sc.getRight().stream().map(
@@ -228,7 +263,7 @@ public class BioFormatsBdvOpener {
     }
 
     public List<BioFormatsBdvSource> getConcreteSources(String codeSerieChannel) {
-        List<BioFormatsBdvSource> sources = BioFormatsMetaDataHelper.getListOfSeriesAndChannels(dataLocation,codeSerieChannel)
+        List<BioFormatsBdvSource> sources = BioFormatsMetaDataHelper.getListOfSeriesAndChannels(getCachedReader(),codeSerieChannel)
                 .stream()
                 .map(sc ->
                         sc.getRight().stream().map(
