@@ -95,6 +95,11 @@ public class BioFormatsBdvOpener {
         return this;
     }
 
+    public BioFormatsBdvOpener location(File f) {
+        this.dataLocation = f.getAbsolutePath();
+        return this;
+    }
+
     public BioFormatsBdvOpener unit(Unit u) {
         this.u = u;
         return this;
