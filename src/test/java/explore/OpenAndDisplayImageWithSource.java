@@ -16,18 +16,16 @@ import java.util.List;
 
 public class OpenAndDisplayImageWithSource
 {
-	// Todo : sample images
-	// Todo : Color conversion
 	public static void main( String[] args )
 	{
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 
+		DatasetHelper.getSampleVSIDataset(); // Cached : no need to worry about double download
+
 		List<VolatileBdvSource> sources =
 				BioFormatsBdvOpener.getOpener()
-                                   .location("https://biop.epfl.ch/img/splash/physicsTemporal_byRGUIETcrop.jpg")
-						           .location("C:\\Users\\nicol\\Dropbox\\BIOP\\QuPath Formation\\qpath\\Image_06.vsi")
-						.location(DatasetHelper.urlToFile(DatasetHelper.OME_TIF))
+                        .location(DatasetHelper.getDataset(DatasetHelper.VSI))
 						.getVolatileSources();
 
 		BdvStackSource<?> bss = BdvFunctions.show(sources.get(0));
