@@ -253,16 +253,16 @@ public class BioFormatsConvertFilesToSpimData implements Command {
                 File inputFile = inputFiles[0];
                 if ((xmlFilePath==null)||(xmlFilePath.equals(""))) {
                     String outputPath = FilenameUtils.removeExtension(inputFile.getAbsolutePath())+".xml";
-                    System.out.println(outputPath);
+                    log.accept(outputPath);
                     final SpimData spimData = new SpimData( inputFile.getParentFile(), sd, new ViewRegistrations( registrations ) );
                     asd = spimData;
-                    new XmlIoSpimData().save( spimData, outputPath );
+                    if (saveDataset) new XmlIoSpimData().save( spimData, outputPath );
                 } else {
                     String outputFileName = FilenameUtils.getBaseName(inputFile.getAbsolutePath())+".xml";
-                    System.out.println(outputFileName);
+                    log.accept(outputFileName);
                     final SpimData spimData = new SpimData( xmlFilePath, sd, new ViewRegistrations( registrations ) );
                     asd = spimData;
-                    new XmlIoSpimData().save( spimData, new File(xmlFilePath,outputFileName).getAbsolutePath() );
+                    if (saveDataset) new XmlIoSpimData().save( spimData, new File(xmlFilePath,outputFileName).getAbsolutePath() );
                 }
             } else {
                 final SpimData spimData = new SpimData( xmlFilePath, sd, new ViewRegistrations( registrations ) );

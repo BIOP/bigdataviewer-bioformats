@@ -1,5 +1,4 @@
 import net.imagej.ImageJ;
-import org.junit.Test;
 
 public class SimpleIJLaunch {
 

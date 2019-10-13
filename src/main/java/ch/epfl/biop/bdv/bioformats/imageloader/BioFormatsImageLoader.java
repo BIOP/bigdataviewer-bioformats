@@ -23,9 +23,6 @@ import java.util.stream.IntStream;
 
 public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImgLoader {
 
-    //public List<File> files;
-
-
     public List<BioFormatsBdvOpener> openers;
 
     final AbstractSequenceDescription<?, ?, ?> sequenceDescription;
@@ -60,7 +57,6 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
             openersIdxStream.forEach(idxOpener -> {
                 try {
                     BioFormatsBdvOpener opener = openers.get(idxOpener);
-                    //File f = files.get(idxOpener);
                     memo.setId(opener.getDataLocation());
 
                     tTypeGetter.put(idxOpener,new HashMap<>());
