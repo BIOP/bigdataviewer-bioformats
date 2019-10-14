@@ -157,12 +157,12 @@ public class BioFormatsConvertFilesToSpimData implements Command {
                             iCh -> {
                                 int ch_id = getChannelId(omeMeta, iSerie, iCh);
                                 String channelName = omeMeta.getChannelName(iSerie, iCh);
-                                IntStream timepoints = IntStream.range(0, omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
-                                timepoints.forEach(
-                                        iTp -> {
+                                //IntStream timepoints = IntStream.range(0, omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
+                                //timepoints.forEach(
+                                //        iTp -> {
                                             String setupName = imageName
-                                                    + "-" + channelName + ":" + iTp;
-                                            System.out.println(setupName);
+                                                    + "-" + channelName;// + ":" + iTp;
+                                            log.accept(setupName);
                                             ViewSetup vs = new ViewSetup(
                                                     viewSetupCounter,
                                                     setupName,
@@ -175,7 +175,7 @@ public class BioFormatsConvertFilesToSpimData implements Command {
                                             viewSetups.add(vs);
                                             viewSetupToBFFileSerieChannel.put(viewSetupCounter, new FileSerieChannel(iFile, iSerie, iCh));
                                             viewSetupCounter++;
-                                        });
+                                 //       });
                             });
                 });
                 reader.close();
