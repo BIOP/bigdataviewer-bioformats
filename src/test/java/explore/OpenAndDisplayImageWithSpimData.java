@@ -26,7 +26,9 @@ public class OpenAndDisplayImageWithSpimData
 		BioFormatsConvertFilesToSpimData cvt = new BioFormatsConvertFilesToSpimData();
 		//File f = DatasetHelper.getDataset(DatasetHelper.VSI);
 		//File f = DatasetHelper.getDataset(DatasetHelper.JPG_RGB);
-		File f = DatasetHelper.getDataset("https://www.terroir-fribourg.ch/Media/s/87db6c74daa2645f54a3fa1773662d3a5caed8ae93b1e0.01095846/747.398.1.70/terroir-fribourg-2019-fondue-02-web@2x.jpg");
+		//File f = DatasetHelper.getDataset("https://www.terroir-fribourg.ch/Media/s/87db6c74daa2645f54a3fa1773662d3a5caed8ae93b1e0.01095846/747.398.1.70/terroir-fribourg-2019-fondue-02-web@2x.jpg");
+		File f = DatasetHelper.getDataset(DatasetHelper.TIF_TIMELAPSE_3D);
+
 
 		cvt.inputFiles = new File[] {f};
 		cvt.xmlFilePath = new File(f.getParent());
@@ -36,6 +38,7 @@ public class OpenAndDisplayImageWithSpimData
 		cvt.saveDataset=false; // Put true if you want to save an xml file for the spimdata
 		cvt.switchZandC=false;
 		cvt.positionConventionIsCenter=false;
+		cvt.verbose=true;
 
 		cvt.run();
 
@@ -47,7 +50,7 @@ public class OpenAndDisplayImageWithSpimData
 					lbss.get(idx).setColor(
 							BioFormatsMetaDataHelper.getSourceColor((BioFormatsBdvSource) bfsl.concreteSource)
 					);
-					lbss.get(idx).setDisplayRange(0,255);
+					lbss.get(idx).setDisplayRange(0,5000);
 					}
 				);
 	}

@@ -27,6 +27,7 @@ public class OpenAndDisplayImageWithSource
 		List<VolatileBdvSource> sources =
 				BioFormatsBdvOpener.getOpener()
                         .location(DatasetHelper.getDataset(DatasetHelper.VSI))
+						.location(DatasetHelper.getDataset(DatasetHelper.TIF_TIMELAPSE_3D))
 						//.location(DatasetHelper.getDataset(DatasetHelper.JPG_RGB))
 						//.location(DatasetHelper.getDataset(DatasetHelper.OLYMPUS_OIR))
 						//.location(DatasetHelper.getDataset(DatasetHelper.LIF))
