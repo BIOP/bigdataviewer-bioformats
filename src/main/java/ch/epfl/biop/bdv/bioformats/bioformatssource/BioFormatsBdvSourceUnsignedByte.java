@@ -40,8 +40,6 @@ public class BioFormatsBdvSourceUnsignedByte extends BioFormatsBdvSource<Unsigne
             reader.setResolution(level);
             int sx = reader.getSizeX();
             int sy = reader.getSizeY();
-
-            System.out.println("level="+level+" sx = "+sx+" sy = "+sy);
             int sz = (!is3D)?1:reader.getSizeZ();
 
             // Cached Image Factory Options

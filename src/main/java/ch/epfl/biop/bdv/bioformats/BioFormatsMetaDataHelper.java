@@ -1,5 +1,6 @@
 package ch.epfl.biop.bdv.bioformats;
 
+import bdv.viewer.Source;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.VolatileBdvSource;
 import loci.formats.*;
@@ -33,19 +34,42 @@ public class BioFormatsMetaDataHelper {
 
     private static final Logger LOGGER = Logger.getLogger( BioFormatsMetaDataHelper.class.getName() );
 
-    public static int getChannelHashFromBFMeta(IMetadata m, int iSerie, int iChannel) {
-        // Iso Channel = identical Wavelength and pixel type
-        int hash = 1;
-        if (m.getChannelEmissionWavelength(iSerie,iChannel)!=null) {
-            hash*=m.getChannelEmissionWavelength(iSerie,iChannel).value(UNITS.NANOMETER).intValue();
+    public static class BioformatsChannel {
+
+        int iSerie;
+        int iChannel;
+        int emissionWl;
+        String chName="";
+        String pxType="";
+        boolean isRGB;
+
+        public BioformatsChannel(IMetadata m, int iSerie, int iChannel, boolean isRGB) {
+            this.iSerie=iSerie;
+            this.iChannel=iChannel;
+            this.isRGB=isRGB;
+            if (m.getChannelEmissionWavelength(iSerie,iChannel)!=null) {
+               this.emissionWl = m.getChannelEmissionWavelength(iSerie,iChannel).value(UNITS.NANOMETER).intValue();
+            }
+            if (m.getChannelName(iSerie,iChannel)!=null) {
+               this.chName=m.getChannelName(iSerie,iChannel);
+            }
+            if (m.getPixelsType(iSerie)!=null) {
+               this.pxType=m.getPixelsType(iSerie).getValue();
+            }
         }
-        if (m.getChannelName(iSerie,iChannel)!=null) {
-            hash*=m.getChannelName(iSerie,iChannel).hashCode() % 17;
+
+        @Override
+        public int hashCode() {
+            return ((iSerie+1)%17)*iChannel;
         }
-        if (m.getPixelsType(iSerie)!=null) {
-            hash*=m.getPixelsType(iSerie).getValue().hashCode() % 17;
+
+        public boolean equals(BioformatsChannel bc) {
+            return (iChannel==bc.iChannel)
+                    &&(isRGB==bc.isRGB)
+                    &&(chName.equals(bc.chName))
+                    &&(pxType.equals(bc.pxType));
         }
-        return hash;
+
     }
 
     public static double[] getPos(IMetadata omeMeta, int iSerie, Unit u) {
@@ -57,11 +81,11 @@ public class BioFormatsMetaDataHelper {
                 pYmm = omeMeta.getPlanePositionY(iSerie, 0).value(u).doubleValue();
             }
         } catch(NullPointerException e) { // Beurk
-            System.out.println("NullPointerException Caught : no physical units");
+            //System.out.println("NullPointerException Caught : no physical units");
             try {
                 pXmm = omeMeta.getPlanePositionX(iSerie, 0).value().doubleValue();
                 pYmm = omeMeta.getPlanePositionY(iSerie, 0).value().doubleValue();
-                System.out.println("NullPointerException Caught : no plane position");
+                //System.out.println("NullPointerException Caught : no plane position");
             } catch (NullPointerException e2) { // Beurk
                 pXmm=0;
                 pYmm=0;
@@ -95,12 +119,12 @@ public class BioFormatsMetaDataHelper {
 
         // In 3D if available
         if (omeMeta.getPixelsPhysicalSizeZ(iSerie)==null) {
-            dZmm=1; // Assuming isotropic
+            dZmm=1;
         } else {
             try {
                 dZmm = omeMeta.getPixelsPhysicalSizeZ(iSerie).value(u).doubleValue();
             }  catch(NullPointerException e2) {
-                dZmm=1; // Assuming isotropic
+                dZmm=1;
             }
         }
         return new double[]{dXmm, dYmm, dZmm};
@@ -258,7 +282,7 @@ public class BioFormatsMetaDataHelper {
             try {
                 if (seriesIdentifier.trim().equals("*")) {
                     int maxIndex = fbounds.apply(-1);
-                    System.out.println("maxIndex="+maxIndex);
+                    //System.out.println("maxIndex="+maxIndex);
                     for (int index = 0; index <=maxIndex; index++) {
                         MutablePair<Integer, ArrayList<Integer>> current = new MutablePair<>();
                         final int idxCp = index;
@@ -367,6 +391,16 @@ public class BioFormatsMetaDataHelper {
             }
         }
         return arrayOfIndexes;
+    }
+
+    public static ARGBType getSourceColor(Source src) {
+        if (src instanceof BioFormatsBdvSource) {
+            return getSourceColor((BioFormatsBdvSource) src);
+        } else if (src instanceof VolatileBdvSource) {
+            return getSourceColor((VolatileBdvSource) src);
+        } else {
+            return null;
+        }
     }
 
     public static ARGBType getSourceColor(VolatileBdvSource src) {
