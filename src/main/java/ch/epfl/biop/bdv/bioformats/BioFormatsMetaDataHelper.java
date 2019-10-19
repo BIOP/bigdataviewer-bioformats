@@ -63,11 +63,18 @@ public class BioFormatsMetaDataHelper {
             return ((iSerie+1)%17)*iChannel;
         }
 
-        public boolean equals(BioformatsChannel bc) {
-            return (iChannel==bc.iChannel)
-                    &&(isRGB==bc.isRGB)
-                    &&(chName.equals(bc.chName))
-                    &&(pxType.equals(bc.pxType));
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof BioFormatsMetaDataHelper.BioformatsChannel) {
+                BioFormatsMetaDataHelper.BioformatsChannel bc = (BioFormatsMetaDataHelper.BioformatsChannel) obj;
+                return (iChannel==bc.iChannel)
+                        &&(isRGB==bc.isRGB)
+                        &&(chName.equals(bc.chName))
+                        &&(pxType.equals(bc.pxType));
+            } else {
+                return false;
+            }
+
         }
 
     }
