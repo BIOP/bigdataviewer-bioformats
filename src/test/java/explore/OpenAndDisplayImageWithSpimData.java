@@ -27,11 +27,11 @@ public class OpenAndDisplayImageWithSpimData
 		//File f = DatasetHelper.getDataset(DatasetHelper.VSI);
 		//File f = DatasetHelper.getDataset(DatasetHelper.JPG_RGB);
 		//File f = DatasetHelper.getDataset("https://www.terroir-fribourg.ch/Media/s/87db6c74daa2645f54a3fa1773662d3a5caed8ae93b1e0.01095846/747.398.1.70/terroir-fribourg-2019-fondue-02-web@2x.jpg");
-		File f = DatasetHelper.getDataset(DatasetHelper.TIF_TIMELAPSE_3D);
+		File f = DatasetHelper.getDataset(DatasetHelper.VSI);
 
 
 		cvt.inputFiles = new File[] {
-
+				DatasetHelper.getDataset(DatasetHelper.VSI),
 				DatasetHelper.getDataset(DatasetHelper.JPG_RGB),
 				DatasetHelper.getDataset(DatasetHelper.TIF_TIMELAPSE_3D),
 		};
@@ -43,7 +43,7 @@ public class OpenAndDisplayImageWithSpimData
 		   cvt.cacheSizeZ=64;
 		cvt.xmlFileName="dataset.xml";
 		cvt.unit = "millimeter";
-		cvt.saveDataset=false; // Put true if you want to save an xml file for the spimdata
+		cvt.saveDataset=true; // Put true if you want to save an xml file for the spimdata
 		cvt.switchZandC=false;
 		cvt.positionConventionIsCenter=false;
 		cvt.verbose=false;//true;
