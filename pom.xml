@@ -210,12 +210,10 @@
 			<artifactId>gson</artifactId>
 		</dependency>
 
-
 		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>bigdataviewer_fiji</artifactId>
-			<scope>runtime</scope>
-			<!--<version>0.1.4-SNAPSHOT</version>-->
+            <groupId>sc.fiji</groupId>
+            <artifactId>bigdataviewer_fiji</artifactId>
+            <scope>runtime</scope>
 		</dependency>
 
     </dependencies>

@@ -27,7 +27,7 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
 
     final AbstractSequenceDescription<?, ?, ?> sequenceDescription;
 
-    Consumer<String> log = s -> System.out.println(s);
+    Consumer<String> log = s -> {};//System.out.println(s);
 
     Map<Integer, FileSerieChannel> viewSetupToBFFileSerieChannel = new HashMap<>();
 
@@ -84,13 +84,9 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
                         // Register Setups (one per channel and one per timepoint)
                         channels.forEach(
                                 iCh -> {
-                                    IntStream timepoints = IntStream.range(0, omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
                                     FileSerieChannel fsc = new FileSerieChannel(idxOpener, iSerie, iCh);
-                                    timepoints.forEach(
-                                            iTp -> {
-                                                viewSetupToBFFileSerieChannel.put(viewSetupCounter,fsc);
-                                                viewSetupCounter++;
-                                            });
+                                    viewSetupToBFFileSerieChannel.put(viewSetupCounter,fsc);
+                                    viewSetupCounter++;
                                 });
                         Type t = BioFormatsBdvSource.getBioformatsBdvSourceType(reader, iSerie);
                         tTypeGetter.get(idxOpener).put(iSerie,(NumericType)t);
@@ -104,10 +100,9 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
             });
         }
         // NOT CORRECTLY IMPLEMENTED YET
-        final BlockingFetchQueues<Callable<?>> queue = new BlockingFetchQueues<>(1);
+        final BlockingFetchQueues<Callable<?>> queue = new BlockingFetchQueues<>(1,1);
         cache = new VolatileGlobalCellCache(queue);
     }
-
 
     public BioFormatsSetupLoader getSetupImgLoader(int setupId) {
         if (imgLoaders.containsKey(setupId)) {
@@ -116,6 +111,7 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
             int iF = viewSetupToBFFileSerieChannel.get(setupId).iFile;
             int iS = viewSetupToBFFileSerieChannel.get(setupId).iSerie;
             int iC = viewSetupToBFFileSerieChannel.get(setupId).iChannel;
+            log.accept("loading file number = "+iF+" setupId = "+setupId);
 
             BioFormatsSetupLoader imgL = new BioFormatsSetupLoader(
                     openers.get(iF),

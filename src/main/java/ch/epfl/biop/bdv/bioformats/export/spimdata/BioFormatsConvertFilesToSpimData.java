@@ -87,7 +87,7 @@ public class BioFormatsConvertFilesToSpimData implements Command {
 
     int channelCounter = 0;
 
-    Map<Integer,Integer> channelHashToId = new HashMap<>();
+    Map<BioFormatsMetaDataHelper.BioformatsChannel,Integer> channelToId = new HashMap<>();
 
     Map<Integer,Integer> fileIdxToNumberOfSeries = new HashMap<>();
     Map<Integer,Channel> channelIdToChannel = new HashMap<>();
@@ -100,6 +100,8 @@ public class BioFormatsConvertFilesToSpimData implements Command {
 
         if (verbose) {
             log = s -> System.out.println(s);
+        } else {
+            log = s -> {};
         }
         IFormatReader readerIdx = new ImageReader();
 
@@ -155,7 +157,7 @@ public class BioFormatsConvertFilesToSpimData implements Command {
                     // Register Setups (one per channel and one per timepoint)
                     channels.forEach(
                             iCh -> {
-                                int ch_id = getChannelId(omeMeta, iSerie, iCh);
+                                int ch_id = getChannelId(omeMeta, iSerie, iCh, reader.isRGB());
                                 String channelName = omeMeta.getChannelName(iSerie, iCh);
                                 //IntStream timepoints = IntStream.range(0, omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
                                 //timepoints.forEach(
@@ -216,11 +218,10 @@ public class BioFormatsConvertFilesToSpimData implements Command {
                 openers.add(opener);
             });
 
-            SequenceDescription sd = new SequenceDescription( new TimePoints( timePoints ), viewSetups , null, null);
-            sd.setImgLoader(new BioFormatsImageLoader(openers,sd));
 
             final ArrayList<ViewRegistration> registrations = new ArrayList<>();
 
+            List<ViewId> missingViews = new ArrayList<>();
             for (int iF=0;iF<inputFiles.length;iF++) {
                 int iFile = iF;
 
@@ -233,21 +234,36 @@ public class BioFormatsConvertFilesToSpimData implements Command {
                 int nSeries = fileIdxToNumberOfSeries.get(iF);
                 // Need to set view registrations : identity ? how does that work with the one given by the image loader ?
                 IntStream series = IntStream.range(0, nSeries);
+
+
                 series.forEach(iSerie -> {
-                    int iS = iSerie;
-                    IntStream timepoints = IntStream.range(0, omeMetaOmeXml.getPixelsSizeT(iS).getNumberValue().intValue());
+                    //int iS = iSerie;
+                    //int nTimepoints = omeMetaOmeXml.getPixelsSizeT(iS).getNumberValue().intValue();
+                    //IntStream timepoints = IntStream.range(0, nTimepoints);
+                    final int nTimepoints = omeMetaOmeXml.getPixelsSizeT(iSerie).getNumberValue().intValue();
+
                     timePoints.forEach(iTp -> {
                         viewSetupToBFFileSerieChannel
                                 .keySet()
                                 .stream()
                                 .filter(viewSetupId -> (viewSetupToBFFileSerieChannel.get(viewSetupId).iFile == iFile))
                                 .filter(viewSetupId -> (viewSetupToBFFileSerieChannel.get(viewSetupId).iSerie == iSerie))
-                                .forEach(viewSetupId -> registrations.add(new ViewRegistration(iTp.getId(), viewSetupId, BioFormatsMetaDataHelper.getRootTransform(omeMeta,iSerie,UNITS.MILLIMETER, positionConventionIsCenter)))//new AffineTransform3D()))//
-                                );
+                                .forEach(viewSetupId -> {
+                                    if (iTp.getId()<nTimepoints) {
+                                      registrations.add(new ViewRegistration(iTp.getId(), viewSetupId, BioFormatsMetaDataHelper.getRootTransform(omeMeta, iSerie, UNITS.MILLIMETER, positionConventionIsCenter)));
+                                    } else {
+                                      missingViews.add(new ViewId(iTp.getId(), viewSetupId));
+                                    }
+                                });
                     });
+
                 });
                 reader.close();
             }
+
+            SequenceDescription sd = new SequenceDescription( new TimePoints( timePoints ), viewSetups , null, new MissingViews(missingViews));
+            sd.setImgLoader(new BioFormatsImageLoader(openers,sd));
+
 
             if (inputFiles.length==1) {
                 File inputFile = inputFiles[0];
@@ -274,16 +290,16 @@ public class BioFormatsConvertFilesToSpimData implements Command {
         }
     }
 
-    int getChannelId(IMetadata omeMeta, int iSerie, int iChannel) {
-        int channelHash = BioFormatsMetaDataHelper.getChannelHashFromBFMeta(omeMeta, iSerie, iChannel);
-        if (!channelHashToId.containsKey(channelHash)) {
+    int getChannelId(IMetadata omeMeta, int iSerie, int iChannel, boolean isRGB) {
+        BioFormatsMetaDataHelper.BioformatsChannel channel = new BioFormatsMetaDataHelper.BioformatsChannel(omeMeta, iSerie, iChannel, false);
+        if (!channelToId.containsKey(channel)) {
             // No : add it in the channel hashmap
-            channelHashToId.put(channelHash,channelCounter);
+            channelToId.put(channel,channelCounter);
             log.accept(" \t \t \t New Channel, set as number "+channelCounter);
             channelIdToChannel.put(channelCounter, new Channel(channelCounter));
             channelCounter++;
         }
-        int idChannel = channelHashToId.get(channelHash);
+        int idChannel = channelIdToChannel.get(channelToId.get(channel)).getId();
         return idChannel;
     }
 

@@ -30,15 +30,23 @@ public class OpenAndDisplayImageWithSpimData
 		File f = DatasetHelper.getDataset(DatasetHelper.TIF_TIMELAPSE_3D);
 
 
-		cvt.inputFiles = new File[] {f};
+		cvt.inputFiles = new File[] {
+
+				DatasetHelper.getDataset(DatasetHelper.JPG_RGB),
+				DatasetHelper.getDataset(DatasetHelper.TIF_TIMELAPSE_3D),
+		};
 		cvt.xmlFilePath = new File(f.getParent());
 		cvt.useBioFormatsCacheBlockSize=true;
+		   // ignored if useBioFormatsCacheBlockSize is true
+		   cvt.cacheSizeX=64;
+		   cvt.cacheSizeY=64;
+		   cvt.cacheSizeZ=64;
 		cvt.xmlFileName="dataset.xml";
 		cvt.unit = "millimeter";
 		cvt.saveDataset=false; // Put true if you want to save an xml file for the spimdata
 		cvt.switchZandC=false;
 		cvt.positionConventionIsCenter=false;
-		cvt.verbose=true;
+		cvt.verbose=false;//true;
 
 		cvt.run();
 
@@ -50,7 +58,7 @@ public class OpenAndDisplayImageWithSpimData
 					lbss.get(idx).setColor(
 							BioFormatsMetaDataHelper.getSourceColor((BioFormatsBdvSource) bfsl.concreteSource)
 					);
-					lbss.get(idx).setDisplayRange(0,5000);
+					lbss.get(idx).setDisplayRange(0,255);
 					}
 				);
 	}
