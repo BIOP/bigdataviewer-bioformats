@@ -94,6 +94,10 @@
 			<roles><role>founder</role></roles>
 			<properties><id>oburri</id></properties>
 		</contributor>
+		<contributor>
+			<name>Christian Tischer</name>
+			<properties><id>tischi</id></properties>
+		</contributor>
 	</contributors>
 
 	<mailingLists>
@@ -200,12 +204,6 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.scijava</groupId>
-			<artifactId>scijava-ui-swing</artifactId>
-			<version>0.13.0</version>
-		</dependency>
-
-		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 		</dependency>
@@ -213,7 +211,7 @@
 		<dependency>
             <groupId>sc.fiji</groupId>
             <artifactId>bigdataviewer_fiji</artifactId>
-            <scope>runtime</scope>
+            <scope>test</scope>
 		</dependency>
 
     </dependencies>
