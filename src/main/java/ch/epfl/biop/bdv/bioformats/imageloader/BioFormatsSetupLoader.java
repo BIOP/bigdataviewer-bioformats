@@ -39,12 +39,22 @@ public class BioFormatsSetupLoader<T extends NumericType<T>,V extends Volatile<T
         return ((BioFormatsBdvSource) concreteSource).getReader();
     }
 
+    final BioFormatsBdvOpener opener;
+
+    public BioFormatsBdvOpener getOpener() { return opener; }
+
+    final public int iSerie,iChannel;
+
     public BioFormatsSetupLoader(BioFormatsBdvOpener opener,
                                  int sourceIndex,
                                  int channelIndex,
                                  T t,
                                  V v) {
         super(t, v);
+
+        this.opener = opener;
+        iSerie = sourceIndex;
+        iChannel = channelIndex;
 
         Map<String, Source> sources = opener.getConcreteAndVolatileSources(sourceIndex, channelIndex);
 
