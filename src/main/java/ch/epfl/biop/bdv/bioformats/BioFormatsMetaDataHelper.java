@@ -60,15 +60,16 @@ public class BioFormatsMetaDataHelper {
 
         @Override
         public int hashCode() {
-            return ((iSerie+1)%17)*iChannel;
+            return this.chName.hashCode()*this.pxType.hashCode();
         }
 
         @Override
         public boolean equals(Object obj) {
             if (obj instanceof BioFormatsMetaDataHelper.BioformatsChannel) {
                 BioFormatsMetaDataHelper.BioformatsChannel bc = (BioFormatsMetaDataHelper.BioformatsChannel) obj;
-                return (iChannel==bc.iChannel)
-                        &&(isRGB==bc.isRGB)
+                return //(iChannel==bc.iChannel)
+                        //&&
+                        (isRGB==bc.isRGB)
                         &&(chName.equals(bc.chName))
                         &&(pxType.equals(bc.pxType));
             } else {
