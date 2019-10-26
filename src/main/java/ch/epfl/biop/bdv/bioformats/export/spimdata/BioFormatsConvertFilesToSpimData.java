@@ -174,7 +174,7 @@ public class BioFormatsConvertFilesToSpimData implements Command {
                     }
                     String imageName = omeMeta.getImageName(iSerie);
                     Dimensions dims = BioFormatsMetaDataHelper.getSeriesDimensions(omeMeta, iSerie); // number of pixels .. no calibration
-                    VoxelDimensions voxDims = BioFormatsMetaDataHelper.getSeriesVoxelDimensions(omeMeta, iSerie, bfUnit);
+                    VoxelDimensions voxDims = BioFormatsMetaDataHelper.getSeriesVoxelDimensions(omeMeta, iSerie, bfUnit, voxSizeReferenceFrameLength);
                     // Register Setups (one per channel and one per timepoint)
                     channels.forEach(
                             iCh -> {

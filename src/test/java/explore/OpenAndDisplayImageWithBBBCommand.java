@@ -12,7 +12,7 @@ public class OpenAndDisplayImageWithBBBCommand {
 
         final ImageJ ij = new ImageJ();
         ij.ui().showUI();
-        ij.command().run(OpenImageWithBioformatsBigdataviewerBridge.class,true,
+        /*ij.command().run(OpenImageWithBioformatsBigdataviewerBridge.class,true,
                     "files", new File[] {
                                 DatasetHelper.getDataset(DatasetHelper.ND2_20X),
                                 DatasetHelper.getDataset(DatasetHelper.ND2_60X)
@@ -23,13 +23,13 @@ public class OpenAndDisplayImageWithBBBCommand {
                             "advancedParameters", false,
                             "minDisplay",0,
                             "maxDisplay",255
-                    );
+                    );*/
 
         ij.command().run(OpenImageWithBioformatsBigdataviewerBridge.class,true,
                 "files", new File[] {
                         DatasetHelper.getDataset(DatasetHelper.VSI),
-                        DatasetHelper.getDataset(DatasetHelper.JPG_RGB),
-                        DatasetHelper.getDataset(DatasetHelper.TIF_TIMELAPSE_3D),
+                       // DatasetHelper.getDataset(DatasetHelper.JPG_RGB),
+                       // DatasetHelper.getDataset(DatasetHelper.TIF_TIMELAPSE_3D),
                 },
                 "autosetColor", true,
                 "setGrouping", true,
