@@ -44,7 +44,10 @@ public class OpenImageWithBioformatsBigdataviewerBridge implements Command {
     boolean setGrouping;
 
     @Parameter
-    boolean positionIsCenter=false;
+    double minDisplay = 0;
+
+    @Parameter
+    double maxDisplay = 255;
 
     @Parameter(choices = {MILLIMETER,MICROMETER,NANOMETER})
     public String unit;
@@ -52,23 +55,30 @@ public class OpenImageWithBioformatsBigdataviewerBridge implements Command {
     @Parameter(type = ItemIO.OUTPUT)
     public BdvHandle bdv_h;
 
+    Map<String, Object> predefinedParameters = new HashMap<>();
+
     @Override
     public void run() {
-        Map<String, Object> predefinedParameters = new HashMap<>();
         predefinedParameters.put("inputFiles", files);
         predefinedParameters.put("unit", unit);
-        predefinedParameters.put("positionIsCenter", positionIsCenter);
 
         if (!advancedParameters) {
             predefinedParameters.put("xmlFilePath", new File(files[0].getParent()));
             predefinedParameters.put("useBioFormatsCacheBlockSize", true);
             predefinedParameters.put("xmlFileName", "dataset.xml");
+            predefinedParameters.put("positionIsCenter", "AUTO");
             predefinedParameters.put("cacheSizeX", 0);
             predefinedParameters.put("cacheSizeY", 0);
             predefinedParameters.put("cacheSizeZ", 0);
             predefinedParameters.put("saveDataset", false);
-            predefinedParameters.put("switchZandC", false);
+            predefinedParameters.put("switchZandC", "AUTO");
+            predefinedParameters.put("flipPosition", "AUTO");
             predefinedParameters.put("verbose", false);
+            predefinedParameters.put("refFramePositionValue", 1);
+            predefinedParameters.put("refFrameVoxSizeValue", 1);
+            predefinedParameters.put("cacheSizeX", 512);
+            predefinedParameters.put("cacheSizeY", 512);
+            predefinedParameters.put("cacheSizeZ", 1);
         }
 
         try {
@@ -83,7 +93,7 @@ public class OpenImageWithBioformatsBigdataviewerBridge implements Command {
                             lbss.get(idx).setColor(
                                     BioFormatsMetaDataHelper.getSourceColor((BioFormatsBdvSource) bfsl.concreteSource)
                             );
-                            //lbss.get(idx).setDisplayRange(0, 255);
+                            lbss.get(idx).setDisplayRange(minDisplay, maxDisplay);
                         }
                 );
             }

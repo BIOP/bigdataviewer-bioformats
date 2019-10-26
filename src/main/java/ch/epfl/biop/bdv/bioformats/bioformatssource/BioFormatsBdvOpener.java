@@ -38,22 +38,18 @@ public class BioFormatsBdvOpener {
     public Unit u;
 
     // Bioformats location fix
-    //transient private AffineTransform3D positionPreTransform;
     public double[] positionPreTransformMatrixArray;
-    //transient private AffineTransform3D positionPostTransform;
     public double[] positionPostTransformMatrixArray;
     public Length positionReferenceFrameLength;
     public boolean positionIgnoreBioFormatsMetaData = false;
     public boolean positionIsImageCenter = false; // Top left corner otherwise
 
     // Bioformats voxsize fix
-    //transient private AffineTransform3D voxSizePreTransform;
     public double[] voxSizePreTransformMatrixArray;
-    //transient private AffineTransform3D voxSizePostTransform;
     public double[] voxSizePostTransformMatrixArray;
     public Length voxSizeReferenceFrameLength;
     public boolean voxSizeIgnoreBioFormatsMetaData = false;
-    public boolean[] axesFlip = new boolean[]{false, false, false};
+    public boolean[] axesOfImageFlip = new boolean[]{false, false, false};
 
     public String getDataLocation() {
         return dataLocation;
@@ -309,7 +305,7 @@ public class BioFormatsBdvOpener {
                     positionPostTransform,
                     voxSizePreTransform,
                     voxSizePostTransform,
-                    axesFlip);
+                    axesOfImageFlip);
             return bdvSrc;
         } catch (Exception e) {
             e.printStackTrace();
