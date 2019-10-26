@@ -32,8 +32,8 @@ public class OpenAndDisplayImageWithSpimData
 
 		cvt.inputFiles = new File[] {
 				DatasetHelper.getDataset(DatasetHelper.VSI),
-				DatasetHelper.getDataset(DatasetHelper.JPG_RGB),
-				DatasetHelper.getDataset(DatasetHelper.TIF_TIMELAPSE_3D),
+				//DatasetHelper.getDataset(DatasetHelper.JPG_RGB),
+				//DatasetHelper.getDataset(DatasetHelper.TIF_TIMELAPSE_3D),
 		};
 		cvt.xmlFilePath = new File(f.getParent());
 		cvt.useBioFormatsCacheBlockSize=true;
@@ -44,8 +44,8 @@ public class OpenAndDisplayImageWithSpimData
 		cvt.xmlFileName="dataset.xml";
 		cvt.unit = "millimeter";
 		cvt.saveDataset=true; // Put true if you want to save an xml file for the spimdata
-		cvt.switchZandC=false;
-		cvt.positionConventionIsCenter=false;
+		cvt.switchZandC="AUTO";
+		cvt.positionIsCenter="AUTO";
 		cvt.verbose=false;//true;
 
 		cvt.run();

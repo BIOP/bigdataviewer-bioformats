@@ -7,6 +7,8 @@ import bdv.viewer.Source;
 import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import net.imagej.ImageJ;
+import ome.units.UNITS;
+import ome.units.quantity.Length;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,6 +44,8 @@ public class OpenAndDisplayImageWithSource
 						.millimeter() // unit = millimeter
 						//.unit(UNITS.YARD) // Ok, if you really want...
 						//.getConcreteSources()
+						.positionReferenceFrameLength(new Length(10, UNITS.MICROMETER))
+						.voxSizeReferenceFrameLength(new Length(1000, UNITS.MICROMETER))
 						.getVolatileSources()
 						.stream().map(src -> (Source) src).collect(Collectors.toList());
 						//.getVolatileSources();
