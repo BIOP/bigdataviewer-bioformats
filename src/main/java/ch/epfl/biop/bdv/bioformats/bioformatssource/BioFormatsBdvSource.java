@@ -111,7 +111,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
     final AffineTransform3D voxSizePreTransform;
     final AffineTransform3D voxSizePostTransform;
 
-    final boolean[] axesFlip;
+    final boolean[] axesOfImageFlip;
 
     /**
      * Bio Format source cosntructor
@@ -156,7 +156,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
         this.positionPreTransform = positionPreTransform;
         this.voxSizePostTransform = voxSizePostTransform;
         this.voxSizePreTransform = voxSizePreTransform;
-        this.axesFlip = axesFlip;
+        this.axesOfImageFlip = axesFlip;
 
         // MetaData
         final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
@@ -234,7 +234,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
                     voxSizePreTransform,
                     voxSizePostTransform,
                     voxSizeReferenceFrameLength,
-                    axesFlip));
+                    axesOfImageFlip));
         }
     }
 

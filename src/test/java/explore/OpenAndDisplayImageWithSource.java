@@ -45,7 +45,7 @@ public class OpenAndDisplayImageWithSource
 						//.unit(UNITS.YARD) // Ok, if you really want...
 						//.getConcreteSources()
 						.positionReferenceFrameLength(new Length(10, UNITS.MICROMETER))
-						.voxSizeReferenceFrameLength(new Length(1000, UNITS.MICROMETER))
+						.voxSizeReferenceFrameLength(new Length(1, UNITS.MICROMETER))
 						.getVolatileSources()
 						.stream().map(src -> (Source) src).collect(Collectors.toList());
 						//.getVolatileSources();

@@ -24,16 +24,17 @@ public class OpenAndDisplayImageWithSpimData
 		DatasetHelper.getSampleVSIDataset(); // Cached : no need to worry about double download
 
 		BioFormatsConvertFilesToSpimData cvt = new BioFormatsConvertFilesToSpimData();
-		//File f = DatasetHelper.getDataset(DatasetHelper.VSI);
-		//File f = DatasetHelper.getDataset(DatasetHelper.JPG_RGB);
-		//File f = DatasetHelper.getDataset("https://www.terroir-fribourg.ch/Media/s/87db6c74daa2645f54a3fa1773662d3a5caed8ae93b1e0.01095846/747.398.1.70/terroir-fribourg-2019-fondue-02-web@2x.jpg");
 		File f = DatasetHelper.getDataset(DatasetHelper.VSI);
-
 
 		cvt.inputFiles = new File[] {
 				DatasetHelper.getDataset(DatasetHelper.VSI),
-				//DatasetHelper.getDataset(DatasetHelper.JPG_RGB),
-				//DatasetHelper.getDataset(DatasetHelper.TIF_TIMELAPSE_3D),
+				DatasetHelper.getDataset(DatasetHelper.JPG_RGB),
+				DatasetHelper.getDataset(DatasetHelper.TIF_TIMELAPSE_3D),
+		};
+		// OR
+		cvt.inputFiles = new File[] {
+				DatasetHelper.getDataset(DatasetHelper.ND2_20X),
+				DatasetHelper.getDataset(DatasetHelper.ND2_60X)
 		};
 		cvt.xmlFilePath = new File(f.getParent());
 		cvt.useBioFormatsCacheBlockSize=true;
@@ -42,10 +43,11 @@ public class OpenAndDisplayImageWithSpimData
 		   cvt.cacheSizeY=64;
 		   cvt.cacheSizeZ=64;
 		cvt.xmlFileName="dataset.xml";
-		cvt.unit = "millimeter";
+		cvt.unit = "micrometer";
 		cvt.saveDataset=true; // Put true if you want to save an xml file for the spimdata
 		cvt.switchZandC="AUTO";
 		cvt.positionIsCenter="AUTO";
+		cvt.flipPosition="AUTO";
 		cvt.verbose=false;//true;
 
 		cvt.run();

@@ -21,6 +21,8 @@ public class DatasetHelper {
     final public static String VSI ="https://github.com/NicoKiaru/TestImages/raw/master/VSI/Fluo3DFluoImage2Channels_01.vsi";
     final public static String LIF = "https://downloads.openmicroscopy.org/images/Leica-LIF/michael/PR2729_frameOrderCombinedScanTypes.lif";
     final public static String TIF_TIMELAPSE_3D = "https://github.com/NicoKiaru/TestImages/raw/master/CElegans/dub-0.5xy-TP1-22.tif";
+    final public static String ND2_20X = "https://github.com/NicoKiaru/TestImages/raw/master/ND2/20x_g5_a1.nd2";
+    final public static String ND2_60X = "https://github.com/NicoKiaru/TestImages/raw/master/ND2/60x_g5_a1.nd2";
 
 
     public static void main(String... args) {

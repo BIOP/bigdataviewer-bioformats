@@ -54,7 +54,7 @@ public class BioFormatsConvertFilesToSpimData implements Command {
     @Parameter
     public boolean useBioFormatsCacheBlockSize = true;
 
-    @Parameter(required = false)
+    @Parameter
     public int cacheSizeX, cacheSizeY, cacheSizeZ;
 
     @Parameter(choices = {MILLIMETER,MICROMETER,NANOMETER})
@@ -64,7 +64,10 @@ public class BioFormatsConvertFilesToSpimData implements Command {
     public String positionIsCenter = "AUTO";
 
     @Parameter(choices = {"AUTO", "TRUE", "FALSE"})
-    public String switchZandC = "FALSE";
+    public String switchZandC = "AUTO";
+
+    @Parameter(choices = {"AUTO", "TRUE", "FALSE"})
+    public String flipPosition = "AUTO";
 
     @Parameter(required=false, label = "output file name") // To append datasets potentially
     public String xmlFileName;
@@ -235,6 +238,12 @@ public class BioFormatsConvertFilesToSpimData implements Command {
                     }
                 }
 
+                if (!flipPosition.equals("AUTO")) {
+                    if (flipPosition.equals("TRUE")) {
+                        opener = opener.flipPosition();
+                    }
+                }
+
                 opener = opener.unit(BioFormatsMetaDataHelper.getUnitFromString(unit));
 
                 opener = opener.positionReferenceFrameLength(positionReferenceFrameLength);
@@ -287,7 +296,7 @@ public class BioFormatsConvertFilesToSpimData implements Command {
                                               openers.get(iFile).voxSizePreTransformMatrixArray, //voxSizePreTransform,
                                               openers.get(iFile).voxSizePostTransformMatrixArray, //AffineTransform3D voxSizePostTransform,
                                               openers.get(iFile).voxSizeReferenceFrameLength, //null, //Length voxSizeReferenceFrameLength,
-                                              openers.get(iFile).axesFlip // axesFlip
+                                              openers.get(iFile).axesOfImageFlip // axesOfImageFlip
                                       )));
                                     } else {
                                       missingViews.add(new ViewId(iTp.getId(), viewSetupId));
