@@ -44,8 +44,8 @@ public class OpenAndDisplayImageWithSource
 						.millimeter() // unit = millimeter
 						//.unit(UNITS.YARD) // Ok, if you really want...
 						//.getConcreteSources()
-						.positionReferenceFrameLength(new Length(10, UNITS.MICROMETER))
-						.voxSizeReferenceFrameLength(new Length(1, UNITS.MICROMETER))
+						.positionReferenceFrameLength(new Length(1, UNITS.MICROMETER))
+						.voxSizeReferenceFrameLength(new Length(100, UNITS.MICROMETER))
 						.getVolatileSources()
 						.stream().map(src -> (Source) src).collect(Collectors.toList());
 						//.getVolatileSources();

@@ -220,40 +220,65 @@ public class BioFormatsMetaDataHelper {
             }
         }
 
-        AffineTransform3D voxSpacing = new AffineTransform3D();
-        if (voxSizePostTransform!=null) {voxSpacing.concatenate(voxSizePostTransform);}
-        if (positionIsImageCenter) {
-            voxSpacing.translate(-(dims.dimension(0)/2d),
-                                 -(dims.dimension(1)/2d),
-                                 -(dims.dimension(2)/2d));
-        }
+        AffineTransform3D translateFwd = new AffineTransform3D();
+        translateFwd.translate(
+                -(dims.dimension(0)/2d),
+                -(dims.dimension(1)/2d),
+                -(dims.dimension(2)/2d));
 
-        voxSpacing.scale(
-                ((axesFlip[0])?-1d:1d)*d[0],
-                ((axesFlip[1])?-1d:1d)*d[1],
-                ((axesFlip[2])?-1d:1d)*d[2]);
+        AffineTransform3D translateBwd = new AffineTransform3D();
+        translateBwd.translate(
+                +(dims.dimension(0)/2d),
+                +(dims.dimension(1)/2d),
+                +(dims.dimension(2)/2d));
 
-        if (voxSizePreTransform!=null) {voxSpacing.concatenate(voxSizePreTransform);}
+        AffineTransform3D flip = new AffineTransform3D();
+        flip.scale(
+                axesFlip[0]?-1:1,
+                axesFlip[1]?-1:1,
+                axesFlip[2]?-1:1);
+
+        AffineTransform3D scaleVox = new AffineTransform3D();
+        scaleVox.scale(
+                d[0],
+                d[1],
+                d[2]);
 
         AffineTransform3D position = new AffineTransform3D();
-        if (positionPostTransform!=null) position.concatenate(positionPostTransform);
         position.translate(p[0], p[1], p[2]);
-        if (positionPreTransform!=null) position.concatenate(positionPreTransform);
 
         AffineTransform3D rootTransform = new AffineTransform3D();
 
+        if (positionPostTransform!=null) {rootTransform.concatenate(positionPostTransform);}
         rootTransform.concatenate(position);
-        rootTransform.concatenate(voxSpacing);
-
+        if (positionPreTransform!=null) {rootTransform.concatenate(positionPreTransform);}
+        if (voxSizePostTransform!=null) {rootTransform.concatenate(voxSizePostTransform);}
+        rootTransform.concatenate(scaleVox);
+        if (positionIsImageCenter) rootTransform.concatenate(translateFwd);
+        rootTransform.concatenate(translateBwd);
+        rootTransform.concatenate(flip);
+        rootTransform.concatenate(translateFwd);
+        if (voxSizePreTransform!=null) {rootTransform.concatenate(voxSizePreTransform);}
         return rootTransform;
     }
 
-    public static VoxelDimensions getSeriesVoxelDimensions(IMetadata omeMeta, int iSerie, Unit u) {
+    public static VoxelDimensions getSeriesVoxelDimensions(IMetadata omeMeta, int iSerie, Unit u, Length voxSizeReferenceFrameLength) {
         // Always 3 to allow for big stitcher compatibility
         //int numDimensions = 2 + (omeMeta.getPixelsSizeZ(iSerie).getNumberValue().intValue()>1?1:0);
         int numDimensions = 3;
+        Length[] voxSize = getSeriesVoxelSizeAsLengths(omeMeta, iSerie);
+        double[] d = new double[3];
 
-        Length[] d = getSeriesVoxelSizeAsLengths(omeMeta, iSerie);
+        for (int iDimension = 0; iDimension<3;iDimension++) { // X:0; Y:1; Z:2
+            if ((voxSize[iDimension].unit()!=null)&&(voxSize[iDimension].unit().isConvertible(u))) {
+                d[iDimension] = voxSize[iDimension].value(u).doubleValue();
+            } else if (voxSize[iDimension].unit().getSymbol().equals("reference frame"))  {
+                Length l = new Length(voxSize[iDimension].value().doubleValue() * voxSizeReferenceFrameLength.value().doubleValue(), voxSizeReferenceFrameLength.unit());
+                d[iDimension] = l.value(u).doubleValue();
+            } else {
+                d[iDimension] = 1;
+            }
+        }
 
         VoxelDimensions voxelDimensions;
 
@@ -264,9 +289,9 @@ public class BioFormatsMetaDataHelper {
                 final Unit<Length> targetUnit = u;
 
                 double[] dims = {
-                        d[0].unit().isConvertible(u)&&(d[0].value(u)==null)?d[0].value(u).doubleValue():d[0].value().doubleValue(),
-                        d[1].unit().isConvertible(u)&&(d[1].value(u)==null)?d[1].value(u).doubleValue():d[1].value().doubleValue(),
-                        d[2].unit().isConvertible(u)&&(d[2].value(u)==null)?d[2].value(u).doubleValue():d[2].value().doubleValue()};
+                        d[0],
+                        d[1],
+                        d[2]};
 
                 @Override
                 public String unit() {

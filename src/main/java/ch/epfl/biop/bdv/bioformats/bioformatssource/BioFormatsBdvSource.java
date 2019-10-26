@@ -32,14 +32,9 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * BigDataViewer multiresolution source built from BioFormat reader
  *
- * Limitations:
- * - 3D unsupported yet
- * - Unsigned Byte, Unsigned Short, RGB channel only
- * - Location of acquisition is supposed to be independent of time -> no live tracking object
  * - NumericType requirement is just for Zero extension out of bounds strategy
  *
  * Useful resources:
- * https://github.com/ome/bio-formats-examples/blob/master/src/main/java/ReadPhysicalSize.java
  * All the bio-formats-examples repository on GitHub
  *
  * @param <T> pixel type
@@ -184,36 +179,9 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
             is3D=false;
         }
 
-        int numDimensions = 3; // For BigStitcher compatibility
-        {
-            assert numDimensions == 3;
-            voxelsDimensions = new VoxelDimensions() {
-
-                double[] dims = {1,1,1};
-
-                @Override
-                public String unit() {
-                    return targetUnit.getSymbol();
-                }
-
-                @Override
-                public void dimensions(double[] doubles) {
-                    doubles[0] = dims[0];
-                    doubles[1] = dims[1];
-                    doubles[2] = dims[2];
-                }
-
-                @Override
-                public double dimension(int i) {
-                    return dims[i];
-                }
-
-                @Override
-                public int numDimensions() {
-                    return numDimensions;
-                }
-            };
-        }
+        voxelsDimensions = BioFormatsMetaDataHelper.getSeriesVoxelDimensions(
+                omeMeta, image_index, u, voxSizeReferenceFrameLength
+        );
 
         cellDimensions = new int[] {
                 useBioFormatsXYBlockSize?reader.getOptimalTileWidth():(int)cacheBlockSize.dimension(0),
