@@ -97,11 +97,21 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
 
     public boolean ignoreBioFormatsLocationMetaData;
 
-    boolean positionConventionIsCenter;
+    boolean positionIsImageCenter;
 
     public int[] cellDimensions;
 
     final Unit<Length> targetUnit;
+
+    final Length positionReferenceFrameLength;
+    final Length voxSizeReferenceFrameLength;
+
+    final AffineTransform3D positionPreTransform;
+    final AffineTransform3D positionPostTransform;
+    final AffineTransform3D voxSizePreTransform;
+    final AffineTransform3D voxSizePostTransform;
+
+    final boolean[] axesFlip;
 
     /**
      * Bio Format source cosntructor
@@ -118,8 +128,15 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
                                boolean useBioFormatsXYBlockSize,
                                boolean ignoreBioFormatsLocationMetaData,
                                boolean ignoreBioFormatsVoxelSizeMetaData,
-                               boolean positionConventionIsCenter,
-                               Unit u)
+                               boolean positionIsImageCenter,
+                               Length positionReferenceFrameLength,
+                               Length voxSizeReferenceFrameLength,
+                               Unit u,
+                               AffineTransform3D positionPreTransform,
+                               AffineTransform3D positionPostTransform,
+                               AffineTransform3D voxSizePreTransform,
+                               AffineTransform3D voxSizePostTransform,
+                               boolean[] axesFlip)
     {
         this.targetUnit = u;
         this.ignoreBioFormatsLocationMetaData = ignoreBioFormatsLocationMetaData;
@@ -132,7 +149,14 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
         this.cSerie = image_index;
         this.cChannel = channel_index;
         this.numberOfTimePoints = this.reader.getSizeT();
-        this.positionConventionIsCenter=positionConventionIsCenter;
+        this.positionIsImageCenter = positionIsImageCenter;
+        this.positionReferenceFrameLength = positionReferenceFrameLength;
+        this.voxSizeReferenceFrameLength = voxSizeReferenceFrameLength;
+        this.positionPostTransform = positionPostTransform;
+        this.positionPreTransform = positionPreTransform;
+        this.voxSizePostTransform = voxSizePostTransform;
+        this.voxSizePreTransform = voxSizePreTransform;
+        this.axesFlip = axesFlip;
 
         // MetaData
         final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
@@ -201,7 +225,16 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
         if (ignoreBioFormatsLocationMetaData) {
             rootTransform.identity();
         } else {
-            rootTransform.set(BioFormatsMetaDataHelper.getRootTransform(omeMeta, image_index, targetUnit, positionConventionIsCenter));
+            rootTransform.set(BioFormatsMetaDataHelper.getSeriesRootTransform(omeMeta,
+                    image_index,targetUnit,
+                    positionPreTransform,
+                    positionPostTransform,
+                    positionReferenceFrameLength,
+                    positionIsImageCenter,
+                    voxSizePreTransform,
+                    voxSizePostTransform,
+                    voxSizeReferenceFrameLength,
+                    axesFlip));
         }
     }
 

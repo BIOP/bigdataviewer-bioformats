@@ -26,10 +26,6 @@ import java.util.logging.Logger;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
-/**
- *
- */
-
 public class BioFormatsMetaDataHelper {
 
     private static final Logger LOGGER = Logger.getLogger( BioFormatsMetaDataHelper.class.getName() );
@@ -39,7 +35,7 @@ public class BioFormatsMetaDataHelper {
         int iSerie;
         int iChannel;
         int emissionWl;
-        String chName="";
+        public String chName="";
         String pxType="";
         boolean isRGB;
 
@@ -75,100 +71,189 @@ public class BioFormatsMetaDataHelper {
             } else {
                 return false;
             }
-
         }
-
     }
 
-    public static double[] getPos(IMetadata omeMeta, int iSerie, Unit u) {
-        double pXmm = 0, pYmm = 0, pZmm = 0; // Location of pixel located at coordinates 0,0,0
-        // First : try with Physical dimension
-        try {
-            if (omeMeta.getPlaneCount(iSerie)>0) {
-                pXmm = omeMeta.getPlanePositionX(iSerie, 0).value(u).doubleValue();
-                pYmm = omeMeta.getPlanePositionY(iSerie, 0).value(u).doubleValue();
-            }
-        } catch(NullPointerException e) { // Beurk
-            //System.out.println("NullPointerException Caught : no physical units");
-            try {
-                pXmm = omeMeta.getPlanePositionX(iSerie, 0).value().doubleValue();
-                pYmm = omeMeta.getPlanePositionY(iSerie, 0).value().doubleValue();
-                //System.out.println("NullPointerException Caught : no plane position");
-            } catch (NullPointerException e2) { // Beurk
-                pXmm=0;
-                pYmm=0;
-            }
-        }
+    public static Length[] getSeriesPositionAsLengths(IMetadata omeMeta, int iSerie) {
+        Length[] pos = new Length[3];
 
-        // In 3D if available
-        if (omeMeta.getPixelsPhysicalSizeZ(iSerie)==null) {
-            pZmm=0;
+        if (omeMeta.getPlanePositionX(iSerie, 0)!=null) {
+            pos[0] = omeMeta.getPlanePositionX(iSerie, 0);
         } else {
-            try {
-                pZmm = omeMeta.getPlanePositionZ(iSerie, 0).value(u).doubleValue();
-            }  catch(NullPointerException | IndexOutOfBoundsException e2 ) { // Beurk
-                pZmm=0;
-            }
-        }
-        return new double[]{pXmm,pYmm,pZmm};
-    }
-
-    public static double[] getVoxSize(IMetadata omeMeta, int iSerie, Unit u) {
-        double dXmm, dYmm, dZmm; // Voxel size
-
-        try {
-            dXmm = omeMeta.getPixelsPhysicalSizeX(iSerie).value(u).doubleValue();
-            dYmm = omeMeta.getPixelsPhysicalSizeY(iSerie).value(u).doubleValue();
-        } catch(NullPointerException e1) { // Beurk
-            //System.out.print("NullPointerException Caught");
-                dXmm=1;
-                dYmm=1;
+            pos[0] = new Length(0,UNITS.REFERENCEFRAME);
         }
 
-        // In 3D if available
-        if (omeMeta.getPixelsPhysicalSizeZ(iSerie)==null) {
-            dZmm=1;
+        if (omeMeta.getPlanePositionY(iSerie, 0)!=null) {
+            pos[1] = omeMeta.getPlanePositionY(iSerie, 0);
         } else {
-            try {
-                dZmm = omeMeta.getPixelsPhysicalSizeZ(iSerie).value(u).doubleValue();
-            }  catch(NullPointerException e2) {
-                dZmm=1;
-            }
+            pos[1] = new Length(0,UNITS.REFERENCEFRAME);
         }
-        return new double[]{dXmm, dYmm, dZmm};
+
+        if (omeMeta.getPlanePositionZ(iSerie, 0)!=null) {
+            pos[2] = omeMeta.getPlanePositionZ(iSerie, 0);
+        } else {
+            pos[2] = new Length(0,UNITS.REFERENCEFRAME);
+        }
+
+        return pos;
     }
 
-    public static AffineTransform3D getRootTransform(IMetadata omeMeta, int iSerie, Unit u, boolean isCenterConvention) {
+    public static Length[] getSeriesVoxelSizeAsLengths(IMetadata omeMeta, int iSerie) {
+        Length[] vox = new Length[3];
+
+        if (omeMeta.getPixelsPhysicalSizeX(iSerie)!=null) {
+            vox[0] = omeMeta.getPixelsPhysicalSizeX(iSerie);
+        } else {
+            vox[0] = new Length(1,UNITS.REFERENCEFRAME);
+        }
+
+        if (omeMeta.getPixelsPhysicalSizeY(iSerie)!=null) {
+            vox[1] = omeMeta.getPixelsPhysicalSizeY(iSerie);
+        } else {
+            vox[1] = new Length(1,UNITS.REFERENCEFRAME);
+        }
+
+        if (omeMeta.getPixelsPhysicalSizeZ(iSerie)!=null) {
+            vox[2] = omeMeta.getPixelsPhysicalSizeZ(iSerie);
+        } else {
+            vox[2] = new Length(1,UNITS.REFERENCEFRAME);
+        }
+
+        return vox;
+    }
+
+    public static AffineTransform3D getSeriesRootTransform(IMetadata omeMeta,
+                                                           int iSerie,
+                                                           Unit u,
+                                                           // Bioformats location fix
+                                                           double[] positionPreTransformMA,
+                                                           double[] positionPostTransformMA,
+                                                           Length positionReferenceFrameLength,
+                                                           boolean positionIsImageCenter,
+                                                           // Bioformats voxSize fix
+                                                           double[] voxSizePreTransformMA,
+                                                           double[] voxSizePostTransformMA,
+                                                           Length voxSizeReferenceFrameLength,
+                                                           boolean[] axesFlip) {
+
+        AffineTransform3D positionPreTransform = null;
+        if (positionPreTransformMA!=null) {
+            positionPreTransform = new AffineTransform3D();
+            positionPreTransform.set(positionPreTransformMA);
+        }
+
+        AffineTransform3D positionPostTransform = null;
+        if (positionPostTransformMA!=null) {
+            positionPostTransform = new AffineTransform3D();
+            positionPostTransform.set(positionPostTransformMA);
+        }
+
+        AffineTransform3D voxSizePreTransform = null;
+        if (voxSizePreTransformMA!=null) {
+            voxSizePreTransform = new AffineTransform3D();
+            voxSizePreTransform.set(voxSizePreTransformMA);
+        }
+
+        AffineTransform3D voxSizePostTransform = null;
+        if (voxSizePreTransformMA!=null) {
+            voxSizePostTransform = new AffineTransform3D();
+            voxSizePostTransform.set(voxSizePostTransformMA);
+        }
+
+        return getSeriesRootTransform(omeMeta,
+            iSerie,
+            u,
+            // Bioformats location fix
+            positionPreTransform,
+            positionPostTransform,
+            positionReferenceFrameLength,
+            positionIsImageCenter,
+            // Bioformats voxSize fix
+            voxSizePreTransform,
+            voxSizePostTransform,
+            voxSizeReferenceFrameLength,
+            axesFlip);
+
+    }
+
+    public static AffineTransform3D getSeriesRootTransform(IMetadata omeMeta,
+                                                           int iSerie,
+                                                           Unit u,
+                                                           // Bioformats location fix
+                                                           AffineTransform3D positionPreTransform,
+                                                           AffineTransform3D positionPostTransform,
+                                                           Length positionReferenceFrameLength,
+                                                           boolean positionIsImageCenter,
+                                                           // Bioformats voxSize fix
+                                                           AffineTransform3D voxSizePreTransform,
+                                                           AffineTransform3D voxSizePostTransform,
+                                                           Length voxSizeReferenceFrameLength,
+                                                           boolean[] axesFlip) {
+
+        Length[] voxSize = getSeriesVoxelSizeAsLengths(omeMeta, iSerie);
+        double[] d = new double[3];
+
+        for (int iDimension = 0; iDimension<3;iDimension++) { // X:0; Y:1; Z:2
+            if ((voxSize[iDimension].unit()!=null)&&(voxSize[iDimension].unit().isConvertible(u))) {
+                d[iDimension] = voxSize[iDimension].value(u).doubleValue();
+            } else if (voxSize[iDimension].unit().getSymbol().equals("reference frame"))  {
+                Length l = new Length(voxSize[iDimension].value().doubleValue() * voxSizeReferenceFrameLength.value().doubleValue(), voxSizeReferenceFrameLength.unit());
+                d[iDimension] = l.value(u).doubleValue();
+            } else {
+                d[iDimension] = 1;
+            }
+        }
+
+        Length[] pos = getSeriesPositionAsLengths(omeMeta, iSerie);
+        double[] p = new double[3];
+
+        Dimensions dims = getSeriesDimensions(omeMeta, iSerie);
+
+        for (int iDimension = 0; iDimension<3;iDimension++) { // X:0; Y:1; Z:2
+            if ((pos[iDimension].unit()!=null)&&(pos[iDimension].unit().isConvertible(u))) {
+                p[iDimension] = pos[iDimension].value(u).doubleValue();
+            } else if (pos[iDimension].unit().getSymbol().equals("reference frame")) {
+                Length l = new Length(pos[iDimension].value().doubleValue() * positionReferenceFrameLength.value().doubleValue(), positionReferenceFrameLength.unit());
+                p[iDimension] = l.value(u).doubleValue();
+            } else {
+                p[iDimension] = 0;
+            }
+        }
+
+        AffineTransform3D voxSpacing = new AffineTransform3D();
+        if (voxSizePostTransform!=null) {voxSpacing.concatenate(voxSizePostTransform);}
+        if (positionIsImageCenter) {
+            voxSpacing.translate(-(dims.dimension(0)/2d),
+                                 -(dims.dimension(1)/2d),
+                                 -(dims.dimension(2)/2d));
+        }
+
+        voxSpacing.scale(
+                ((axesFlip[0])?-1d:1d)*d[0],
+                ((axesFlip[1])?-1d:1d)*d[1],
+                ((axesFlip[2])?-1d:1d)*d[2]);
+
+        if (voxSizePreTransform!=null) {voxSpacing.concatenate(voxSizePreTransform);}
+
+        AffineTransform3D position = new AffineTransform3D();
+        if (positionPostTransform!=null) position.concatenate(positionPostTransform);
+        position.translate(p[0], p[1], p[2]);
+        if (positionPreTransform!=null) position.concatenate(positionPreTransform);
 
         AffineTransform3D rootTransform = new AffineTransform3D();
 
-        double[] p = getPos(omeMeta, iSerie, u);
-        double[] d = getVoxSize(omeMeta, iSerie, u);
+        rootTransform.concatenate(position);
+        rootTransform.concatenate(voxSpacing);
 
-        // Sets AffineTransform of the highest resolution image from the pyramid
-        rootTransform.identity();
-        rootTransform.set(
-                d[0],0   ,0   ,0,
-                0   ,d[1],0   ,0,
-                0   ,0   ,d[2],0,
-                0   ,0   ,0   ,1
-        );
-        if (isCenterConvention) {
-            Dimensions dims = getDimensions(omeMeta, iSerie, u);
-            p[0]-=(dims.dimension(0)/2d)*d[0];
-            p[1]-=(dims.dimension(1)/2d)*d[1];
-            p[2]-=(dims.dimension(2)/2d)*d[2];
-        }
-        rootTransform.translate(p[0], p[1], p[2]);
         return rootTransform;
     }
 
-    public static VoxelDimensions getVoxelDimensions(IMetadata omeMeta, int iSerie, Unit u) {
+    public static VoxelDimensions getSeriesVoxelDimensions(IMetadata omeMeta, int iSerie, Unit u) {
         // Always 3 to allow for big stitcher compatibility
         //int numDimensions = 2 + (omeMeta.getPixelsSizeZ(iSerie).getNumberValue().intValue()>1?1:0);
         int numDimensions = 3;
 
-        double[] d = getVoxSize(omeMeta, iSerie, u);
+        Length[] d = getSeriesVoxelSizeAsLengths(omeMeta, iSerie);
 
         VoxelDimensions voxelDimensions;
 
@@ -178,7 +263,10 @@ public class BioFormatsMetaDataHelper {
 
                 final Unit<Length> targetUnit = u;
 
-                double[] dims = {d[0],d[1],d[2]};
+                double[] dims = {
+                        d[0].unit().isConvertible(u)&&(d[0].value(u)==null)?d[0].value(u).doubleValue():d[0].value().doubleValue(),
+                        d[1].unit().isConvertible(u)&&(d[1].value(u)==null)?d[1].value(u).doubleValue():d[1].value().doubleValue(),
+                        d[2].unit().isConvertible(u)&&(d[2].value(u)==null)?d[2].value(u).doubleValue():d[2].value().doubleValue()};
 
                 @Override
                 public String unit() {
@@ -189,7 +277,6 @@ public class BioFormatsMetaDataHelper {
                 public void dimensions(double[] doubles) {
                     doubles[0] = dims[0];
                     doubles[1] = dims[1];
-                    //if (numDimensions==3)
                     doubles[2] = dims[2];
                 }
 
@@ -207,7 +294,7 @@ public class BioFormatsMetaDataHelper {
         return voxelDimensions;
     }
 
-    public static Dimensions getDimensions(IMetadata omeMeta, int iSerie, Unit u) {
+    public static Dimensions getSeriesDimensions(IMetadata omeMeta, int iSerie) {
         // Always set 3d to allow for Big Stitcher compatibility
         //int numDimensions = 2 + (omeMeta.getPixelsSizeZ(iSerie).getNumberValue().intValue()>1?1:0);
         int numDimensions = 3;
@@ -217,6 +304,7 @@ public class BioFormatsMetaDataHelper {
         int sZ = omeMeta.getPixelsSizeZ(iSerie).getNumberValue().intValue();
 
         long[] dims = new long[3];
+
         dims[0] = sX;
 
         dims[1] = sY;
@@ -229,7 +317,6 @@ public class BioFormatsMetaDataHelper {
                 dimensions[0] = dims[0];
                 dimensions[1] = dims[1];
                 dimensions[2] = dims[2];
-                //if (numDimensions==3) dimensions[2] = dims[2];
             }
 
             @Override
@@ -534,6 +621,7 @@ public class BioFormatsMetaDataHelper {
         Field[] bfUnits = UNITS.class.getFields();
         for (Field f:bfUnits) {
             if (f.getType().equals(Unit.class)) {
+                if (f.getName()!=null)
                 if (f.getName().toUpperCase().equals(unit_string.trim().toUpperCase())) {
                     try {
                         // Field found
@@ -548,6 +636,5 @@ public class BioFormatsMetaDataHelper {
         // Field not found
         return null;
     }
-
 
 }

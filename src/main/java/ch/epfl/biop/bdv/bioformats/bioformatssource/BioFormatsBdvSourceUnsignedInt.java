@@ -7,8 +7,10 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.cache.img.DiskCachedCellImgFactory;
 import net.imglib2.cache.img.DiskCachedCellImgOptions;
 import net.imglib2.img.Img;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.integer.UnsignedIntType;
 import net.imglib2.view.Views;
+import ome.units.quantity.Length;
 import ome.units.unit.Unit;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,15 +22,37 @@ public class BioFormatsBdvSourceUnsignedInt extends BioFormatsBdvSource<Unsigned
     public BioFormatsBdvSourceUnsignedInt(IFormatReader reader,
                                           int image_index,
                                           int channel_index,
-                                          boolean sw,
+                                          boolean swZC,
                                           FinalInterval cacheBlockSize,
                                           boolean useBioFormatsXYBlockSize,
                                           boolean ignoreBioFormatsLocationMetaData,
                                           boolean ignoreBioFormatsVoxelSizeMetaData,
-                                          boolean positionConventionIsCenter, Unit u) {
-        super(reader, image_index, channel_index, sw, cacheBlockSize, useBioFormatsXYBlockSize,
-                ignoreBioFormatsLocationMetaData, ignoreBioFormatsVoxelSizeMetaData,
-                positionConventionIsCenter,u);
+                                          boolean positionConventionIsCenter,
+                                          Length locationReferenceFrameLength,
+                                          Length voxSizeReferenceFrameLength,
+                                          Unit u,
+                                          AffineTransform3D locationPreTransform,
+                                          AffineTransform3D locationPostTransform,
+                                          AffineTransform3D voxSizePreTransform,
+                                          AffineTransform3D voxSizePostTransform,
+                                          boolean[] axesFlip) {
+        super(reader,
+                image_index,
+                channel_index,
+                swZC,
+                cacheBlockSize,
+                useBioFormatsXYBlockSize,
+                ignoreBioFormatsLocationMetaData,
+                ignoreBioFormatsVoxelSizeMetaData,
+                positionConventionIsCenter,
+                locationReferenceFrameLength,
+                voxSizeReferenceFrameLength,
+                u,
+                locationPreTransform,
+                locationPostTransform,
+                voxSizePreTransform,
+                voxSizePostTransform,
+                axesFlip);
     }
 
 

@@ -6,8 +6,10 @@ import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;
 import net.imglib2.FinalInterval;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.NumericType;
 import ome.units.UNITS;
+import ome.units.quantity.Length;
 import ome.units.unit.Unit;
 
 import java.io.File;
@@ -24,14 +26,34 @@ public class BioFormatsBdvOpener {
 
     // All serializable fields
     public String dataLocation = null; // URL or File
-    public boolean swZC;
+
+    public boolean useBioFormatsXYBlockSize = true; // Block size : use the one defined by BioFormats or
     public FinalInterval cacheBlockSize = new FinalInterval(new long[]{0,0,0}, new long[]{512,512,1}); // needs a default size for z
-    public boolean useBioFormatsXYBlockSize = true;
-    public boolean ignoreBioFormatsLocationMetaData = false;
-    public boolean ignoreBioFormatsVoxelSizeMetaData = false;
-    public boolean positionConventionIsCenter = false;
+
+    // Channels options
+    public boolean swZC; // Switch Z and Channels
     public boolean splitRGBChannels = false;
+
+    // Unit used for display
     public Unit u;
+
+    // Bioformats location fix
+    //transient private AffineTransform3D positionPreTransform;
+    public double[] positionPreTransformMatrixArray;
+    //transient private AffineTransform3D positionPostTransform;
+    public double[] positionPostTransformMatrixArray;
+    public Length positionReferenceFrameLength;
+    public boolean positionIgnoreBioFormatsMetaData = false;
+    public boolean positionIsImageCenter = false; // Top left corner otherwise
+
+    // Bioformats voxsize fix
+    //transient private AffineTransform3D voxSizePreTransform;
+    public double[] voxSizePreTransformMatrixArray;
+    //transient private AffineTransform3D voxSizePostTransform;
+    public double[] voxSizePostTransformMatrixArray;
+    public Length voxSizeReferenceFrameLength;
+    public boolean voxSizeIgnoreBioFormatsMetaData = false;
+    public boolean[] axesFlip = new boolean[]{false, false, false};
 
     public String getDataLocation() {
         return dataLocation;
@@ -47,6 +69,16 @@ public class BioFormatsBdvOpener {
         return this;
     }
 
+    public BioFormatsBdvOpener positionReferenceFrameLength(Length l) {
+        this.positionReferenceFrameLength = l;
+        return this;
+    }
+
+    public BioFormatsBdvOpener voxSizeReferenceFrameLength(Length l) {
+        this.voxSizeReferenceFrameLength = l;
+        return this;
+    }
+
     public BioFormatsBdvOpener file(String filePath) {
         this.dataLocation = filePath;
         return this;
@@ -54,6 +86,27 @@ public class BioFormatsBdvOpener {
 
     public BioFormatsBdvOpener splitRGBChannels() {
         splitRGBChannels = true;
+        return this;
+    }
+
+    public BioFormatsBdvOpener flipPosition() {
+        if (this.positionPreTransformMatrixArray == null) {
+            positionPreTransformMatrixArray = new AffineTransform3D().getRowPackedCopy();
+        }
+        AffineTransform3D at3D = new AffineTransform3D();
+        at3D.set(positionPreTransformMatrixArray);
+        at3D.scale(-1);
+        positionPreTransformMatrixArray = at3D.getRowPackedCopy();
+        return this;
+    }
+
+    public BioFormatsBdvOpener setPositionPreTransform(AffineTransform3D at3d) {
+        positionPreTransformMatrixArray = at3d.getRowPackedCopy();
+        return this;
+    }
+
+    public BioFormatsBdvOpener setPositionPostTransform(AffineTransform3D at3d) {
+        positionPostTransformMatrixArray = at3d.getRowPackedCopy();
         return this;
     }
 
@@ -81,10 +134,11 @@ public class BioFormatsBdvOpener {
 
         //System.out.println("Attempts to set opener settings for file format " + reader.getFormat());
 
-        // Adjustements here! Especially center convention
+        // Adjustements here!
 
-        if (reader.getFormat().equals("nd2")) {
-            positionConventionIsCenter=true;
+        if (reader.getFormat().equals("Nikon ND2")) {
+            positionIsImageCenter = true;
+            this.flipPosition();
         }
 
         return this;
@@ -110,12 +164,17 @@ public class BioFormatsBdvOpener {
         return this;
     }
 
+    public BioFormatsBdvOpener unit(String u) {
+        this.u = BioFormatsMetaDataHelper.getUnitFromString(u);
+        return this;
+    }
+
     public BioFormatsBdvOpener millimeter() {
         this.u = UNITS.MILLIMETER;
         return this;
     }
 
-    public BioFormatsBdvOpener micronmeter() {
+    public BioFormatsBdvOpener micrometer() {
         this.u = UNITS.MICROMETER;
         return this;
     }
@@ -126,18 +185,18 @@ public class BioFormatsBdvOpener {
     }
 
     public BioFormatsBdvOpener centerPositionConvention() {
-        this.positionConventionIsCenter = true;
+        this.positionIsImageCenter = true;
         return this;
     }
 
     public BioFormatsBdvOpener cornerPositionConvention() {
-        this.positionConventionIsCenter = false;
+        this.positionIsImageCenter = false;
         return this;
     }
 
     public BioFormatsBdvOpener ignoreMetadata() {
-        this.ignoreBioFormatsLocationMetaData = true;
-        this.ignoreBioFormatsVoxelSizeMetaData = true;
+        this.positionIgnoreBioFormatsMetaData = true;
+        this.voxSizeIgnoreBioFormatsMetaData = true;
         return this;
     }
 
@@ -158,7 +217,6 @@ public class BioFormatsBdvOpener {
     }
 
     public IFormatReader getNewReader() {
-        //System.out.println("Serie:\t" + image_index + "\t Channel:\t" + channel_index);
         IFormatReader reader = new ImageReader();
         reader.setFlattenedResolutions(false);
         if (splitRGBChannels) {reader = new ChannelSeparator(reader);}
@@ -188,19 +246,33 @@ public class BioFormatsBdvOpener {
     public BioFormatsBdvSource getConcreteSource(int image_index, int channel_index) {
         try {
 
-            /*System.out.println("Serie:\t" + image_index + "\t Channel:\t" + channel_index);
-            IFormatReader reader = new ImageReader();
-            reader.setFlattenedResolutions(false);
-            if (splitRGBChannels) {reader = new ChannelSeparator(reader);}
-            Memoizer memo = new Memoizer(reader);
-            final IMetadata omeMetaIdxOmeXml = MetadataTools.createOMEXMLMetadata();
-            memo.setMetadataStore(omeMetaIdxOmeXml);
-            memo.setId(dataLocation);
-            final IFormatReader readerIdx = memo;*/
-
             final IFormatReader readerIdx = getNewReader();
 
             Class<? extends BioFormatsBdvSource> c = BioFormatsBdvSource.getBioformatsBdvSourceClass(readerIdx, image_index);
+
+            AffineTransform3D positionPreTransform = null;
+            if (positionPreTransformMatrixArray!=null) {
+                positionPreTransform = new AffineTransform3D();
+                positionPreTransform.set(positionPreTransformMatrixArray);
+            }
+
+            AffineTransform3D positionPostTransform = null;
+            if (positionPostTransformMatrixArray!=null) {
+                positionPostTransform = new AffineTransform3D();
+                positionPostTransform.set(positionPostTransformMatrixArray);
+            }
+
+            AffineTransform3D voxSizePreTransform = null;
+            if (voxSizePreTransformMatrixArray!=null) {
+                voxSizePreTransform = new AffineTransform3D();
+                voxSizePreTransform.set(voxSizePreTransformMatrixArray);
+            }
+
+            AffineTransform3D voxSizePostTransform = null;
+            if (voxSizePreTransformMatrixArray!=null) {
+                voxSizePostTransform = new AffineTransform3D();
+                voxSizePostTransform.set(voxSizePostTransformMatrixArray);
+            }
 
             BioFormatsBdvSource bdvSrc = c.getConstructor(
                     IFormatReader.class,
@@ -212,7 +284,14 @@ public class BioFormatsBdvOpener {
                     boolean.class,
                     boolean.class,
                     boolean.class,
-                    Unit.class
+                    Length.class,
+                    Length.class,
+                    Unit.class,
+                    AffineTransform3D.class, // public  positionPreTransform;
+                    AffineTransform3D.class, // positionPostTransform;
+                    AffineTransform3D.class, // public  positionPreTransform;
+                    AffineTransform3D.class, // positionPostTransform;
+                    boolean[].class
             ).newInstance(
                     readerIdx,
                     image_index,
@@ -220,10 +299,17 @@ public class BioFormatsBdvOpener {
                     swZC,
                     cacheBlockSize,
                     useBioFormatsXYBlockSize,
-                    ignoreBioFormatsLocationMetaData,
-                    ignoreBioFormatsVoxelSizeMetaData,
-                    positionConventionIsCenter,
-                    u);
+                    positionIgnoreBioFormatsMetaData,
+                    voxSizeIgnoreBioFormatsMetaData,
+                    positionIsImageCenter,
+                    positionReferenceFrameLength,
+                    voxSizeReferenceFrameLength,
+                    u,
+                    positionPreTransform,
+                    positionPostTransform,
+                    voxSizePreTransform,
+                    voxSizePostTransform,
+                    axesFlip);
             return bdvSrc;
         } catch (Exception e) {
             e.printStackTrace();

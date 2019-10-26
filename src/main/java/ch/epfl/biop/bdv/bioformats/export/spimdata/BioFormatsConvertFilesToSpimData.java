@@ -14,7 +14,8 @@ import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.*;
 import net.imglib2.Dimensions;
-import ome.units.UNITS;
+import ome.units.quantity.Length;
+import ome.units.unit.Unit;
 import org.apache.commons.io.FilenameUtils;
 import org.scijava.ItemIO;
 import org.scijava.command.Command;
@@ -59,11 +60,11 @@ public class BioFormatsConvertFilesToSpimData implements Command {
     @Parameter(choices = {MILLIMETER,MICROMETER,NANOMETER})
     public String unit;
 
-    @Parameter
-    public boolean positionConventionIsCenter = false;
+    @Parameter(choices = {"AUTO", "TRUE", "FALSE"})
+    public String positionIsCenter = "AUTO";
 
-    @Parameter
-    public boolean switchZandC = false;
+    @Parameter(choices = {"AUTO", "TRUE", "FALSE"})
+    public String switchZandC = "FALSE";
 
     @Parameter(required=false, label = "output file name") // To append datasets potentially
     public String xmlFileName;
@@ -75,7 +76,13 @@ public class BioFormatsConvertFilesToSpimData implements Command {
     public boolean saveDataset=true;
 
     @Parameter
-    public boolean verbose;
+    public boolean verbose = false;
+
+    @Parameter(label = "Reference Frame Position value in specified unit ")
+    public double refFramePositionValue = 1;
+
+    @Parameter(label = "Reference Frame Voxel Size value in specified unit ")
+    public double refFrameVoxSizeValue = 1;
 
     public Consumer<String> log = s -> {};
 
@@ -95,14 +102,25 @@ public class BioFormatsConvertFilesToSpimData implements Command {
     Map<Integer, SeriesTps> fileIdxToNumberOfSeriesAndTimepoints = new HashMap<>();
     Map<Integer, FileSerieChannel> viewSetupToBFFileSerieChannel = new HashMap<>();
 
+    Unit bfUnit;
+
     @Override
     public void run() {
+
+        this.positionIsCenter = positionIsCenter.trim().toUpperCase();
+        this.switchZandC = switchZandC.trim().toUpperCase();
 
         if (verbose) {
             log = s -> System.out.println(s);
         } else {
             log = s -> {};
         }
+
+        bfUnit = BioFormatsMetaDataHelper.getUnitFromString(unit);
+
+        Length positionReferenceFrameLength = new Length(refFramePositionValue, bfUnit);
+        Length voxSizeReferenceFrameLength = new Length(refFrameVoxSizeValue, bfUnit);
+
         IFormatReader readerIdx = new ImageReader();
 
         readerIdx.setFlattenedResolutions(false);
@@ -152,8 +170,8 @@ public class BioFormatsConvertFilesToSpimData implements Command {
                         maxTimepoints = omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue();
                     }
                     String imageName = omeMeta.getImageName(iSerie);
-                    Dimensions dims = BioFormatsMetaDataHelper.getDimensions(omeMeta, iSerie, UNITS.MILLIMETER);
-                    VoxelDimensions voxDims = BioFormatsMetaDataHelper.getVoxelDimensions(omeMeta, iSerie, UNITS.MILLIMETER);
+                    Dimensions dims = BioFormatsMetaDataHelper.getSeriesDimensions(omeMeta, iSerie); // number of pixels .. no calibration
+                    VoxelDimensions voxDims = BioFormatsMetaDataHelper.getSeriesVoxelDimensions(omeMeta, iSerie, bfUnit);
                     // Register Setups (one per channel and one per timepoint)
                     channels.forEach(
                             iCh -> {
@@ -199,21 +217,29 @@ public class BioFormatsConvertFilesToSpimData implements Command {
                 BioFormatsBdvOpener opener = BioFormatsBdvOpener.getOpener()
                         .file(f)
                         .auto()
-                        .ignoreMetadata()
-                        .switchZandC(switchZandC);
+                        .ignoreMetadata();
+                if (!switchZandC.equals("AUTO")) {
+                    opener = opener.switchZandC(switchZandC.equals("TRUE"));
+                }
 
                 if (!useBioFormatsCacheBlockSize) {
                     opener = opener.cacheBlockSize(cacheSizeX,cacheSizeY,cacheSizeZ);
                 }
 
                 // Not sure it is useful here because the metadata location is handled somewhere else
-                if (positionConventionIsCenter) {
-                    opener=opener.centerPositionConvention();
-                } else {
-                    opener=opener.cornerPositionConvention();
+                if (!positionIsCenter.equals("AUTO")) {
+                    if (positionIsCenter.equals("TRUE")) {
+                        opener = opener.centerPositionConvention();
+                    } else {
+                        opener=opener.cornerPositionConvention();
+                    }
                 }
 
                 opener = opener.unit(BioFormatsMetaDataHelper.getUnitFromString(unit));
+
+                opener = opener.positionReferenceFrameLength(positionReferenceFrameLength);
+
+                opener = opener.voxSizeReferenceFrameLength(voxSizeReferenceFrameLength);
 
                 openers.add(opener);
             });
@@ -250,7 +276,19 @@ public class BioFormatsConvertFilesToSpimData implements Command {
                                 .filter(viewSetupId -> (viewSetupToBFFileSerieChannel.get(viewSetupId).iSerie == iSerie))
                                 .forEach(viewSetupId -> {
                                     if (iTp.getId()<nTimepoints) {
-                                      registrations.add(new ViewRegistration(iTp.getId(), viewSetupId, BioFormatsMetaDataHelper.getRootTransform(omeMeta, iSerie, UNITS.MILLIMETER, positionConventionIsCenter)));
+                                      registrations.add(new ViewRegistration(iTp.getId(), viewSetupId, BioFormatsMetaDataHelper.getSeriesRootTransform(
+                                              omeMeta,
+                                              iSerie,
+                                              bfUnit,
+                                              openers.get(iFile).positionPreTransformMatrixArray, //AffineTransform3D positionPreTransform,
+                                              openers.get(iFile).positionPostTransformMatrixArray, //AffineTransform3D positionPostTransform,
+                                              openers.get(iFile).positionReferenceFrameLength,
+                                              openers.get(iFile).positionIsImageCenter, //boolean positionIsImageCenter,
+                                              openers.get(iFile).voxSizePreTransformMatrixArray, //voxSizePreTransform,
+                                              openers.get(iFile).voxSizePostTransformMatrixArray, //AffineTransform3D voxSizePostTransform,
+                                              openers.get(iFile).voxSizeReferenceFrameLength, //null, //Length voxSizeReferenceFrameLength,
+                                              openers.get(iFile).axesFlip // axesFlip
+                                      )));
                                     } else {
                                       missingViews.add(new ViewId(iTp.getId(), viewSetupId));
                                     }
