@@ -115,22 +115,14 @@ public class BioFormatsConvertFilesToSpimData implements Command {
 
         if (verbose) {
             log = s -> System.out.println(s);
-        } else {
+        } /*else {
             log = s -> {};
-        }
+        }*/
 
         bfUnit = BioFormatsMetaDataHelper.getUnitFromString(unit);
 
         Length positionReferenceFrameLength = new Length(refFramePositionValue, bfUnit);
         Length voxSizeReferenceFrameLength = new Length(refFrameVoxSizeValue, bfUnit);
-
-        IFormatReader readerIdx = new ImageReader();
-
-        readerIdx.setFlattenedResolutions(false);
-        Memoizer memo = new Memoizer( readerIdx );
-
-        final IMetadata omeMetaOmeXml = MetadataTools.createOMEXMLMetadata();
-        memo.setMetadataStore(omeMetaOmeXml);
 
         // No Illumination
         Illumination dummy_ill = new Illumination(0);
@@ -142,22 +134,26 @@ public class BioFormatsConvertFilesToSpimData implements Command {
         try {
             for (int iF=0;iF<inputFiles.length;iF++) {
                 log.accept("File : "+ inputFiles[iF].getAbsolutePath());
+                IFormatReader readerIdx = new ImageReader();
+
+                readerIdx.setFlattenedResolutions(false);
+                Memoizer memo = new Memoizer( readerIdx );
 
                 memo.setId(inputFiles[iF].getAbsolutePath());
                 final int iFile = iF;
-                final IFormatReader reader = memo;
+                //final IFormatReader reader = memo;
 
-                log.accept("Number of Series : " + reader.getSeriesCount());
-                final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
+                log.accept("Number of Series : " + memo.getSeriesCount());
+                final IMetadata omeMeta = (IMetadata) memo.getMetadataStore();
 
-                fileIdxToNumberOfSeries.put(iF, reader.getSeriesCount() );
+                fileIdxToNumberOfSeries.put(iF, memo.getSeriesCount() );
 
                 // -------------------------- SETUPS For each Series : one per timepoint and one per channel
-                IntStream series = IntStream.range(0, reader.getSeriesCount());
+                IntStream series = IntStream.range(0, memo.getSeriesCount());
                 series.forEach(iSerie -> {
-                    reader.setSeries(iSerie);
+                    memo.setSeries(iSerie);
 
-                    fileIdxToNumberOfSeriesAndTimepoints.put(iFile, new SeriesTps(reader.getSeriesCount(),omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue()));
+                    fileIdxToNumberOfSeriesAndTimepoints.put(iFile, new SeriesTps(memo.getSeriesCount(),omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue()));
                     // One serie = one Tile
                     Tile tile = new Tile(nTileCounter);
                     nTileCounter++;
@@ -178,7 +174,7 @@ public class BioFormatsConvertFilesToSpimData implements Command {
                     // Register Setups (one per channel and one per timepoint)
                     channels.forEach(
                             iCh -> {
-                                int ch_id = getChannelId(omeMeta, iSerie, iCh, reader.isRGB());
+                                int ch_id = getChannelId(omeMeta, iSerie, iCh, memo.isRGB());
                                 String channelName = omeMeta.getChannelName(iSerie, iCh);
                                 //IntStream timepoints = IntStream.range(0, omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
                                 //timepoints.forEach(
@@ -201,7 +197,7 @@ public class BioFormatsConvertFilesToSpimData implements Command {
                                  //       });
                             });
                 });
-                reader.close();
+                memo.close();
             }
 
             // ------------------- BUILDING SPIM DATA
@@ -260,11 +256,16 @@ public class BioFormatsConvertFilesToSpimData implements Command {
             for (int iF=0;iF<inputFiles.length;iF++) {
                 int iFile = iF;
 
-                memo.setId(inputFiles[iF].getAbsolutePath());
-                final IFormatReader reader = memo;
+                IFormatReader readerIdx = new ImageReader();
 
-                log.accept("Number of Series : " + reader.getSeriesCount());
-                final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
+                readerIdx.setFlattenedResolutions(false);
+                Memoizer memo = new Memoizer( readerIdx );
+
+                memo.setId(inputFiles[iF].getAbsolutePath());
+                //final IFormatReader reader = memo;
+
+                log.accept("Number of Series : " + memo.getSeriesCount());
+                final IMetadata omeMeta = (IMetadata) memo.getMetadataStore();
 
                 int nSeries = fileIdxToNumberOfSeries.get(iF);
                 // Need to set view registrations : identity ? how does that work with the one given by the image loader ?
@@ -275,7 +276,7 @@ public class BioFormatsConvertFilesToSpimData implements Command {
                     //int iS = iSerie;
                     //int nTimepoints = omeMetaOmeXml.getPixelsSizeT(iS).getNumberValue().intValue();
                     //IntStream timepoints = IntStream.range(0, nTimepoints);
-                    final int nTimepoints = omeMetaOmeXml.getPixelsSizeT(iSerie).getNumberValue().intValue();
+                    final int nTimepoints = omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue();
 
                     timePoints.forEach(iTp -> {
                         viewSetupToBFFileSerieChannel
@@ -305,7 +306,7 @@ public class BioFormatsConvertFilesToSpimData implements Command {
                     });
 
                 });
-                reader.close();
+                memo.close();
             }
 
             SequenceDescription sd = new SequenceDescription( new TimePoints( timePoints ), viewSetups , null, new MissingViews(missingViews));

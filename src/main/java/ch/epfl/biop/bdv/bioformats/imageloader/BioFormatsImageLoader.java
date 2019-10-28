@@ -27,7 +27,7 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
 
     final AbstractSequenceDescription<?, ?, ?> sequenceDescription;
 
-    Consumer<String> log = s -> {};//System.out.println(s);
+    public Consumer<String> log = s -> {};//System.out.println(s);
 
     Map<Integer, FileSerieChannel> viewSetupToBFFileSerieChannel = new HashMap<>();
 
@@ -44,35 +44,41 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
     public BioFormatsImageLoader(List<BioFormatsBdvOpener> openers, final AbstractSequenceDescription<?, ?, ?> sequenceDescription) {
         this.openers = openers;
         this.sequenceDescription = sequenceDescription;
-        IFormatReader readerIdx = new ImageReader();
 
-        readerIdx.setFlattenedResolutions(false);
-        Memoizer memo = new Memoizer( readerIdx );
 
-        final IMetadata omeMetaOmeXml = MetadataTools.createOMEXMLMetadata();
-        memo.setMetadataStore(omeMetaOmeXml);
+        //final IMetadata omeMetaOmeXml = MetadataTools.createOMEXMLMetadata();
+        //memo.setMetadataStore(omeMetaOmeXml);
 
         IntStream openersIdxStream = IntStream.range(0, openers.size());
         if ((sequenceDescription!=null)) {
-            openersIdxStream.forEach(idxOpener -> {
+            openersIdxStream.forEach(iF -> {
                 try {
-                    BioFormatsBdvOpener opener = openers.get(idxOpener);
+                    BioFormatsBdvOpener opener = openers.get(iF);
+                    log.accept("Data location = "+opener.getDataLocation());
+
+                    IFormatReader readerIdx = new ImageReader();
+
+                    readerIdx.setFlattenedResolutions(false);
+                    Memoizer memo = new Memoizer( readerIdx );
+
                     memo.setId(opener.getDataLocation());
 
-                    tTypeGetter.put(idxOpener,new HashMap<>());
-                    vTypeGetter.put(idxOpener,new HashMap<>());
+                    tTypeGetter.put(iF,new HashMap<>());
+                    vTypeGetter.put(iF,new HashMap<>());
 
-                    final IFormatReader reader = memo;
+                    //final IFormatReader reader = memo;
 
-                    log.accept("Number of Series : " + reader.getSeriesCount());
-                    final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
-
+                    log.accept("Number of Series : " + memo.getSeriesCount());
+                    IMetadata omeMeta = (IMetadata) memo.getMetadataStore();
+                    memo.setMetadataStore(omeMeta);
                     // -------------------------- SETUPS For each Series : one per timepoint and one per channel
 
-                    IntStream series = IntStream.range(0, reader.getSeriesCount());
+                    IntStream series = IntStream.range(0, memo.getSeriesCount());
+
+                    final int iFile = iF;
 
                     series.forEach(iSerie -> {
-                        reader.setSeries(iSerie);
+                        memo.setSeries(iSerie);
                         // One serie = one Tile
                         // ---------- Serie >
                         // ---------- Serie > Timepoints
@@ -84,16 +90,16 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
                         // Register Setups (one per channel and one per timepoint)
                         channels.forEach(
                                 iCh -> {
-                                    FileSerieChannel fsc = new FileSerieChannel(idxOpener, iSerie, iCh);
+                                    FileSerieChannel fsc = new FileSerieChannel(iFile, iSerie, iCh);
                                     viewSetupToBFFileSerieChannel.put(viewSetupCounter,fsc);
                                     viewSetupCounter++;
                                 });
-                        Type t = BioFormatsBdvSource.getBioformatsBdvSourceType(reader, iSerie);
-                        tTypeGetter.get(idxOpener).put(iSerie,(NumericType)t);
+                        Type t = BioFormatsBdvSource.getBioformatsBdvSourceType(memo, iSerie);
+                        tTypeGetter.get(iF).put(iSerie,(NumericType)t);
                         Volatile v = BioFormatsBdvSource.getVolatileOf((NumericType)t);
-                        vTypeGetter.get(idxOpener).put(iSerie, v);
+                        vTypeGetter.get(iF).put(iSerie, v);
                     });
-                    reader.close();
+                    memo.close();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
