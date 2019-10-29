@@ -51,6 +51,12 @@ public class BioFormatsBdvOpener {
     public boolean voxSizeIgnoreBioFormatsMetaData = false;
     public boolean[] axesOfImageFlip = new boolean[]{false, false, false};
 
+    public int nFetcherThread = 2;
+
+    public int numPriorities = 4;
+
+    transient SharedQueue cc = new SharedQueue(2,4);
+
     public String getDataLocation() {
         return dataLocation;
     }
@@ -72,6 +78,13 @@ public class BioFormatsBdvOpener {
 
     public BioFormatsBdvOpener voxSizeReferenceFrameLength(Length l) {
         this.voxSizeReferenceFrameLength = l;
+        return this;
+    }
+
+    public BioFormatsBdvOpener cache(int numFetcherThreads, int numPriorities) {
+        this.nFetcherThread = numFetcherThreads;
+        this.numPriorities = numPriorities;
+        this.cc = new SharedQueue(this.nFetcherThread, this.numPriorities);
         return this;
     }
 
@@ -316,8 +329,7 @@ public class BioFormatsBdvOpener {
     public VolatileBdvSource getVolatileSource(int image_index, int channel_index) {
         BioFormatsBdvSource concreteSource = this.getConcreteSource(image_index, channel_index);
         VolatileBdvSource volatileSource = new VolatileBdvSource(concreteSource,
-                BioFormatsBdvSource.getVolatileOf((NumericType) concreteSource.getType()),
-                new SharedQueue(1));
+                BioFormatsBdvSource.getVolatileOf((NumericType) concreteSource.getType()),cc);
         return volatileSource;
     }
 
@@ -325,7 +337,7 @@ public class BioFormatsBdvOpener {
         BioFormatsBdvSource concreteSource = this.getConcreteSource(image_index, channel_index);
         VolatileBdvSource volatileSource = new VolatileBdvSource(concreteSource,
                 BioFormatsBdvSource.getVolatileOf((NumericType) concreteSource.getType()),
-                new SharedQueue(1));
+                cc);
         Map<String, Source> sources = new HashMap();
         sources.put(BioFormatsBdvSource.CONCRETE, concreteSource);
         sources.put(BioFormatsBdvSource.VOLATILE, volatileSource);
