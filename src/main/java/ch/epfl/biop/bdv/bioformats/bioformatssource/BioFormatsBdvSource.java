@@ -187,6 +187,9 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
                 useBioFormatsXYBlockSize?reader.getOptimalTileWidth():(int)cacheBlockSize.dimension(0),
                 useBioFormatsXYBlockSize?reader.getOptimalTileHeight():(int)cacheBlockSize.dimension(1),
                 (!is3D)?1:(int)cacheBlockSize.dimension(2)};
+
+        //fixedLevel = true;
+        //cLevel = this.getNumMipmapLevels()-1;
     }
 
     public void setRootTransform(IMetadata omeMeta, int image_index) {
@@ -263,6 +266,12 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
      */
     @Override
     public RealRandomAccessible<T> getInterpolatedSource(int t, int level, Interpolation method) {
+        if (fixedLevel) {
+            level=cLevel;
+        }
+        if ((lowerLevel)&&(level<minLevel)) {
+            level=minLevel;
+        }
         final T zero = getType();
         zero.setZero();
         ExtendedRandomAccessibleInterval<T, RandomAccessibleInterval< T >>
@@ -282,14 +291,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
     public void getSourceTransform(int t, int level, AffineTransform3D transform) {
         // Ignoring t parameters : assuming all transforms are identical over time
         // TODO How is the pyramid in 3D ?
-        if (fixedLevel) {
-            level=cLevel;
-            transform.set(transforms.get(level));
-        }
-        if ((lowerLevel)&&(level<minLevel)) {
-            level=minLevel;
-            transform.set(transforms.get(level));
-        }
+
         if (!transforms.contains(level)) {
             if (level==0) {
                 transforms.put(0, this.rootTransform);
@@ -316,6 +318,13 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
                 tr.translate(pXmm, pYmm, pZmm);
                 transforms.put(level, tr);
             }
+        }
+
+        if (fixedLevel) {
+            level=cLevel;
+        }
+        if ((lowerLevel)&&(level<minLevel)) {
+            level=minLevel;
         }
         transform.set(transforms.get(level));
     }
