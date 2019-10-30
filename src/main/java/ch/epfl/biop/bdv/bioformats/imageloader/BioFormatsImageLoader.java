@@ -11,14 +11,12 @@ import loci.formats.meta.IMetadata;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.sequence.*;
 import net.imglib2.Volatile;
-import net.imglib2.cache.queue.BlockingFetchQueues;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.NumericType;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
@@ -42,15 +40,17 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
 
     protected VolatileGlobalCellCache cache;
 
-    protected SharedQueue sq = new SharedQueue(1,1);
+    protected SharedQueue sq;
 
-    public BioFormatsImageLoader(List<BioFormatsBdvOpener> openers, final AbstractSequenceDescription<?, ?, ?> sequenceDescription) {
+    public final int numFetcherThreads;
+    public final int numPriorities;
+
+    public BioFormatsImageLoader(List<BioFormatsBdvOpener> openers, final AbstractSequenceDescription<?, ?, ?> sequenceDescription, int numFetcherThreads, int numPriorities) {
         this.openers = openers;
         this.sequenceDescription = sequenceDescription;
-
-
-        //final IMetadata omeMetaOmeXml = MetadataTools.createOMEXMLMetadata();
-        //memo.setMetadataStore(omeMetaOmeXml);
+        this.numFetcherThreads=numFetcherThreads;
+        this.numPriorities=numPriorities;
+        sq = new SharedQueue(numFetcherThreads,numPriorities);
 
         IntStream openersIdxStream = IntStream.range(0, openers.size());
         if ((sequenceDescription!=null)) {

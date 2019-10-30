@@ -19,6 +19,8 @@ public class XmlIoBioFormatsImgLoader implements XmlIoBasicImgLoader< BioFormats
 
     public static final String OPENER_CLASS_TAG = "opener_class";
     public static final String OPENER_TAG = "opener";
+    public static final String CACHE_NUM_FETCHER = "num_fetcher_threads";
+    public static final String CACHE_NUM_PRIORITIES = "num_priorities";
     public static final String DATASET_NUMBER_TAG = "dataset_number";
 
     @Override
@@ -27,6 +29,8 @@ public class XmlIoBioFormatsImgLoader implements XmlIoBasicImgLoader< BioFormats
         elem.setAttribute( IMGLOADER_FORMAT_ATTRIBUTE_NAME, this.getClass().getAnnotation( ImgLoaderIo.class ).format() );
         // For potential extensibility
         elem.addContent(XmlHelpers.textElement( OPENER_CLASS_TAG, BioFormatsBdvOpener.class.getName()));
+        elem.addContent(XmlHelpers.intElement( CACHE_NUM_FETCHER, imgLoader.numFetcherThreads));
+        elem.addContent(XmlHelpers.intElement( CACHE_NUM_PRIORITIES, imgLoader.numPriorities));
         elem.addContent(XmlHelpers.intElement( DATASET_NUMBER_TAG, imgLoader.openers.size()));
 
         Gson gson = new Gson();
@@ -42,6 +46,9 @@ public class XmlIoBioFormatsImgLoader implements XmlIoBasicImgLoader< BioFormats
         try
         {
             final int number_of_datasets = XmlHelpers.getInt( elem, DATASET_NUMBER_TAG );
+            final int numFetcherThreads = XmlHelpers.getInt(elem, CACHE_NUM_FETCHER);
+            final int numPriorities = XmlHelpers.getInt(elem, CACHE_NUM_PRIORITIES);
+
             List<BioFormatsBdvOpener> openers = new ArrayList<>();
 
             String openerClassName = XmlHelpers.getText( elem, OPENER_CLASS_TAG );
@@ -58,7 +65,7 @@ public class XmlIoBioFormatsImgLoader implements XmlIoBasicImgLoader< BioFormats
                 openers.add(opener);
             }
 
-            return new BioFormatsImageLoader( openers, sequenceDescription);
+            return new BioFormatsImageLoader( openers, sequenceDescription, numFetcherThreads, numPriorities);
         }
         catch ( final Exception e )
         {

@@ -57,6 +57,12 @@ public class BioFormatsConvertFilesToSpimData implements Command {
     @Parameter
     public int cacheSizeX, cacheSizeY, cacheSizeZ;
 
+    @Parameter
+    public int numFetcherThreads = 1;
+
+    @Parameter
+    public int numPriorities = 1;
+
     @Parameter(choices = {MILLIMETER,MICROMETER,NANOMETER})
     public String unit;
 
@@ -310,7 +316,7 @@ public class BioFormatsConvertFilesToSpimData implements Command {
             }
 
             SequenceDescription sd = new SequenceDescription( new TimePoints( timePoints ), viewSetups , null, new MissingViews(missingViews));
-            sd.setImgLoader(new BioFormatsImageLoader(openers,sd));
+            sd.setImgLoader(new BioFormatsImageLoader(openers,sd,numFetcherThreads, numPriorities));
 
 
             if (inputFiles.length==1) {
