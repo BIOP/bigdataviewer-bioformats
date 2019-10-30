@@ -3,6 +3,7 @@ package ch.epfl.biop.bdv.bioformats.imageloader;
 import bdv.ViewerImgLoader;
 import bdv.cache.CacheControl;
 import bdv.img.cache.VolatileGlobalCellCache;
+import bdv.util.volatiles.SharedQueue;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
 import loci.formats.*;
@@ -41,6 +42,8 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
 
     protected VolatileGlobalCellCache cache;
 
+    protected SharedQueue sq = new SharedQueue(1,1);
+
     public BioFormatsImageLoader(List<BioFormatsBdvOpener> openers, final AbstractSequenceDescription<?, ?, ?> sequenceDescription) {
         this.openers = openers;
         this.sequenceDescription = sequenceDescription;
@@ -54,6 +57,7 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
             openersIdxStream.forEach(iF -> {
                 try {
                     BioFormatsBdvOpener opener = openers.get(iF);
+                    opener.setCache(sq);
                     log.accept("Data location = "+opener.getDataLocation());
 
                     IFormatReader readerIdx = new ImageReader();
@@ -106,8 +110,8 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
             });
         }
         // NOT CORRECTLY IMPLEMENTED YET
-        final BlockingFetchQueues<Callable<?>> queue = new BlockingFetchQueues<>(1,1);
-        cache = new VolatileGlobalCellCache(queue);
+        //final BlockingFetchQueues<Callable<?>> queue = new BlockingFetchQueues<>(1,1);
+        cache = new VolatileGlobalCellCache(sq);
     }
 
     public BioFormatsSetupLoader getSetupImgLoader(int setupId) {
@@ -135,6 +139,7 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
     @Override
     public CacheControl getCacheControl() {
         return cache;
-    }
+    }//cache;
+    //}
 
 }

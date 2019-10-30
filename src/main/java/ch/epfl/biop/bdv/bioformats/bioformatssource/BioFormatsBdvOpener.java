@@ -81,10 +81,15 @@ public class BioFormatsBdvOpener {
         return this;
     }
 
-    public BioFormatsBdvOpener cache(int numFetcherThreads, int numPriorities) {
+    public BioFormatsBdvOpener cacheOptions(int numFetcherThreads, int numPriorities) {
         this.nFetcherThread = numFetcherThreads;
         this.numPriorities = numPriorities;
         this.cc = new SharedQueue(this.nFetcherThread, this.numPriorities);
+        return this;
+    }
+
+    public BioFormatsBdvOpener setCache(SharedQueue sq) {
+        this.cc = sq;
         return this;
     }
 

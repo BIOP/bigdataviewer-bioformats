@@ -234,11 +234,6 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
      */
     abstract public RandomAccessibleInterval<T> createSource(int t, int level);
 
-    public boolean fixedLevel = false;
-    public boolean lowerLevel = false;
-    public int minLevel = 2;
-    public int cLevel = 4;
-
     /**
      * Returns stored RAI of requested timepoint and resolution level
      * @param t
@@ -247,8 +242,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
      */
     @Override
     public RandomAccessibleInterval<T> getSource(int t, int level) {
-        if (fixedLevel) {level=cLevel;}
-        if ((lowerLevel)&&(level<minLevel)) {level=minLevel;}
+        level = levelCropper(level);
         if (raiMap.containsKey(t)) {
             if (raiMap.get(t).containsKey(level)) {
                 return raiMap.get(t).get(level);
@@ -266,18 +260,17 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
      */
     @Override
     public RealRandomAccessible<T> getInterpolatedSource(int t, int level, Interpolation method) {
-        if (fixedLevel) {
-            level=cLevel;
-        }
-        if ((lowerLevel)&&(level<minLevel)) {
-            level=minLevel;
-        }
+        level = levelCropper(level);
         final T zero = getType();
         zero.setZero();
         ExtendedRandomAccessibleInterval<T, RandomAccessibleInterval< T >>
                 eView = Views.extendZero(getSource( t, level ));
         RealRandomAccessible< T > realRandomAccessible = Views.interpolate( eView, interpolators.get(method) );
         return realRandomAccessible;
+    }
+
+    public int levelCropper(int level) {
+        return level;//this.getNumMipmapLevels()-1;
     }
 
     /**
@@ -291,7 +284,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
     public void getSourceTransform(int t, int level, AffineTransform3D transform) {
         // Ignoring t parameters : assuming all transforms are identical over time
         // TODO How is the pyramid in 3D ?
-
+        level = levelCropper(level);
         if (!transforms.contains(level)) {
             if (level==0) {
                 transforms.put(0, this.rootTransform);
@@ -300,13 +293,17 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
                 tr.set(rootTransform);
 
                 // Apply ratio in numbers of pixel
-                long nPixXLvl0 = this.getSource(t,0).dimension(0);
+                long nPixXLvl0, nPixYLvl0, nPixZLvl0;
+                synchronized (reader) {
+                    reader.setResolution(0);
+                    nPixXLvl0 = reader.getSizeX();//this.getSource(t,0).dimension(0);
+                    nPixYLvl0 = reader.getSizeY();//this.getSource(t,0).dimension(1);
+                    nPixZLvl0 = reader.getSizeZ();//this.getSource(t,0).dimension(2);
+                }
                 long nPixXCurrentLvl = this.getSource(t,level).dimension(0);
 
-                long nPixYLvl0 = this.getSource(t,0).dimension(1);
                 long nPixYCurrentLvl = this.getSource(t,level).dimension(1);
 
-                long nPixZLvl0 = this.getSource(t,0).dimension(2);
                 long nPixZCurrentLvl = this.getSource(t,level).dimension(2);
 
                 tr.translate(-pXmm, -pYmm, -pZmm);
@@ -320,12 +317,6 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
             }
         }
 
-        if (fixedLevel) {
-            level=cLevel;
-        }
-        if ((lowerLevel)&&(level<minLevel)) {
-            level=minLevel;
-        }
         transform.set(transforms.get(level));
     }
 
