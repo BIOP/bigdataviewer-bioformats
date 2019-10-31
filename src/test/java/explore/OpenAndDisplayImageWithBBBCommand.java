@@ -1,6 +1,6 @@
 package explore;
 
-import ch.epfl.biop.bdv.bioformats.show.OpenImageWithBioformatsBigdataviewerBridge;
+//import ch.epfl.biop.bdv.bioformats.OpenImageWithBioformatsBigdataviewerBridge;
 import net.imagej.ImageJ;
 
 import java.io.File;
@@ -24,7 +24,7 @@ public class OpenAndDisplayImageWithBBBCommand {
                             "minDisplay",0,
                             "maxDisplay",255
                     );*/
-
+        /*
         ij.command().run(OpenImageWithBioformatsBigdataviewerBridge.class,true,
                 "files", new File[] {
                         DatasetHelper.getDataset(DatasetHelper.VSI),
@@ -37,6 +37,6 @@ public class OpenAndDisplayImageWithBBBCommand {
                 "advancedParameters", false,
                 "minDisplay",0,
                 "maxDisplay",255
-        );
+        );*/
     }
 }

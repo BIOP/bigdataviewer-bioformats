@@ -26,16 +26,16 @@ public class OpenAndDisplayImageWithSpimData
 		BioFormatsConvertFilesToSpimData cvt = new BioFormatsConvertFilesToSpimData();
 		File f = DatasetHelper.getDataset(DatasetHelper.VSI);
 
-		cvt.inputFiles = new File[] {
+		/*cvt.inputFiles = new File[] {
 				DatasetHelper.getDataset(DatasetHelper.VSI),
 				DatasetHelper.getDataset(DatasetHelper.JPG_RGB),
 				DatasetHelper.getDataset(DatasetHelper.TIF_TIMELAPSE_3D),
 		};
 		// OR
-		/*cvt.inputFiles = new File[] {
+		cvt.inputFiles = new File[] {
 				DatasetHelper.getDataset(DatasetHelper.ND2_20X),
 				DatasetHelper.getDataset(DatasetHelper.ND2_60X)
-		};*/
+		};
 		cvt.xmlFilePath = new File(f.getParent());
 		cvt.useBioFormatsCacheBlockSize=true;
 		   // ignored if useBioFormatsCacheBlockSize is true
@@ -62,6 +62,6 @@ public class OpenAndDisplayImageWithSpimData
 					);
 					lbss.get(idx).setDisplayRange(0,255);
 					}
-				);
+				);*/
 	}
 }

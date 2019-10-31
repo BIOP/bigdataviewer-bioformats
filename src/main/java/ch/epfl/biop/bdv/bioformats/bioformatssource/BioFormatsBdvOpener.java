@@ -24,6 +24,45 @@ import java.util.stream.Collectors;
 
 public class BioFormatsBdvOpener {
 
+    // For copying the object
+    public BioFormatsBdvOpener copy() {
+        return new BioFormatsBdvOpener(this);
+    }
+
+    public BioFormatsBdvOpener(BioFormatsBdvOpener opener) {
+        dataLocation=opener.dataLocation;
+        useBioFormatsXYBlockSize = opener.useBioFormatsXYBlockSize;
+        cacheBlockSize = new FinalInterval(opener.cacheBlockSize);
+        swZC = opener.swZC;
+        splitRGBChannels=opener.splitRGBChannels;
+        u = opener.u; // No deep copy
+        if (opener.positionPreTransformMatrixArray!=null)
+            positionPreTransformMatrixArray = opener.positionPreTransformMatrixArray.clone();
+        if (opener.positionPostTransformMatrixArray!=null)
+            positionPostTransformMatrixArray = opener.positionPostTransformMatrixArray.clone();
+        positionReferenceFrameLength = opener.positionReferenceFrameLength; // no deep copy
+        positionIgnoreBioFormatsMetaData = opener.positionIgnoreBioFormatsMetaData;
+        positionIsImageCenter = opener.positionIsImageCenter;
+        if (opener.voxSizePreTransformMatrixArray!=null)
+            voxSizePreTransformMatrixArray = opener.voxSizePreTransformMatrixArray.clone();
+        if (opener.voxSizePostTransformMatrixArray!=null)
+            voxSizePostTransformMatrixArray = opener.voxSizePostTransformMatrixArray.clone();
+        voxSizeReferenceFrameLength = opener.voxSizeReferenceFrameLength;
+        voxSizeIgnoreBioFormatsMetaData = opener.voxSizeIgnoreBioFormatsMetaData;
+        axesOfImageFlip = opener.axesOfImageFlip.clone();
+        nFetcherThread = opener.nFetcherThread;
+        numPriorities = opener.numPriorities;
+    }
+
+    public BioFormatsBdvOpener() {}
+
+    public SharedQueue getCacheControl() {
+        if (cc==null) {
+            cc = new SharedQueue(nFetcherThread, numPriorities);
+        }
+        return cc;
+    }
+
     // All serializable fields
     public String dataLocation = null; // URL or File
 

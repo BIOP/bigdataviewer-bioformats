@@ -1,6 +1,5 @@
 package command;
 
-import ch.epfl.biop.bdv.bioformats.export.spimdata.BioFormatsConvertFilesToSpimData;
 import net.imagej.ImageJ;
 
 public class RunBioFormatsConvertFilesToXmlDataset
@@ -10,6 +9,6 @@ public class RunBioFormatsConvertFilesToXmlDataset
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 
-		ij.command().run( BioFormatsConvertFilesToSpimData.class, true );
+		//ij.command().run(); BioFormatsConvertFilesToSpimData.class, true );
 	}
 }
