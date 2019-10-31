@@ -15,6 +15,7 @@ import org.scijava.plugin.Plugin;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Plugin(type = Command.class, menuPath = "BDV_SciJava>Open>Open Files with BioFormats Bdv Bridge")
 public class OpenFilesWithBigdataviewerBioformatsBridgeCommand extends BioformatsBigdataviewerBridgeDatasetCommand {
@@ -22,16 +23,16 @@ public class OpenFilesWithBigdataviewerBioformatsBridgeCommand extends Bioformat
     @Parameter
     File[] files;
 
-    @Parameter
-    boolean setColor;
+    @Parameter(required = false)
+    boolean setColor = true;
 
-    @Parameter
-    boolean setGrouping;
+    @Parameter(required = false)
+    boolean setGrouping = true;
 
-    @Parameter
+    @Parameter(required = false)
     double minDisplay = 0;
 
-    @Parameter
+    @Parameter(required = false)
     double maxDisplay = 255;
 
     @Parameter(type = ItemIO.OUTPUT)
