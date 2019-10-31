@@ -8,7 +8,5 @@ public class RunBioFormatsConvertFilesToXmlDataset
 	{
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
-
-		//ij.command().run(); BioFormatsConvertFilesToSpimData.class, true );
 	}
 }

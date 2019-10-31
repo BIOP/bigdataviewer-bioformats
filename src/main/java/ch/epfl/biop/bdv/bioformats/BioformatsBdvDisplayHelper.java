@@ -9,6 +9,7 @@ import loci.formats.meta.IMetadata;
 import mpicbg.spim.data.generic.AbstractSpimData;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -18,6 +19,7 @@ public class BioformatsBdvDisplayHelper {
     public static void autosetColorsAngGrouping(List<BdvStackSource<?>> lbss, AbstractSpimData asd, boolean setColor, double minValue, double maxValue, boolean setGrouping) {
         BdvHandle bdv_h = lbss.get(0).getBdvHandle();
 
+        // Set Color to each channel
         if (setColor) {
             asd.getSequenceDescription().getViewSetupsOrdered().forEach(id_vs -> {
                         int idx = ((mpicbg.spim.data.sequence.ViewSetup) id_vs).getId();
@@ -31,6 +33,7 @@ public class BioformatsBdvDisplayHelper {
         }
 
         if (setGrouping) {
+            // Group source index per channel
             Map<BioFormatsMetaDataHelper.BioformatsChannel, List<Integer>> srcsGroupedByChannel =
                     (Map<BioFormatsMetaDataHelper.BioformatsChannel, List<Integer>>)
                             asd.getSequenceDescription()
@@ -43,14 +46,35 @@ public class BioformatsBdvDisplayHelper {
                                             },
                                             Collectors.toList()));
 
-            List<SourceGroup> sgs = srcsGroupedByChannel.entrySet().stream().map(
-                    e -> {
-                        SourceGroup sg = new SourceGroup(e.getKey().chName);
-                        e.getValue().forEach(idx -> sg.addSource(idx));
+
+            Map<Integer, BioFormatsMetaDataHelper.BioformatsChannel> idToChannel = new HashMap<>();
+
+            srcsGroupedByChannel.entrySet().stream().forEach(e -> {
+                e.getValue().forEach(id -> idToChannel.put(id,e.getKey()));
+            });
+
+            List<BioFormatsMetaDataHelper.BioformatsChannel> orderedChannelList = new ArrayList<>();
+
+            asd.getSequenceDescription()
+                    .getViewSetupsOrdered().stream()
+                    .map(obj -> ((mpicbg.spim.data.sequence.ViewSetup) obj).getId()).forEach(
+                            id -> {
+                                if (!orderedChannelList.contains(idToChannel.get(id))) {
+                                    orderedChannelList.add(idToChannel.get(id));
+                                }
+                            }
+            );
+
+            List<SourceGroup> sgs =
+                    orderedChannelList.stream().map(
+                    ch -> {
+                        SourceGroup sg = new SourceGroup(ch.chName);
+                        srcsGroupedByChannel.get(ch).forEach(idx -> sg.addSource(idx));
                         return sg;
                     }
             ).collect(Collectors.toList());
 
+            // Group source per channel
             int idx = 0;
             while (idx<sgs.size()) {
                 final int idx_cp = idx;
@@ -67,6 +91,7 @@ public class BioformatsBdvDisplayHelper {
                                         bdv_h.getSetupAssignments().getMinMaxGroups().get(idx_cp));
                             }
                     );
+
                 } else {
                     bdv_h.getViewerPanel().addGroup(sgs.get(idx));
                     sgs.get(idx).getSourceIds().stream().forEach(
