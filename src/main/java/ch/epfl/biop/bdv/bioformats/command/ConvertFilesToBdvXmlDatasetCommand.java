@@ -32,8 +32,6 @@ public class ConvertFilesToBdvXmlDatasetCommand extends BioformatsBigdataviewerB
     File datasetFileName;
 
     public void run() {
-
-        String renamedXmlFileName = FilenameUtils.removeExtension(datasetFileName.getAbsolutePath())+".xml";
         List<BioFormatsBdvOpener> openers = new ArrayList<>();
         for (File f:files) {
             openers.add(getOpener(f));
@@ -42,6 +40,7 @@ public class ConvertFilesToBdvXmlDatasetCommand extends BioformatsBigdataviewerB
         if (saveDataset) {
             spimData.setBasePath(datasetFileName.getParentFile());
             try {
+                String renamedXmlFileName = FilenameUtils.removeExtension(datasetFileName.getAbsolutePath())+".xml";
                 new XmlIoSpimData().save( (SpimData) spimData, renamedXmlFileName );
             } catch (SpimDataException e) {
                 e.printStackTrace();
