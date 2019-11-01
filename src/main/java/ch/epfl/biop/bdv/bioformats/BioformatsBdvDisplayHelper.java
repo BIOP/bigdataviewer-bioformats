@@ -7,6 +7,7 @@ import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
 import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsSetupLoader;
 import loci.formats.meta.IMetadata;
 import mpicbg.spim.data.generic.AbstractSpimData;
+import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,7 +23,7 @@ public class BioformatsBdvDisplayHelper {
         // Set Color to each channel
         if (setColor) {
             asd.getSequenceDescription().getViewSetupsOrdered().forEach(id_vs -> {
-                        int idx = ((mpicbg.spim.data.sequence.ViewSetup) id_vs).getId();
+                        int idx = ((BasicViewSetup) id_vs).getId();
                         BioFormatsSetupLoader bfsl = (BioFormatsSetupLoader) asd.getSequenceDescription().getImgLoader().getSetupImgLoader(idx);
                         lbss.get(idx).setColor(
                                 BioFormatsMetaDataHelper.getSourceColor((BioFormatsBdvSource) bfsl.concreteSource)
@@ -38,7 +39,7 @@ public class BioformatsBdvDisplayHelper {
                     (Map<BioFormatsMetaDataHelper.BioformatsChannel, List<Integer>>)
                             asd.getSequenceDescription()
                                     .getViewSetupsOrdered().stream()
-                                    .map(obj -> ((mpicbg.spim.data.sequence.ViewSetup) obj).getId())
+                                    .map(obj -> ((BasicViewSetup) obj).getId())
                                     .collect(Collectors.groupingBy(e -> {
                                                 BioFormatsSetupLoader bfsl = (BioFormatsSetupLoader) asd.getSequenceDescription().getImgLoader().getSetupImgLoader((int)e);
                                                 return
@@ -57,7 +58,7 @@ public class BioformatsBdvDisplayHelper {
 
             asd.getSequenceDescription()
                     .getViewSetupsOrdered().stream()
-                    .map(obj -> ((mpicbg.spim.data.sequence.ViewSetup) obj).getId()).forEach(
+                    .map(obj -> ((BasicViewSetup) obj).getId()).forEach(
                             id -> {
                                 if (!orderedChannelList.contains(idToChannel.get(id))) {
                                     orderedChannelList.add(idToChannel.get(id));
@@ -108,21 +109,34 @@ public class BioformatsBdvDisplayHelper {
             Map<String, ArrayList<Integer>> dataLocationToViewSetup =
                     (Map<String, ArrayList<Integer>>)
                             asd.getSequenceDescription().getViewSetupsOrdered().stream()
-                                    .map(obj -> ((mpicbg.spim.data.sequence.ViewSetup) obj).getId())
+                                    .map(obj -> ((BasicViewSetup) obj).getId())
                                     .collect(Collectors.groupingBy(e -> {
                                                 BioFormatsSetupLoader bfsl = (BioFormatsSetupLoader) asd.getSequenceDescription().getImgLoader().getSetupImgLoader((int)e);
                                                 return bfsl.getOpener().dataLocation;
                                             },
                                             Collectors.toList()));
 
+            /*List<BioFormatsMetaDataHelper.BioformatsChannel> orderedDatLocationList = new ArrayList<>();
+
+            asd.getSequenceDescription()
+                    .getViewSetupsOrdered().stream()
+                    .map(obj -> ((BasicViewSetup) obj).getId()).forEach(
+                    id -> {
+                        if (!orderedChannelList.contains(idToChannel.get(id))) {
+                            orderedChannelList.add(idToChannel.get(id));
+                        }
+                    }
+            );*/
+
             sgs = dataLocationToViewSetup.entrySet().stream().map(
                     e -> {
                         SourceGroup sg = new SourceGroup(e.getKey());
-                        System.out.println(e.getKey());
                         e.getValue().forEach(index -> sg.addSource(index));
                         return sg;
                     }
             ).collect(Collectors.toList());
+
+
 
             int idx_offs = idx;
             while (idx<sgs.size()+idx_offs) {
@@ -134,7 +148,7 @@ public class BioformatsBdvDisplayHelper {
                     sg.setName(sgs.get(idx-idx_offs).getName());
                     sgs.get(idx-idx_offs).getSourceIds().stream().forEach( id -> sg.addSource(id) );
                 } else {
-                    bdv_h.getViewerPanel().addGroup(sgs.get(idx));
+                    bdv_h.getViewerPanel().addGroup(sgs.get(idx-idx_offs));
                 }
                 idx++;
             }
