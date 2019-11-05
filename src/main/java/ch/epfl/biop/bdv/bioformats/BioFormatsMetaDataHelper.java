@@ -20,6 +20,7 @@ import java.awt.*;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
@@ -29,6 +30,8 @@ import org.apache.commons.lang3.tuple.Pair;
 public class BioFormatsMetaDataHelper {
 
     private static final Logger LOGGER = Logger.getLogger( BioFormatsMetaDataHelper.class.getName() );
+
+    public static Consumer<String> log = (s) -> System.out.println(BioFormatsMetaDataHelper.class.getName()+":"+s);
 
     public static class BioformatsChannel {
 
@@ -94,6 +97,10 @@ public class BioFormatsMetaDataHelper {
         } else {
             pos[2] = new Length(0,UNITS.REFERENCEFRAME);
         }
+        log.accept("Ch Name="+omeMeta.getChannelName(iSerie,0));
+        log.accept("pos[0]="+pos[0].value()+" "+pos[0].unit().getSymbol());
+        log.accept("pos[1]="+pos[1].value()+" "+pos[1].unit().getSymbol());
+        log.accept("pos[2]="+pos[2].value()+" "+pos[2].unit().getSymbol());
 
         return pos;
     }
@@ -118,6 +125,11 @@ public class BioFormatsMetaDataHelper {
         } else {
             vox[2] = new Length(1,UNITS.REFERENCEFRAME);
         }
+
+        log.accept("Ch Name="+omeMeta.getChannelName(iSerie,0));
+        log.accept("vox[0]="+vox[0].value()+" "+vox[0].unit().getSymbol());
+        log.accept("vox[1]="+vox[1].value()+" "+vox[1].unit().getSymbol());
+        log.accept("vox[2]="+vox[2].value()+" "+vox[2].unit().getSymbol());
 
         return vox;
     }
