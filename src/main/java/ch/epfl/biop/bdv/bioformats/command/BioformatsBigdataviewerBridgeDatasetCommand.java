@@ -19,7 +19,9 @@ abstract public class BioformatsBigdataviewerBridgeDatasetCommand implements Com
         def.put("splitRGBChannels",false);
         def.put("positionIsCenter","AUTO");
         def.put("switchZandC","AUTO");
-        def.put("flipPosition","AUTO");
+        def.put("flipPositionX","AUTO");
+        def.put("flipPositionY","AUTO");
+        def.put("flipPositionZ","AUTO");
         def.put("useBioFormatsCacheBlockSize",true);
         def.put("cacheSizeX",512);
         def.put("cacheSizeY",512);
@@ -43,7 +45,13 @@ abstract public class BioformatsBigdataviewerBridgeDatasetCommand implements Com
     public String switchZandC = "AUTO";
 
     @Parameter(required = false, choices = {"AUTO", "TRUE", "FALSE"})
-    public String flipPosition = "AUTO";
+    public String flipPositionX = "AUTO";
+
+    @Parameter(required = false, choices = {"AUTO", "TRUE", "FALSE"})
+    public String flipPositionY = "AUTO";
+
+    @Parameter(required = false, choices = {"AUTO", "TRUE", "FALSE"})
+    public String flipPositionZ = "AUTO";
 
     @Parameter(required = false)
     public boolean useBioFormatsCacheBlockSize = true;
@@ -87,9 +95,21 @@ abstract public class BioformatsBigdataviewerBridgeDatasetCommand implements Com
             }
         }
 
-        if (!flipPosition.equals("AUTO")) {
-            if (flipPosition.equals("TRUE")) {
-                opener = opener.flipPosition();
+        if (!flipPositionX.equals("AUTO")) {
+            if (flipPositionX.equals("TRUE")) {
+                opener = opener.flipPositionX();
+            }
+        }
+
+        if (!flipPositionY.equals("AUTO")) {
+            if (flipPositionY.equals("TRUE")) {
+                opener = opener.flipPositionY();
+            }
+        }
+
+        if (!flipPositionZ.equals("AUTO")) {
+            if (flipPositionZ.equals("TRUE")) {
+                opener = opener.flipPositionZ();
             }
         }
 

@@ -142,13 +142,46 @@ public class BioFormatsBdvOpener {
         return this;
     }
 
-    public BioFormatsBdvOpener flipPosition() {
+    public BioFormatsBdvOpener flipPositionXYZ() {
         if (this.positionPreTransformMatrixArray == null) {
             positionPreTransformMatrixArray = new AffineTransform3D().getRowPackedCopy();
         }
         AffineTransform3D at3D = new AffineTransform3D();
         at3D.set(positionPreTransformMatrixArray);
         at3D.scale(-1);
+        positionPreTransformMatrixArray = at3D.getRowPackedCopy();
+        return this;
+    }
+
+    public BioFormatsBdvOpener flipPositionX() {
+        if (this.positionPreTransformMatrixArray == null) {
+            positionPreTransformMatrixArray = new AffineTransform3D().getRowPackedCopy();
+        }
+        AffineTransform3D at3D = new AffineTransform3D();
+        at3D.set(positionPreTransformMatrixArray);
+        at3D.scale(-1,1,1);
+        positionPreTransformMatrixArray = at3D.getRowPackedCopy();
+        return this;
+    }
+
+    public BioFormatsBdvOpener flipPositionY() {
+        if (this.positionPreTransformMatrixArray == null) {
+            positionPreTransformMatrixArray = new AffineTransform3D().getRowPackedCopy();
+        }
+        AffineTransform3D at3D = new AffineTransform3D();
+        at3D.set(positionPreTransformMatrixArray);
+        at3D.scale(1,-1,1);
+        positionPreTransformMatrixArray = at3D.getRowPackedCopy();
+        return this;
+    }
+
+    public BioFormatsBdvOpener flipPositionZ() {
+        if (this.positionPreTransformMatrixArray == null) {
+            positionPreTransformMatrixArray = new AffineTransform3D().getRowPackedCopy();
+        }
+        AffineTransform3D at3D = new AffineTransform3D();
+        at3D.set(positionPreTransformMatrixArray);
+        at3D.scale(1,1,-1);
         positionPreTransformMatrixArray = at3D.getRowPackedCopy();
         return this;
     }
@@ -191,7 +224,8 @@ public class BioFormatsBdvOpener {
 
         if (reader.getFormat().equals("Nikon ND2")) {
             positionIsImageCenter = true;
-            this.flipPosition();
+            this.flipPositionX();
+            this.flipPositionY();
         }
 
         return this;
