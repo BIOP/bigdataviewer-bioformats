@@ -3,6 +3,7 @@ package ch.epfl.biop.bdv.bioformats.export.spimdata;
 import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsImageLoader;
+import ch.epfl.biop.bdv.bioformats.imageloader.FileIndex;
 import ch.epfl.biop.bdv.bioformats.imageloader.FileSerieChannel;
 import ch.epfl.biop.bdv.bioformats.imageloader.SeriesTps;
 import loci.formats.*;
@@ -74,6 +75,7 @@ public class BioFormatsConvertFilesToSpimData {
 
         try {
             for (int iF=0;iF<openers.size();iF++) {
+                FileIndex fi = new FileIndex(iF);
                 log.accept("Data : "+ openers.get(iF).getDataLocation());
                 IFormatReader readerIdx = new ImageReader();
 
@@ -131,6 +133,7 @@ public class BioFormatsConvertFilesToSpimData {
                                         channelIdToChannel.get(ch_id),
                                         dummy_ang,
                                         dummy_ill);
+                                vs.setAttribute(fi);
                                 viewSetups.add(vs);
                                 viewSetupToBFFileSerieChannel.put(viewSetupCounter, new FileSerieChannel(iFile, iSerie, iCh));
                                 viewSetupCounter++;
