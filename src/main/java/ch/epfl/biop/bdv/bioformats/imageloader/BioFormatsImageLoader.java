@@ -8,6 +8,7 @@ import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;
+import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.sequence.*;
 import net.imglib2.Volatile;
@@ -139,7 +140,7 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
     @Override
     public CacheControl getCacheControl() {
         return cache;
-    }//cache;
-    //}
+    }
+
 
 }
