@@ -39,7 +39,7 @@ import java.util.logging.Logger;
  * JUST NOT WORKING AT ALL WITH TILES
  */
 
-@Plugin(type = Command.class,menuPath = "BDV_SciJava>Export>Save Sources as OMETIFF (SciJava)")
+@Plugin(type = Command.class,menuPath = "BDV_SciJava>Bdv>Export Sources>As OMETIFF (very limited) (SciJava)")
 public class ExportBdvSourcesToOmeTiff implements Command{
 
     private static final Logger LOGGER = Logger.getLogger( ExportBdvSourcesToOmeTiff.class.getName() );
