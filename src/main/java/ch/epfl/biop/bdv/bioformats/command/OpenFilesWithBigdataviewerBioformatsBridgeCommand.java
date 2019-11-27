@@ -16,7 +16,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-@Plugin(type = Command.class, menuPath = "BDV_SciJava>SpimDataset>Open>SpimDataset [BioFormats Bdv Bridge + SHOW]")
+@Plugin(type = Command.class, menuPath = "BDV_SciJava>SpimDataset>Open>SpimDataset [BioFormats Bdv Bridge]")
 public class OpenFilesWithBigdataviewerBioformatsBridgeCommand extends BioformatsBigdataviewerBridgeDatasetCommand {
 
     @Parameter
