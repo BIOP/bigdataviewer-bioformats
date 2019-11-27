@@ -218,18 +218,19 @@ public class BioFormatsBdvOpener {
         }
         final IFormatReader reader = memo;
 
-        //System.out.println("Attempts to set opener settings for file format " + reader.getFormat());
+        System.out.println("Attempts to set opener settings for file format " + reader.getFormat());
 
         // Adjustements here!
 
         if (reader.getFormat().equals("Nikon ND2")) {
-            positionIsImageCenter = true;
-            this.flipPositionX();
-            this.flipPositionY();
+            BioFormatsBdvOpenerFix.fixNikonND2(this);
         }
+
+
 
         return this;
     }
+
 
     public BioFormatsBdvOpener url(URL url) {
         this.dataLocation = url.toString();

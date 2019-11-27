@@ -31,7 +31,7 @@ public class BioFormatsMetaDataHelper {
 
     private static final Logger LOGGER = Logger.getLogger( BioFormatsMetaDataHelper.class.getName() );
 
-    public static Consumer<String> log = (s) -> System.out.println(BioFormatsMetaDataHelper.class.getName()+":"+s);
+    public static Consumer<String> log = (s) -> {};//System.out.println(BioFormatsMetaDataHelper.class.getName()+":"+s);
 
     public static class BioformatsChannel {
 
