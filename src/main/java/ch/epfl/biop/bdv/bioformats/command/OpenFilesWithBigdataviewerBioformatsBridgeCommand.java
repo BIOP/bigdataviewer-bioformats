@@ -16,7 +16,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-@Plugin(type = Command.class, menuPath = "BDV_SciJava>SpimDataset>Open>SpimDataset [BioFormats Bdv Bridge]")
+@Plugin(type = Command.class,
+        menuPath = "BDV_SciJava>SpimDataset>Open>SpimDataset [BioFormats Bdv Bridge]",
+        label = "Opens and show in a bdv window files by using bioformats reader",
+        description = "Support bioformmats multiresolution api. Attempts to set colors based" +
+                "on bioformats metadata. Do not attempt auto contrast.")
 public class OpenFilesWithBigdataviewerBioformatsBridgeCommand extends BioformatsBigdataviewerBridgeDatasetCommand {
 
     @Parameter
