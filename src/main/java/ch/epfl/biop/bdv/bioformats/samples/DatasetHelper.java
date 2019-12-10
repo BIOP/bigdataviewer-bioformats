@@ -1,4 +1,4 @@
-package explore;
+package ch.epfl.biop.bdv.bioformats.samples;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;

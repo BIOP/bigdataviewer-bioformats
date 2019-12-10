@@ -223,12 +223,11 @@ public class BioFormatsBdvOpener {
         // Adjustements here!
 
         if (reader.getFormat().equals("Nikon ND2")) {
-            BioFormatsBdvOpenerFix.fixNikonND2(this);
+            return BioFormatsBdvOpenerFix.fixNikonND2(this);
+        } else {
+            return this;
         }
 
-
-
-        return this;
     }
 
 

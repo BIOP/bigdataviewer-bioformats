@@ -60,7 +60,7 @@ public class BioFormatsConvertFilesToSpimData {
     Map<Integer, FileSerieChannel> viewSetupToBFFileSerieChannel = new HashMap<>();
 
     public AbstractSpimData getSpimDataInstance(List<BioFormatsBdvOpener> openers) {
-
+        openers.forEach(o -> o.ignoreMetadata()); // necessary for spimdata
         viewSetupCounter = 0;
         nTileCounter = 0;
         maxTimepoints = -1;
