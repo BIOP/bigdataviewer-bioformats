@@ -2,6 +2,7 @@ package explore;
 
 import ch.epfl.biop.bdv.bioformats.command.BioformatsBigdataviewerBridgeDatasetCommand;
 import ch.epfl.biop.bdv.bioformats.command.OpenFilesWithBigdataviewerBioformatsBridgeCommand;
+import ch.epfl.biop.bdv.bioformats.samples.DatasetHelper;
 import net.imagej.ImageJ;
 
 import java.io.File;

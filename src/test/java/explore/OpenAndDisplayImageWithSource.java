@@ -6,6 +6,7 @@ import bdv.util.BdvStackSource;
 import bdv.viewer.Source;
 import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
+import ch.epfl.biop.bdv.bioformats.samples.DatasetHelper;
 import net.imagej.ImageJ;
 import ome.units.UNITS;
 import ome.units.quantity.Length;

@@ -51,6 +51,8 @@ public class BioFormatsMetaDataHelper {
             }
             if (m.getChannelName(iSerie,iChannel)!=null) {
                this.chName=m.getChannelName(iSerie,iChannel);
+            } else {
+                System.out.println("No name found for serie "+iSerie+" ch "+iChannel);
             }
             if (m.getPixelsType(iSerie)!=null) {
                this.pxType=m.getPixelsType(iSerie).getValue();
@@ -79,7 +81,7 @@ public class BioFormatsMetaDataHelper {
 
     public static Length[] getSeriesPositionAsLengths(IMetadata omeMeta, int iSerie) {
         Length[] pos = new Length[3];
-
+        try {
         if (omeMeta.getPlanePositionX(iSerie, 0)!=null) {
             pos[0] = omeMeta.getPlanePositionX(iSerie, 0);
         } else {
@@ -95,6 +97,12 @@ public class BioFormatsMetaDataHelper {
         if (omeMeta.getPlanePositionZ(iSerie, 0)!=null) {
             pos[2] = omeMeta.getPlanePositionZ(iSerie, 0);
         } else {
+            pos[2] = new Length(0,UNITS.REFERENCEFRAME);
+        }} catch (Exception e) {
+            //e.printStackTrace();
+            log.accept("Could not access omeMeta.getPlanePosition");
+            pos[0] = new Length(0,UNITS.REFERENCEFRAME);
+            pos[1] = new Length(0,UNITS.REFERENCEFRAME);
             pos[2] = new Length(0,UNITS.REFERENCEFRAME);
         }
         log.accept("Ch Name="+omeMeta.getChannelName(iSerie,0));
@@ -232,17 +240,18 @@ public class BioFormatsMetaDataHelper {
             }
         }
 
+
         AffineTransform3D translateFwd = new AffineTransform3D();
         translateFwd.translate(
-                -(dims.dimension(0)/2d),
-                -(dims.dimension(1)/2d),
-                -(dims.dimension(2)/2d));
+                -(dims.dimension(0)/2.0),
+                -(dims.dimension(1)/2.0),
+                -(dims.dimension(2)/2.0));
 
         AffineTransform3D translateBwd = new AffineTransform3D();
         translateBwd.translate(
-                +(dims.dimension(0)/2d),
-                +(dims.dimension(1)/2d),
-                +(dims.dimension(2)/2d));
+                +(dims.dimension(0)/2.0),
+                +(dims.dimension(1)/2.0),
+                +(dims.dimension(2)/2.0));
 
         AffineTransform3D flip = new AffineTransform3D();
         flip.scale(
