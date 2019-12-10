@@ -12,10 +12,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-@Plugin(type = Command.class,menuPath = "BDV_SciJava>SpimDataset>Convert Files to SpimDataset [BioFormats Bdv Bridge]")
+@Plugin(type = Command.class,
+        menuPath = "BDV_SciJava>SpimDataset>Convert Files to SpimDataset [BioFormats Bdv Bridge]",
+        label = "Convert files to xml Spimdataset, using bioformats reader",
+        description = "Supports multiresolution bioformats api.")
 public class ConvertFilesToBdvXmlDatasetCommand extends BioformatsBigdataviewerBridgeDatasetCommand {
 
-    @Parameter
+    @Parameter(label = "Files to include in the dataset")
     File[] files;
 
     @Parameter(type = ItemIO.OUTPUT)
