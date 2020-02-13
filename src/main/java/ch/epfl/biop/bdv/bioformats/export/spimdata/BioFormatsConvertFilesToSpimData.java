@@ -14,7 +14,11 @@ import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.*;
 import net.imglib2.Dimensions;
+import net.imglib2.type.numeric.ARGBType;
+import ome.units.UNITS;
+import spimdata.util.DisplaySettings;
 
+import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
+
+import static ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper.getColorFromWavelength;
 
 /**
  * Converting BioFormats structure into an Xml Dataset, compatible for BigDataViewer and FIJI BIG Plugins
@@ -134,6 +140,38 @@ public class BioFormatsConvertFilesToSpimData {
                                         dummy_ang,
                                         dummy_ill);
                                 vs.setAttribute(fi);
+
+                                // Attempt to set color
+                                DisplaySettings ds = new DisplaySettings(viewSetupCounter);
+                                ds.min = 0;
+                                ds.max = 255;
+                                ds.isSet = false;
+
+                                // ----------- Color
+                                ome.xml.model.primitives.Color c = omeMeta.getChannelColor(iSerie, iCh);
+                                ARGBType color = null;
+                                if (c != null) {
+                                    color = new ARGBType(ARGBType.rgba(c.getRed(), c.getGreen(), c.getBlue(), 255));
+                                } else {
+                                    if (omeMeta.getChannelEmissionWavelength(iSerie, iCh) != null) {
+                                        int emission = omeMeta.getChannelEmissionWavelength(iSerie, iCh)
+                                                .value(UNITS.NANOMETER)
+                                                .intValue();
+                                        Color cAwt = getColorFromWavelength(emission);
+                                        color = new ARGBType(ARGBType.rgba(cAwt.getRed(), cAwt.getGreen(), cAwt.getBlue(), 255));
+                                    }
+                                }
+
+                                if (color!=null) {
+                                    ds.isSet = true;
+                                    ds.color = new int[]{
+                                            ARGBType.red(color.get()),
+                                            ARGBType.green(color.get()),
+                                            ARGBType.blue(color.get()),
+                                            ARGBType.alpha(color.get())};
+                                }
+                                vs.setAttribute(ds);
+
                                 viewSetups.add(vs);
                                 viewSetupToBFFileSerieChannel.put(viewSetupCounter, new FileSerieChannel(iFile, iSerie, iCh));
                                 viewSetupCounter++;

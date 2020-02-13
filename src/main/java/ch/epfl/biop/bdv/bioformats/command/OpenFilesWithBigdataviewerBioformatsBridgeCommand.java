@@ -1,11 +1,10 @@
 package ch.epfl.biop.bdv.bioformats.command;
 
-import bdv.util.BdvFunctions;
-import bdv.util.BdvHandle;
-import bdv.util.BdvStackSource;
-import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
-import ch.epfl.biop.bdv.bioformats.export.spimdata.BioFormatsConvertFilesToSpimData;
+import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
 import ch.epfl.biop.bdv.bioformats.BioformatsBdvDisplayHelper;
+import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
+import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
+import ch.epfl.biop.bdv.bioformats.export.spimdata.BioFormatsConvertFilesToSpimData;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import org.scijava.ItemIO;
 import org.scijava.command.Command;
@@ -17,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Plugin(type = Command.class,
-        menuPath = "BDV_SciJava>SpimDataset>Open>SpimDataset [BioFormats Bdv Bridge]",
+        menuPath = "BigDataViewer>SpimDataset>Open [BioFormats Bdv Bridge]",
         label = "Opens and show in a bdv window files by using bioformats reader",
         description = "Support bioformmats multiresolution api. Attempts to set colors based" +
                 "on bioformats metadata. Do not attempt auto contrast.")
@@ -25,21 +24,6 @@ public class OpenFilesWithBigdataviewerBioformatsBridgeCommand extends Bioformat
 
     @Parameter
     File[] files;
-
-    @Parameter(required = false)
-    boolean setColor = true;
-
-    @Parameter(required = false)
-    boolean setGrouping = true;
-
-    @Parameter(required = false)
-    double minDisplay = 0;
-
-    @Parameter(required = false)
-    double maxDisplay = 255;
-
-    @Parameter(type = ItemIO.OUTPUT)
-    public BdvHandle bdv_h;
 
     @Parameter(type = ItemIO.OUTPUT)
     AbstractSpimData spimData;
@@ -50,9 +34,6 @@ public class OpenFilesWithBigdataviewerBioformatsBridgeCommand extends Bioformat
             openers.add(getOpener(f));
         }
         spimData = BioFormatsConvertFilesToSpimData.getSpimData(openers);
-        List<BdvStackSource<?>> lbss = BdvFunctions.show(spimData);
-        bdv_h = lbss.get(0).getBdvHandle();
-        BioformatsBdvDisplayHelper.autosetColorsAngGrouping(lbss, spimData, setColor, minDisplay, maxDisplay, setGrouping);
     }
 
 }
