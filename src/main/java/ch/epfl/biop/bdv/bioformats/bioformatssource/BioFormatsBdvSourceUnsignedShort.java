@@ -24,6 +24,7 @@ public class BioFormatsBdvSourceUnsignedShort extends BioFormatsBdvSource<Unsign
                                             int channel_index,
                                             boolean swZC,
                                             FinalInterval cacheBlockSize,
+                                            int maxCacheSize,
                                             boolean useBioFormatsXYBlockSize,
                                             boolean ignoreBioFormatsLocationMetaData,
                                             boolean ignoreBioFormatsVoxelSizeMetaData,
@@ -41,6 +42,7 @@ public class BioFormatsBdvSourceUnsignedShort extends BioFormatsBdvSource<Unsign
                 channel_index,
                 swZC,
                 cacheBlockSize,
+                maxCacheSize,
                 useBioFormatsXYBlockSize,
                 ignoreBioFormatsLocationMetaData,
                 ignoreBioFormatsVoxelSizeMetaData,
@@ -73,8 +75,7 @@ public class BioFormatsBdvSourceUnsignedShort extends BioFormatsBdvSource<Unsign
             final DiskCachedCellImgOptions factoryOptions = options()
                     .cellDimensions( cellDimensions )
                     .cacheType( DiskCachedCellImgOptions.CacheType.BOUNDED )
-                    .maxCacheSize( 1000 );
-
+                    .maxCacheSize(100);
 
             // Creates cached image factory of Type Byte
             final DiskCachedCellImgFactory<UnsignedShortType> factory = new DiskCachedCellImgFactory<>( new UnsignedShortType() , factoryOptions );

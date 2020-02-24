@@ -25,6 +25,7 @@ public class BioFormatsBdvSourceFloat extends BioFormatsBdvSource<FloatType> {
                                     int channel_index,
                                     boolean swZC,
                                     FinalInterval cacheBlockSize,
+                                    int maxCacheSize,
                                     boolean useBioFormatsXYBlockSize,
                                     boolean ignoreBioFormatsLocationMetaData,
                                     boolean ignoreBioFormatsVoxelSizeMetaData,
@@ -42,6 +43,7 @@ public class BioFormatsBdvSourceFloat extends BioFormatsBdvSource<FloatType> {
                 channel_index,
                 swZC,
                 cacheBlockSize,
+                maxCacheSize,
                 useBioFormatsXYBlockSize,
                 ignoreBioFormatsLocationMetaData,
                 ignoreBioFormatsVoxelSizeMetaData,
@@ -75,8 +77,7 @@ public class BioFormatsBdvSourceFloat extends BioFormatsBdvSource<FloatType> {
             final DiskCachedCellImgOptions factoryOptions = options()
                     .cellDimensions( cellDimensions )
                     .cacheType( DiskCachedCellImgOptions.CacheType.BOUNDED )
-                    .maxCacheSize( 1000 );
-
+                    .maxCacheSize( maxCacheSize );
 
             // Creates cached image factory of Type Byte
             final DiskCachedCellImgFactory<FloatType> factory = new DiskCachedCellImgFactory<>( new FloatType() , factoryOptions );
