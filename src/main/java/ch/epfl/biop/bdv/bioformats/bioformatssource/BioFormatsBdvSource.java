@@ -94,6 +94,8 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
 
     boolean positionIsImageCenter;
 
+    int maxCacheSize;
+
     public int[] cellDimensions;
 
     final Unit<Length> targetUnit;
@@ -120,6 +122,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
                                int channel_index,
                                boolean swZC,
                                FinalInterval cacheBlockSize,
+                               int maxCacheSize,
                                boolean useBioFormatsXYBlockSize,
                                boolean ignoreBioFormatsLocationMetaData,
                                boolean ignoreBioFormatsVoxelSizeMetaData,
@@ -138,6 +141,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
         this.ignoreBioFormatsVoxelSizeMetaData = ignoreBioFormatsVoxelSizeMetaData;
         this.useBioFormatsXYBlockSize = useBioFormatsXYBlockSize;
         this.cacheBlockSize = cacheBlockSize;
+        this.maxCacheSize = maxCacheSize;
         this.switchZandC = swZC;
         this.reader = reader;
         this.reader.setSeries(image_index);

@@ -94,6 +94,8 @@ public class BioFormatsBdvOpener {
 
     public int numPriorities = 4;
 
+    public int maxCacheSize = 1;
+
     transient SharedQueue cc = new SharedQueue(2,4);
 
     public String getDataLocation() {
@@ -120,9 +122,10 @@ public class BioFormatsBdvOpener {
         return this;
     }
 
-    public BioFormatsBdvOpener cacheOptions(int numFetcherThreads, int numPriorities) {
+    public BioFormatsBdvOpener cacheOptions(int numFetcherThreads, int numPriorities, int maxCacheSize) {
         this.nFetcherThread = numFetcherThreads;
         this.numPriorities = numPriorities;
+        this.maxCacheSize = maxCacheSize;
         this.cc = new SharedQueue(this.nFetcherThread, this.numPriorities);
         return this;
     }
@@ -367,6 +370,7 @@ public class BioFormatsBdvOpener {
                     int.class,
                     boolean.class,
                     FinalInterval.class,
+                    int.class,
                     boolean.class,
                     boolean.class,
                     boolean.class,
@@ -385,6 +389,7 @@ public class BioFormatsBdvOpener {
                     channel_index,
                     swZC,
                     cacheBlockSize,
+                    maxCacheSize,
                     useBioFormatsXYBlockSize,
                     positionIgnoreBioFormatsMetaData,
                     voxSizeIgnoreBioFormatsMetaData,
