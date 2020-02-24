@@ -81,7 +81,7 @@ public class BioFormatsBdvSourceRGB24bits extends BioFormatsBdvSource<ARGBType> 
             final DiskCachedCellImgOptions factoryOptions = options()
                     .cellDimensions( cellDimensions )
                     .cacheType( DiskCachedCellImgOptions.CacheType.BOUNDED )
-                    .maxCacheSize( 100 );
+                    .maxCacheSize( maxCacheSize );
 
             // Creates cached image factory of Type Byte
             final DiskCachedCellImgFactory<ARGBType> factory = new DiskCachedCellImgFactory<ARGBType>( new ARGBType() , factoryOptions );

@@ -75,7 +75,7 @@ public class BioFormatsBdvSourceUnsignedShort extends BioFormatsBdvSource<Unsign
             final DiskCachedCellImgOptions factoryOptions = options()
                     .cellDimensions( cellDimensions )
                     .cacheType( DiskCachedCellImgOptions.CacheType.BOUNDED )
-                    .maxCacheSize(100);
+                    .maxCacheSize( maxCacheSize );
 
             // Creates cached image factory of Type Byte
             final DiskCachedCellImgFactory<UnsignedShortType> factory = new DiskCachedCellImgFactory<>( new UnsignedShortType() , factoryOptions );

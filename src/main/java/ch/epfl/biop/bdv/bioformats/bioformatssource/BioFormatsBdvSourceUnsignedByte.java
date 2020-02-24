@@ -72,7 +72,7 @@ public class BioFormatsBdvSourceUnsignedByte extends BioFormatsBdvSource<Unsigne
             final DiskCachedCellImgOptions factoryOptions = options()
                     .cellDimensions( cellDimensions )
                     .cacheType( DiskCachedCellImgOptions.CacheType.BOUNDED )
-                    .maxCacheSize( 1000 );
+                    .maxCacheSize( maxCacheSize );
 
 
             // Creates cached image factory of Type Byte
