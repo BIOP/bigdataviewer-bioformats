@@ -364,6 +364,27 @@ public class BioFormatsBdvOpener {
                 voxSizePostTransform.set(voxSizePostTransformMatrixArray);
             }
 
+            /*
+            IFormatReader reader,
+                               int image_index,
+                               int channel_index,
+                               boolean swZC,
+                               FinalInterval cacheBlockSize,
+                               int maxCacheSize,
+                               boolean useBioFormatsXYBlockSize,
+                               boolean ignoreBioFormatsLocationMetaData,
+                               boolean ignoreBioFormatsVoxelSizeMetaData,
+                               boolean positionIsImageCenter,
+                               Length positionReferenceFrameLength,
+                               Length voxSizeReferenceFrameLength,
+                               Unit u,
+                               AffineTransform3D positionPreTransform,
+                               AffineTransform3D positionPostTransform,
+                               AffineTransform3D voxSizePreTransform,
+                               AffineTransform3D voxSizePostTransform,
+                               boolean[] axesFlip)
+             */
+
             BioFormatsBdvSource bdvSrc = c.getConstructor(
                     IFormatReader.class,
                     int.class,
