@@ -119,7 +119,7 @@ public class BioFormatsBdvSourceRGB24bits extends BioFormatsBdvSource<ARGBType> 
 
                                     int totBytes = (w * h) * 3;
                                     while ((out.hasNext()) && (idxPx < totBytes)) {
-                                        int v = ((bytes[idxPx] & 0xff) << 16 ) | ((bytes[idxPx + 1] & 0xff) << 8) | (bytes[idxPx+2] & 0xff);
+                                        int v = ((0xff) << 24 ) | ((bytes[idxPx] & 0xff) << 16 ) | ((bytes[idxPx + 1] & 0xff) << 8) | (bytes[idxPx+2] & 0xff);
                                         out.next().set(v);
                                         idxPx += 3;
                                     }
