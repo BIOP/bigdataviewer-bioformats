@@ -1,3 +1,4 @@
+import bdv.util.BdvHandle;
 import net.imagej.ImageJ;
 
 public class SimpleIJLaunch {
