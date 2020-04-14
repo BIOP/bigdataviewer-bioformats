@@ -8,13 +8,13 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>27.0.1</version>
+		<version>28.0.0</version>
 		<relativePath />
 	</parent>
 
 	<groupId>ch.epfl.biop</groupId>
 	<artifactId>bigdataviewer-bioformats</artifactId>
-	<version>0.2.1</version>
+	<version>0.2.2</version>
 
 	<name>BigDataViewer Bioformats Bridge</name>
 	<description>Commands and function for opening, conversion and easy use of bioformats format into BigDataViewer</description>
@@ -127,8 +127,20 @@
 		<package-name>ch.epfl.biop.bdv.bioformats</package-name>
 		<license.licenseName>N/A</license.licenseName>
 		<license.copyrightOwners>N/A</license.copyrightOwners>
-		<scijava.app.directory>C:/Users/chiarutt/Desktop/fiji-bdv-playground/Fiji.app/</scijava.app.directory>
-		<scijava.deleteOtherVersions>true</scijava.deleteOtherVersions>
+		<!--<scijava.app.directory>C:/Users/chiarutt/Desktop/fiji-bdv-playground/Fiji.app/</scijava.app.directory>
+		<scijava.deleteOtherVersions>true</scijava.deleteOtherVersions> -->
+		<scijava-maven-plugin.version>1.1.0</scijava-maven-plugin.version>
+
+		<bigdataviewer-core.version>9.0.0</bigdataviewer-core.version>
+		<bigdataviewer-vistools.version>1.0.0-beta-19-table-SNAPSHOT</bigdataviewer-vistools.version>
+
+		<imglib2.version>5.9.0</imglib2.version>
+		<imglib2-cache.version>1.0.0-beta-13</imglib2-cache.version>
+
+		<spim_data.version>2.2.3</spim_data.version>
+
+		<ui-behaviour.version>2.0.1</ui-behaviour.version>
+
 	</properties>
 
 	<repositories>
@@ -143,6 +155,7 @@
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej</artifactId>
 		</dependency>
+
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -196,25 +209,28 @@
 
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>bigdataviewer-core</artifactId>
+			<artifactId>bigdataviewer-vistools</artifactId>
+			<!-- Try removing after pom-scijava 29.x.x -->
 		</dependency>
 
 		<dependency>
 			<groupId>sc.fiji</groupId>
-			<artifactId>bigdataviewer-vistools</artifactId>
+			<artifactId>bigdataviewer-core</artifactId>
+			<!-- Try removing after pom-scijava 29.x.x -->
 		</dependency>
 
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 		</dependency>
-
+		<!--
 		<dependency>
+			Useless and creates conflicts with new versions of imglib2
             <groupId>sc.fiji</groupId>
             <artifactId>bigdataviewer_fiji</artifactId>
             <scope>test</scope>
 		</dependency>
-
+		-->
 		<dependency>
 			<groupId>org.reflections</groupId>
 			<artifactId>reflections</artifactId>
@@ -225,7 +241,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>bigdataviewer-playground</artifactId>
-			<version>0.1.5-SNAPSHOT</version>
+			<version>0.1.7</version>
 		</dependency>
 
     </dependencies>
