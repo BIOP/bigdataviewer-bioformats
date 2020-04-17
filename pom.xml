@@ -14,7 +14,7 @@
 
 	<groupId>ch.epfl.biop</groupId>
 	<artifactId>bigdataviewer-bioformats</artifactId>
-	<version>0.2.2</version>
+	<version>0.2.3</version>
 
 	<name>BigDataViewer Bioformats Bridge</name>
 	<description>Commands and function for opening, conversion and easy use of bioformats format into BigDataViewer</description>
@@ -127,8 +127,8 @@
 		<package-name>ch.epfl.biop.bdv.bioformats</package-name>
 		<license.licenseName>N/A</license.licenseName>
 		<license.copyrightOwners>N/A</license.copyrightOwners>
-		<!--<scijava.app.directory>C:/Users/chiarutt/Desktop/fiji-bdv-playground/Fiji.app/</scijava.app.directory>
-		<scijava.deleteOtherVersions>true</scijava.deleteOtherVersions> -->
+		<scijava.app.directory>C:/Users/nicol/Desktop/fiji-win64-bdv-playground/Fiji.app/</scijava.app.directory>
+		<scijava.deleteOtherVersions>true</scijava.deleteOtherVersions>
 		<scijava-maven-plugin.version>1.1.0</scijava-maven-plugin.version>
 
 		<bigdataviewer-core.version>9.0.0</bigdataviewer-core.version>
@@ -241,7 +241,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>bigdataviewer-playground</artifactId>
-			<version>0.1.7</version>
+			<version>0.1.8</version>
 		</dependency>
 
     </dependencies>
