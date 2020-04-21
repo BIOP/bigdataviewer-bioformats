@@ -16,7 +16,7 @@ import mpicbg.spim.data.sequence.*;
 import net.imglib2.Dimensions;
 import net.imglib2.type.numeric.ARGBType;
 import ome.units.UNITS;
-import spimdata.util.DisplaySettings;
+import spimdata.util.Displaysettings;
 
 import java.awt.*;
 import java.io.File;
@@ -142,7 +142,7 @@ public class BioFormatsConvertFilesToSpimData {
                                 vs.setAttribute(fi);
 
                                 // Attempt to set color
-                                DisplaySettings ds = new DisplaySettings(viewSetupCounter);
+                                Displaysettings ds = new Displaysettings(viewSetupCounter);
                                 ds.min = 0;
                                 ds.max = 255;
                                 ds.isSet = false;

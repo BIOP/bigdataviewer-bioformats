@@ -14,7 +14,7 @@
 
 	<groupId>ch.epfl.biop</groupId>
 	<artifactId>bigdataviewer-bioformats</artifactId>
-	<version>0.2.3</version>
+	<version>0.2.4</version>
 
 	<name>BigDataViewer Bioformats Bridge</name>
 	<description>Commands and function for opening, conversion and easy use of bioformats format into BigDataViewer</description>
@@ -243,7 +243,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>bigdataviewer-playground</artifactId>
-			<version>0.1.8</version>
+			<version>0.1.9</version>
 		</dependency>
 
     </dependencies>
