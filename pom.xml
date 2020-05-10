@@ -14,7 +14,7 @@
 
 	<groupId>ch.epfl.biop</groupId>
 	<artifactId>bigdataviewer-bioformats</artifactId>
-	<version>0.2.4</version>
+	<version>0.2.5-SNAPSHOT</version>
 
 	<name>BigDataViewer Bioformats Bridge</name>
 	<description>Commands and function for opening, conversion and easy use of bioformats format into BigDataViewer</description>
@@ -225,14 +225,7 @@
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 		</dependency>
-		<!--
-		<dependency>
-			Useless and creates conflicts with new versions of imglib2
-            <groupId>sc.fiji</groupId>
-            <artifactId>bigdataviewer_fiji</artifactId>
-            <scope>test</scope>
-		</dependency>
-		-->
+
 		<dependency>
 			<groupId>org.reflections</groupId>
 			<artifactId>reflections</artifactId>
@@ -243,7 +236,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>bigdataviewer-playground</artifactId>
-			<version>0.1.9</version>
+			<version>0.2.0</version>
 		</dependency>
 
     </dependencies>
