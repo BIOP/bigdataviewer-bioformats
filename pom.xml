@@ -14,7 +14,7 @@
 
 	<groupId>ch.epfl.biop</groupId>
 	<artifactId>bigdataviewer-bioformats</artifactId>
-	<version>0.2.5</version>
+	<version>0.2.6-SNAPSHOT</version>
 
 	<name>BigDataViewer Bioformats Bridge</name>
 	<description>Commands and function for opening, conversion and easy use of bioformats format into BigDataViewer</description>
@@ -141,7 +141,8 @@
 		<ui-behaviour.version>2.0.1</ui-behaviour.version>
 		<scijava-ui-swing.version>0.13.0</scijava-ui-swing.version>
 
-
+		<bigdataviewer-playground.version>0.2.1-SNAPSHOT</bigdataviewer-playground.version>
+		<reflections.version>0.9.11</reflections.version>
 
 	</properties>
 
@@ -229,14 +230,14 @@
 		<dependency>
 			<groupId>org.reflections</groupId>
 			<artifactId>reflections</artifactId>
-			<version>0.9.11</version>
+			<version>${reflections.version}</version>
 			<scope>test</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>bigdataviewer-playground</artifactId>
-			<version>0.2.0</version>
+			<version>${bigdataviewer-playground.version}</version>
 		</dependency>
 
     </dependencies>
