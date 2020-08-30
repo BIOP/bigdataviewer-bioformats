@@ -1,9 +1,5 @@
 package ch.epfl.biop.bdv.bioformats.samples;
 
-import bdv.util.BdvFunctions;
-import bdv.util.BdvHandle;
-import bdv.util.BdvStackSource;
-import ch.epfl.biop.bdv.bioformats.BioformatsBdvDisplayHelper;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.export.spimdata.BioFormatsConvertFilesToSpimData;
 import mpicbg.spim.data.generic.AbstractSpimData;
@@ -17,10 +13,9 @@ import org.scijava.plugin.Plugin;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.List;
 
 @Plugin(type = Command.class,
-        menuPath = "BigDataViewer>SpimDataset>Open sample dataset",
+        menuPath = "BigDataViewer>BDVDataset>Open sample dataset",
         label = "Open sample datasets",
         description = "Downloads and cache datasets on first open attempt.")
 
@@ -28,9 +23,6 @@ public class OpenSample implements Command {
 
     @Parameter(label = "Choose a sample dataset", choices = {"VSI", "JPG_RGB", "OLYMPUS_OIR", "LIF", "TIF_TIMELAPSE_3D", "ND2_20X", "ND2_60X", "BOTH_ND2"})
     String datasetName;
-
-    //@Parameter(type = ItemIO.OUTPUT)
-    //BdvHandle bdvh_out;
 
     @Parameter(type = ItemIO.OUTPUT)
     AbstractSpimData spimData;
@@ -66,10 +58,6 @@ public class OpenSample implements Command {
 
             spimData = BioFormatsConvertFilesToSpimData.getSpimData(openers);
 
-            //List<BdvStackSource<?>> lbss = BdvFunctions.show(spimData);
-            //bdvh_out = lbss.get(0).getBdvHandle();
-            //BioformatsBdvDisplayHelper.autosetColorsAngGrouping(lbss, spimData, true, 0, 5000, true);
-
             return;
         }
         for (Field f:fields) {
@@ -89,9 +77,6 @@ public class OpenSample implements Command {
                             .location(file).auto()
                             .voxSizeReferenceFrameLength(new Length(1, UNITS.MILLIMETER))
                             .positionReferenceFrameLength(new Length(1, UNITS.MILLIMETER)));
-                    //List<BdvStackSource<?>> lbss = BdvFunctions.show(spimData);
-                    //bdvh_out = lbss.get(0).getBdvHandle();
-                    //BioformatsBdvDisplayHelper.autosetColorsAngGrouping(lbss, spimData, true, 0, 255, true);
 
                     return;
                 } catch (IllegalAccessException e) {

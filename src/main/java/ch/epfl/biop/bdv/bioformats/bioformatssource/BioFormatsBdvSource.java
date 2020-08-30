@@ -111,7 +111,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
     final boolean[] axesOfImageFlip;
 
     /**
-     * Bio Format source cosntructor
+     * Bio Format source constructor
      * @param reader bio format reader -> flatten should be set to false to allow for multiresolution handling
      * @param image_index image index within source
      * @param channel_index channel index within source

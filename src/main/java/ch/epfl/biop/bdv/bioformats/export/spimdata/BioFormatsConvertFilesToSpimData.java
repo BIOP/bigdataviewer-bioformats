@@ -2,10 +2,7 @@ package ch.epfl.biop.bdv.bioformats.export.spimdata;
 
 import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
-import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsImageLoader;
-import ch.epfl.biop.bdv.bioformats.imageloader.FileIndex;
-import ch.epfl.biop.bdv.bioformats.imageloader.FileSerieChannel;
-import ch.epfl.biop.bdv.bioformats.imageloader.SeriesTps;
+import ch.epfl.biop.bdv.bioformats.imageloader.*;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;
 import mpicbg.spim.data.SpimData;
@@ -82,6 +79,7 @@ public class BioFormatsConvertFilesToSpimData {
         try {
             for (int iF=0;iF<openers.size();iF++) {
                 FileIndex fi = new FileIndex(iF);
+                fi.setName(openers.get(iF).getDataLocation());
                 log.accept("Data : "+ openers.get(iF).getDataLocation());
                 IFormatReader readerIdx = new ImageReader();
 
@@ -100,7 +98,7 @@ public class BioFormatsConvertFilesToSpimData {
                 IntStream series = IntStream.range(0, memo.getSeriesCount());
                 series.forEach(iSerie -> {
                     memo.setSeries(iSerie);
-
+                    SeriesNumber sn = new SeriesNumber(iSerie);
                     fileIdxToNumberOfSeriesAndTimepoints.put(iFile, new SeriesTps(memo.getSeriesCount(),omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue()));
                     // One serie = one Tile
                     Tile tile = new Tile(nTileCounter);
@@ -140,6 +138,7 @@ public class BioFormatsConvertFilesToSpimData {
                                         dummy_ang,
                                         dummy_ill);
                                 vs.setAttribute(fi);
+                                vs.setAttribute(sn);
 
                                 // Attempt to set color
                                 Displaysettings ds = new Displaysettings(viewSetupCounter);
