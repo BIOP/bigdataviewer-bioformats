@@ -6,6 +6,8 @@ import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.cache.img.DiskCachedCellImgFactory;
 import net.imglib2.cache.img.DiskCachedCellImgOptions;
+import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
+import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
 import net.imglib2.img.Img;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.ARGBType;
@@ -78,13 +80,13 @@ public class BioFormatsBdvSourceRGB24bits extends BioFormatsBdvSource<ARGBType> 
             int sz = (!is3D)?1:reader.getSizeZ();
             
             // Cached Image Factory Options
-            final DiskCachedCellImgOptions factoryOptions = options()
+            final ReadOnlyCachedCellImgOptions factoryOptions = ReadOnlyCachedCellImgOptions.options()
                     .cellDimensions( cellDimensions )
                     .cacheType( DiskCachedCellImgOptions.CacheType.BOUNDED )
                     .maxCacheSize( maxCacheSize );
 
             // Creates cached image factory of Type Byte
-            final DiskCachedCellImgFactory<ARGBType> factory = new DiskCachedCellImgFactory<ARGBType>( new ARGBType() , factoryOptions );
+            final ReadOnlyCachedCellImgFactory factory = new ReadOnlyCachedCellImgFactory( factoryOptions );
 
             int xc = cellDimensions[0];
             int yc = cellDimensions[1];
@@ -94,7 +96,7 @@ public class BioFormatsBdvSourceRGB24bits extends BioFormatsBdvSource<ARGBType> 
             // TODO improve interleave case
             final Img<ARGBType> rai;
             if (reader.isInterleaved()) {
-                rai = factory.create(new FinalInterval(new long[]{sx, sy, sz}),
+                rai = factory.create(new long[]{sx, sy, sz}, new ARGBType(),
                         cell -> {
                             synchronized(reader) {
                                 reader.setResolution(level);
@@ -126,9 +128,9 @@ public class BioFormatsBdvSourceRGB24bits extends BioFormatsBdvSource<ARGBType> 
                                 }
 
                             }
-                        }, options().initializeCellsAsDirty(true));
+                        });
             } else {
-                rai = factory.create(new FinalInterval(new long[]{sx, sy, sz}),
+                rai = factory.create(new long[]{sx, sy, sz}, new ARGBType(),
                         cell -> {
                             synchronized(reader) {
                                 reader.setResolution(level);
@@ -166,7 +168,7 @@ public class BioFormatsBdvSourceRGB24bits extends BioFormatsBdvSource<ARGBType> 
                                     }
                                 }
                             }
-                        }, options().initializeCellsAsDirty(true));
+                        });
             }
 
             raiMap.get(t).put(level, rai);

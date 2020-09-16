@@ -52,13 +52,15 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
         this.numFetcherThreads=numFetcherThreads;
         this.numPriorities=numPriorities;
         sq = new SharedQueue(numFetcherThreads,numPriorities);
+        
+        openers.forEach(opener -> opener.setCache(sq));
 
         IntStream openersIdxStream = IntStream.range(0, openers.size());
         if ((sequenceDescription!=null)) {
             openersIdxStream.forEach(iF -> {
                 try {
                     BioFormatsBdvOpener opener = openers.get(iF);
-                    opener.setCache(sq);
+                    //opener.setCache(sq);
                     log.accept("Data location = "+opener.getDataLocation());
 
                     IFormatReader readerIdx = new ImageReader();
@@ -142,5 +144,15 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
         return cache;
     }
 
+    public SharedQueue getQueue() {
+        return sq;
+    }
+
+    public void close() {
+        synchronized (this) {
+            cache.clearCache();
+            sq.shutdown();
+        }
+    }
 
 }
