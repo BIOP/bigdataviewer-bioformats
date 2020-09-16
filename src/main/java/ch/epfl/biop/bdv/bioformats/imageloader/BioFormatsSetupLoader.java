@@ -4,6 +4,7 @@ import bdv.AbstractViewerSetupImgLoader;
 import bdv.viewer.Source;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
+import ch.epfl.biop.bdv.bioformats.bioformatssource.VolatileBdvSource;
 import loci.formats.IFormatReader;
 import mpicbg.spim.data.generic.sequence.ImgLoaderHint;
 import mpicbg.spim.data.sequence.MultiResolutionSetupImgLoader;
@@ -173,4 +174,5 @@ public class BioFormatsSetupLoader<T extends NumericType<T>,V extends Volatile<T
     public VoxelDimensions getVoxelSize(int timepointId) {
         return concreteSource.getVoxelDimensions();
     }
+
 }

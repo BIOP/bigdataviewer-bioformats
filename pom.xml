@@ -130,8 +130,12 @@
 		<scijava.app.directory>C:/Users/nicol/Desktop/fiji-win64-bdv-playground/Fiji.app/</scijava.app.directory>
 		<scijava.deleteOtherVersions>true</scijava.deleteOtherVersions>
 
+		<bigdataviewer-core.version>10.0.0</bigdataviewer-core.version>
+		<bigdataviewer-vistools.version>1.0.0-beta-22</bigdataviewer-vistools.version>
+		<imglib2-cache.version>1.0.0-beta-15</imglib2-cache.version>
+		<bigdataviewer-selector.version>0.1.5-SNAPSHOT</bigdataviewer-selector.version>
 
-		<bigdataviewer-playground.version>0.2.3-SNAPSHOT</bigdataviewer-playground.version>
+		<bigdataviewer-playground.version>0.2.4-SNAPSHOT</bigdataviewer-playground.version>
 		<reflections.version>0.9.11</reflections.version>
 
 	</properties>
@@ -180,6 +184,7 @@
 		<dependency>
 			<groupId>ome</groupId>
 			<artifactId>formats-gpl</artifactId>
+			<version>6.6.0-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<!-- NB: Exclude problematic uber-JAR that bundles commons-io. -->
@@ -197,7 +202,6 @@
 					<artifactId>xml-apis</artifactId>
 				</exclusion>
 			</exclusions>
-
 		</dependency>
 
 		<dependency>

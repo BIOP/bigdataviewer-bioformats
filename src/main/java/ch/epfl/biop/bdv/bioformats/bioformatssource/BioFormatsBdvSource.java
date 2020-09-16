@@ -11,6 +11,8 @@ import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccessible;
 import net.imglib2.Volatile;
+import net.imglib2.cache.img.CachedCellImg;
+import net.imglib2.cache.img.DiskCachedCellImg;
 import net.imglib2.img.Img;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.Type;

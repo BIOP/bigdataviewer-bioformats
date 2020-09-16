@@ -6,6 +6,8 @@ import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.cache.img.DiskCachedCellImgFactory;
 import net.imglib2.cache.img.DiskCachedCellImgOptions;
+import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
+import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
 import net.imglib2.img.Img;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.real.FloatType;
@@ -17,7 +19,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static net.imglib2.cache.img.DiskCachedCellImgOptions.options;
+import static net.imglib2.cache.img.ReadOnlyCachedCellImgOptions.options;
 
 public class BioFormatsBdvSourceFloat extends BioFormatsBdvSource<FloatType> {
     public BioFormatsBdvSourceFloat(IFormatReader reader,
@@ -74,13 +76,13 @@ public class BioFormatsBdvSourceFloat extends BioFormatsBdvSource<FloatType> {
             int sy = reader.getSizeY();
             int sz = (!is3D)?1:reader.getSizeZ();
 
-            final DiskCachedCellImgOptions factoryOptions = options()
+            final ReadOnlyCachedCellImgOptions factoryOptions = options()
                     .cellDimensions( cellDimensions )
                     .cacheType( DiskCachedCellImgOptions.CacheType.BOUNDED )
                     .maxCacheSize( maxCacheSize );
 
             // Creates cached image factory of Type Byte
-            final DiskCachedCellImgFactory<FloatType> factory = new DiskCachedCellImgFactory<>( new FloatType() , factoryOptions );
+            final ReadOnlyCachedCellImgFactory factory = new ReadOnlyCachedCellImgFactory( factoryOptions );
 
             int xc = cellDimensions[0];
             int yc = cellDimensions[1];
@@ -88,7 +90,7 @@ public class BioFormatsBdvSourceFloat extends BioFormatsBdvSource<FloatType> {
 
             // Creates border image, with cell Consumer method, which creates the image
 
-            final Img<FloatType> rai = factory.create(new FinalInterval(new long[]{sx, sy, sz}),
+            final Img<FloatType> rai = factory.create(new long[]{sx, sy, sz}, new FloatType(),
                     cell -> {
                         synchronized(reader) {
                             reader.setResolution(level);
@@ -138,7 +140,7 @@ public class BioFormatsBdvSourceFloat extends BioFormatsBdvSource<FloatType> {
                                 }
                             }
                         }
-                    }, options().initializeCellsAsDirty(true));
+                    });
 
             raiMap.get(t).put(level, rai);
 

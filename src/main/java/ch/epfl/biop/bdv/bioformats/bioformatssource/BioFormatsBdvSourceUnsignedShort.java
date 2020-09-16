@@ -6,6 +6,8 @@ import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.cache.img.DiskCachedCellImgFactory;
 import net.imglib2.cache.img.DiskCachedCellImgOptions;
+import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
+import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
 import net.imglib2.img.Img;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
@@ -72,13 +74,13 @@ public class BioFormatsBdvSourceUnsignedShort extends BioFormatsBdvSource<Unsign
             int sy = reader.getSizeY();
             int sz = (!is3D)?1:reader.getSizeZ();
 
-            final DiskCachedCellImgOptions factoryOptions = options()
+            final ReadOnlyCachedCellImgOptions factoryOptions = ReadOnlyCachedCellImgOptions.options()
                     .cellDimensions( cellDimensions )
                     .cacheType( DiskCachedCellImgOptions.CacheType.BOUNDED )
                     .maxCacheSize( maxCacheSize );
 
             // Creates cached image factory of Type Byte
-            final DiskCachedCellImgFactory<UnsignedShortType> factory = new DiskCachedCellImgFactory<>( new UnsignedShortType() , factoryOptions );
+            final ReadOnlyCachedCellImgFactory factory = new ReadOnlyCachedCellImgFactory( factoryOptions );
 
             int xc = cellDimensions[0];
             int yc = cellDimensions[1];
@@ -86,7 +88,7 @@ public class BioFormatsBdvSourceUnsignedShort extends BioFormatsBdvSource<Unsign
 
             // Creates border image, with cell Consumer method, which creates the image
 
-            final Img<UnsignedShortType> rai = factory.create(new FinalInterval(new long[]{sx, sy, sz}),
+            final Img<UnsignedShortType> rai = factory.create(new long[]{sx, sy, sz}, new UnsignedShortType(),
                     cell -> {
                         synchronized(reader) {
                             reader.setResolution(level);
@@ -126,7 +128,7 @@ public class BioFormatsBdvSourceUnsignedShort extends BioFormatsBdvSource<Unsign
                                 }
                             }
                         }
-                    }, options().initializeCellsAsDirty(true));
+                    });
 
             raiMap.get(t).put(level, rai);
 
