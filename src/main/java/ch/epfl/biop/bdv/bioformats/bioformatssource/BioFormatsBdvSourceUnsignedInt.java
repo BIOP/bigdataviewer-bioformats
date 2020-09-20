@@ -8,6 +8,7 @@ import net.imglib2.cache.img.DiskCachedCellImgFactory;
 import net.imglib2.cache.img.DiskCachedCellImgOptions;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
+import net.imglib2.cache.img.optional.CacheOptions;
 import net.imglib2.img.Img;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.integer.UnsignedIntType;
@@ -77,8 +78,9 @@ public class BioFormatsBdvSourceUnsignedInt extends BioFormatsBdvSource<Unsigned
 
             final ReadOnlyCachedCellImgOptions factoryOptions = ReadOnlyCachedCellImgOptions.options()
                     .cellDimensions( cellDimensions )
-                    .cacheType( DiskCachedCellImgOptions.CacheType.BOUNDED )
-                    .maxCacheSize( maxCacheSize );
+                    .cacheType( CacheOptions.CacheType.SOFTREF );
+                    //.cacheType( DiskCachedCellImgOptions.CacheType.BOUNDED )
+                    //.maxCacheSize( maxCacheSize );
 
             // Creates cached image factory of Type Byte
             final ReadOnlyCachedCellImgFactory factory = new ReadOnlyCachedCellImgFactory( factoryOptions );
