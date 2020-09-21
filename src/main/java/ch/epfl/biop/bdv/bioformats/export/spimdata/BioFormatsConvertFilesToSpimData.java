@@ -99,6 +99,7 @@ public class BioFormatsConvertFilesToSpimData {
                 series.forEach(iSerie -> {
                     memo.setSeries(iSerie);
                     SeriesNumber sn = new SeriesNumber(iSerie);
+                    sn.setName("Series_"+iSerie);
                     fileIdxToNumberOfSeriesAndTimepoints.put(iFile, new SeriesTps(memo.getSeriesCount(),omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue()));
                     // One serie = one Tile
                     Tile tile = new Tile(nTileCounter);
