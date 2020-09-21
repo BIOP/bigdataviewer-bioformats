@@ -1,16 +1,7 @@
-import bdv.util.BdvHandle;
 import loci.common.DebugTools;
 import net.imagej.ImageJ;
 
 public class SimpleIJLaunch {
-
-    // TODO:
-    //
-    // autoset per filename
-    // z problem : expand z thickness
-    // force 2d
-    // check ignoremetadata for reference frame
-    // reference frame for voxel ?
 
     static public void main(String... args) {
         // Arrange
