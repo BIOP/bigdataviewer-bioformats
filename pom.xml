@@ -135,7 +135,7 @@
 		<imglib2-cache.version>1.0.0-beta-15</imglib2-cache.version>
 		<bigdataviewer-selector.version>0.1.5-SNAPSHOT</bigdataviewer-selector.version>
 
-		<bigdataviewer-playground.version>0.2.4-SNAPSHOT</bigdataviewer-playground.version>
+		<bigdataviewer-playground.version>0.2.5-SNAPSHOT</bigdataviewer-playground.version>
 		<reflections.version>0.9.11</reflections.version>
 
 	</properties>

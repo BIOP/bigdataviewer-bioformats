@@ -335,7 +335,7 @@ public class BioFormatsBdvOpener {
 
     public BioFormatsBdvSource getConcreteSource(int image_index, int channel_index) {
         try {
-
+            // Huge performance issue with new reader when the memoization is large (typically the case for operetta data)
             final IFormatReader readerIdx = getNewReader();
 
             Class<? extends BioFormatsBdvSource> c = BioFormatsBdvSource.getBioformatsBdvSourceClass(readerIdx, image_index);
@@ -384,7 +384,6 @@ public class BioFormatsBdvOpener {
                                AffineTransform3D voxSizePostTransform,
                                boolean[] axesFlip)
              */
-
             BioFormatsBdvSource bdvSrc = c.getConstructor(
                     IFormatReader.class,
                     int.class,
@@ -438,10 +437,13 @@ public class BioFormatsBdvOpener {
     }
 
     public Map<String, Source> getConcreteAndVolatileSources(int image_index, int channel_index) {
+
         BioFormatsBdvSource concreteSource = this.getConcreteSource(image_index, channel_index);
+
         VolatileBdvSource volatileSource = new VolatileBdvSource(concreteSource,
                 BioFormatsBdvSource.getVolatileOf((NumericType) concreteSource.getType()),
                 cc);
+
         Map<String, Source> sources = new HashMap();
         sources.put(BioFormatsBdvSource.CONCRETE, concreteSource);
         sources.put(BioFormatsBdvSource.VOLATILE, volatileSource);
