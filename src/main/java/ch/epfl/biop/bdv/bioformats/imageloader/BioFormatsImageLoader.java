@@ -8,7 +8,6 @@ import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;
-import mpicbg.spim.data.generic.base.Entity;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.sequence.*;
 import net.imglib2.Volatile;
@@ -52,7 +51,7 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
         this.numFetcherThreads=numFetcherThreads;
         this.numPriorities=numPriorities;
         sq = new SharedQueue(numFetcherThreads,numPriorities);
-        
+
         openers.forEach(opener -> opener.setCache(sq));
 
         IntStream openersIdxStream = IntStream.range(0, openers.size());
@@ -60,7 +59,7 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
             openersIdxStream.forEach(iF -> {
                 try {
                     BioFormatsBdvOpener opener = openers.get(iF);
-                    //opener.setCache(sq);
+
                     log.accept("Data location = "+opener.getDataLocation());
 
                     IFormatReader readerIdx = new ImageReader();
@@ -73,7 +72,6 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
                     tTypeGetter.put(iF,new HashMap<>());
                     vTypeGetter.put(iF,new HashMap<>());
 
-                    //final IFormatReader reader = memo;
 
                     log.accept("Number of Series : " + memo.getSeriesCount());
                     IMetadata omeMeta = (IMetadata) memo.getMetadataStore();
@@ -112,6 +110,7 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
                 }
             });
         }
+
         // NOT CORRECTLY IMPLEMENTED YET
         //final BlockingFetchQueues<Callable<?>> queue = new BlockingFetchQueues<>(1,1);
         cache = new VolatileGlobalCellCache(sq);

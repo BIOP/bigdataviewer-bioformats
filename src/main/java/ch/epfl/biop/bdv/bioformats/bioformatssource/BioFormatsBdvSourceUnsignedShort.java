@@ -22,7 +22,7 @@ import static net.imglib2.cache.img.DiskCachedCellImgOptions.options;
 
 public class BioFormatsBdvSourceUnsignedShort extends BioFormatsBdvSource<UnsignedShortType> {
 
-    public BioFormatsBdvSourceUnsignedShort(IFormatReader reader,
+    public BioFormatsBdvSourceUnsignedShort(ReaderPool readerPool,
                                             int image_index,
                                             int channel_index,
                                             boolean swZC,
@@ -40,7 +40,7 @@ public class BioFormatsBdvSourceUnsignedShort extends BioFormatsBdvSource<Unsign
                                             AffineTransform3D voxSizePreTransform,
                                             AffineTransform3D voxSizePostTransform,
                                             boolean[] axesFlip) {
-        super(reader,
+        super(readerPool,
                 image_index,
                 channel_index,
                 swZC,
@@ -62,42 +62,44 @@ public class BioFormatsBdvSourceUnsignedShort extends BioFormatsBdvSource<Unsign
 
     @Override
     public RandomAccessibleInterval<UnsignedShortType> createSource(int t, int level) {
-        synchronized(reader) {
+        try {
+            IFormatReader reader_init = readerPool.acquire();
+            reader_init.setSeries(this.cSerie);
+            reader_init.setResolution(level);
+
             if (!raiMap.containsKey(t)) {
                 raiMap.put(t, new ConcurrentHashMap<>());
             }
 
-            reader.setResolution(level);
+            boolean littleEndian = reader_init.isLittleEndian();
 
-            boolean littleEndian = reader.isLittleEndian();
-
-            int sx = reader.getSizeX();
-            int sy = reader.getSizeY();
-            int sz = (!is3D)?1:reader.getSizeZ();
+            int sx = reader_init.getSizeX();
+            int sy = reader_init.getSizeY();
+            int sz = (!is3D) ? 1 : reader_init.getSizeZ();
 
             final ReadOnlyCachedCellImgOptions factoryOptions = ReadOnlyCachedCellImgOptions.options()
-                    .cellDimensions( cellDimensions )
-                    .cacheType( CacheOptions.CacheType.SOFTREF );
-                    //.maxCacheSize( maxCacheSize );
+                    .cellDimensions(cellDimensions)
+                    .cacheType(CacheOptions.CacheType.SOFTREF);
 
             // Creates cached image factory of Type Byte
-            final ReadOnlyCachedCellImgFactory factory = new ReadOnlyCachedCellImgFactory( factoryOptions );
+            final ReadOnlyCachedCellImgFactory factory = new ReadOnlyCachedCellImgFactory(factoryOptions);
 
             int xc = cellDimensions[0];
             int yc = cellDimensions[1];
             int zc = cellDimensions[2];
 
-            // Creates border image, with cell Consumer method, which creates the image
-
+            // Creates image, with cell Consumer method, which creates the image
             final Img<UnsignedShortType> rai = factory.create(new long[]{sx, sy, sz}, new UnsignedShortType(),
                     cell -> {
-                        synchronized(reader) {
+                        try {
+                            IFormatReader reader = readerPool.acquire();
+                            reader.setSeries(this.cSerie);
                             reader.setResolution(level);
                             Cursor<UnsignedShortType> out = Views.flatIterable(cell).cursor();
                             int minZ = (int) cell.min(2);
                             int maxZ = Math.min(minZ + zc, reader.getSizeZ());
 
-                            for (int z=minZ;z<maxZ;z++) {
+                            for (int z = minZ; z < maxZ; z++) {
                                 int minX = (int) cell.min(0);
                                 int maxX = Math.min(minX + xc, reader.getSizeX());
 
@@ -108,11 +110,11 @@ public class BioFormatsBdvSourceUnsignedShort extends BioFormatsBdvSource<Unsign
                                 int h = maxY - minY;
 
 
-                                int totBytes = (w * h)*2;
+                                int totBytes = (w * h) * 2;
 
                                 int idxPx = 0;
 
-                                byte[] bytes = reader.openBytes(switchZandC?reader.getIndex(cChannel,z,t):reader.getIndex(z,cChannel,t), minX, minY, w, h);
+                                byte[] bytes = reader.openBytes(switchZandC ? reader.getIndex(cChannel, z, t) : reader.getIndex(z, cChannel, t), minX, minY, w, h);
 
                                 if (littleEndian) { // TODO improve this dirty switch block
                                     while ((out.hasNext()) && (idxPx < totBytes)) {
@@ -122,18 +124,24 @@ public class BioFormatsBdvSourceUnsignedShort extends BioFormatsBdvSource<Unsign
                                     }
                                 } else {
                                     while ((out.hasNext()) && (idxPx < totBytes)) {
-                                        int v = ((bytes[idxPx] & 0xff) << 8) | (bytes[idxPx+1] & 0xff);
+                                        int v = ((bytes[idxPx] & 0xff) << 8) | (bytes[idxPx + 1] & 0xff);
                                         out.next().set(v);
                                         idxPx += 2;
                                     }
                                 }
                             }
+                            readerPool.recycle(reader);
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
                     });
 
             raiMap.get(t).put(level, rai);
-
+            readerPool.recycle(reader_init);
             return raiMap.get(t).get(level);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 

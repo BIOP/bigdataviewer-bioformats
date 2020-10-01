@@ -5,6 +5,7 @@ import bdv.util.BdvStackSource;
 import bdv.viewer.state.SourceGroup;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
 import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsSetupLoader;
+import loci.formats.IFormatReader;
 import loci.formats.meta.IMetadata;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
@@ -15,6 +16,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ *
+ */
+
+@Deprecated
 public class BioformatsBdvDisplayHelper {
 
     public static void autosetColorsAngGrouping(List<BdvStackSource<?>> lbss, AbstractSpimData asd, boolean setColor, double minValue, double maxValue, boolean setGrouping) {
@@ -41,9 +47,20 @@ public class BioformatsBdvDisplayHelper {
                                     .getViewSetupsOrdered().stream()
                                     .map(obj -> ((BasicViewSetup) obj).getId())
                                     .collect(Collectors.groupingBy(e -> {
-                                                BioFormatsSetupLoader bfsl = (BioFormatsSetupLoader) asd.getSequenceDescription().getImgLoader().getSetupImgLoader((int)e);
-                                                return
-                                                        new BioFormatsMetaDataHelper.BioformatsChannel((IMetadata) bfsl.getReader().getMetadataStore(), bfsl.iSerie, bfsl.iChannel, bfsl.getReader().isRGB());
+                                                try {
+                                                    BioFormatsSetupLoader bfsl = (BioFormatsSetupLoader) asd.getSequenceDescription().getImgLoader().getSetupImgLoader((int) e);
+                                                    IFormatReader reader = bfsl.getReaderPool().acquire();
+
+                                                    // TODO : fix series!!
+
+                                                    BioFormatsMetaDataHelper.BioformatsChannel channel = new BioFormatsMetaDataHelper.BioformatsChannel((IMetadata) reader.getMetadataStore(), bfsl.iSerie, bfsl.iChannel, reader.isRGB());
+
+                                                    bfsl.getReaderPool().recycle(reader);
+                                                    return channel;
+                                                } catch (Exception exception) {
+                                                    exception.printStackTrace();
+                                                    return null;
+                                                }
                                             },
                                             Collectors.toList()));
 

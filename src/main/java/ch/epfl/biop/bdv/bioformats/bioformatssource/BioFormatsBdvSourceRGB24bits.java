@@ -4,8 +4,6 @@ import loci.formats.IFormatReader;
 import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.cache.img.DiskCachedCellImgFactory;
-import net.imglib2.cache.img.DiskCachedCellImgOptions;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
 import net.imglib2.cache.img.optional.CacheOptions;
@@ -18,12 +16,9 @@ import ome.units.unit.Unit;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-import static net.imglib2.cache.img.DiskCachedCellImgOptions.options;
-
-
 public class BioFormatsBdvSourceRGB24bits extends BioFormatsBdvSource<ARGBType> {
 
-    public BioFormatsBdvSourceRGB24bits(IFormatReader reader,
+    public BioFormatsBdvSourceRGB24bits(ReaderPool readerPool,
                                         int image_index,
                                         int channel_index,
                                         boolean swZC,
@@ -41,7 +36,7 @@ public class BioFormatsBdvSourceRGB24bits extends BioFormatsBdvSource<ARGBType> 
                                         AffineTransform3D voxSizePreTransform,
                                         AffineTransform3D voxSizePostTransform,
                                         boolean[] axesFlip) {
-        super(reader,
+        super(readerPool,
                 image_index,
                 channel_index,
                 swZC,
@@ -68,39 +63,40 @@ public class BioFormatsBdvSourceRGB24bits extends BioFormatsBdvSource<ARGBType> 
      * @return
      */
     public RandomAccessibleInterval<ARGBType> createSource(int t, int level) {
-        //assert is24bitsRGB;
-        synchronized(reader) {
+        try {
+            IFormatReader reader_init = readerPool.acquire();
+            reader_init.setSeries(this.cSerie);
 
             if (!raiMap.containsKey(t)) {
                 raiMap.put(t, new ConcurrentHashMap<>());
             }
 
-            reader.setResolution(level);
-            int sx = reader.getSizeX();
-            int sy = reader.getSizeY();
-            int sz = (!is3D)?1:reader.getSizeZ();
+            reader_init.setResolution(level);
+            int sx = reader_init.getSizeX();
+            int sy = reader_init.getSizeY();
+            int sz = (!is3D)?1:reader_init.getSizeZ();
             
             // Cached Image Factory Options
             final ReadOnlyCachedCellImgOptions factoryOptions = ReadOnlyCachedCellImgOptions.options()
                     .cellDimensions( cellDimensions )
                     .cacheType( CacheOptions.CacheType.SOFTREF );
-                    //.cacheType( DiskCachedCellImgOptions.CacheType.BOUNDED )
-                    //.maxCacheSize( maxCacheSize );
 
-            // Creates cached image factory of Type Byte
+            // Creates read only cached image factory
             final ReadOnlyCachedCellImgFactory factory = new ReadOnlyCachedCellImgFactory( factoryOptions );
 
             int xc = cellDimensions[0];
             int yc = cellDimensions[1];
             int zc = cellDimensions[2];
 
-            // Creates border image, with cell Consumer method, which creates the image
             // TODO improve interleave case
             final Img<ARGBType> rai;
-            if (reader.isInterleaved()) {
+            if (reader_init.isInterleaved()) {
                 rai = factory.create(new long[]{sx, sy, sz}, new ARGBType(),
                         cell -> {
-                            synchronized(reader) {
+                            try {
+                                IFormatReader reader = readerPool.acquire();
+                                reader.setSeries(cSerie);
+
                                 reader.setResolution(level);
                                 Cursor<ARGBType> out = Views.flatIterable(cell).cursor();
                                 int minZ = (int) cell.min(2);
@@ -128,13 +124,18 @@ public class BioFormatsBdvSourceRGB24bits extends BioFormatsBdvSource<ARGBType> 
                                         idxPx += 3;
                                     }
                                 }
-
+                                readerPool.recycle(reader);
+                            } catch (Exception e) {
+                                e.printStackTrace();
                             }
                         });
             } else {
                 rai = factory.create(new long[]{sx, sy, sz}, new ARGBType(),
                         cell -> {
-                            synchronized(reader) {
+                            try {
+                                IFormatReader reader = readerPool.acquire();
+                                reader.setSeries(cSerie);
+
                                 reader.setResolution(level);
                                 Cursor<ARGBType> out = Views.flatIterable(cell).cursor();
                                 int minZ = (int) cell.min(2);
@@ -169,13 +170,19 @@ public class BioFormatsBdvSourceRGB24bits extends BioFormatsBdvSource<ARGBType> 
                                         idxPx += 1;
                                     }
                                 }
+                                readerPool.recycle(reader);
+                            } catch (Exception e) {
+                                e.printStackTrace();
                             }
                         });
             }
 
             raiMap.get(t).put(level, rai);
-
+            readerPool.recycle(reader_init);
             return raiMap.get(t).get(level);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 

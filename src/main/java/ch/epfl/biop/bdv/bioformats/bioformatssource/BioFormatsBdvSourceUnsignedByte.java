@@ -4,8 +4,6 @@ import loci.formats.IFormatReader;
 import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.cache.img.DiskCachedCellImgFactory;
-import net.imglib2.cache.img.DiskCachedCellImgOptions;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
 import net.imglib2.cache.img.optional.CacheOptions;
@@ -18,10 +16,8 @@ import ome.units.unit.Unit;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-import static net.imglib2.cache.img.DiskCachedCellImgOptions.options;
-
 public class BioFormatsBdvSourceUnsignedByte extends BioFormatsBdvSource<UnsignedByteType> {
-    public BioFormatsBdvSourceUnsignedByte(IFormatReader reader,
+    public BioFormatsBdvSourceUnsignedByte(ReaderPool readerPool,
                                            int image_index,
                                            int channel_index,
                                            boolean swZC,
@@ -39,7 +35,7 @@ public class BioFormatsBdvSourceUnsignedByte extends BioFormatsBdvSource<Unsigne
                                            AffineTransform3D voxSizePreTransform,
                                            AffineTransform3D voxSizePostTransform,
                                            boolean[] axesFlip) {
-        super(reader,
+        super(readerPool,
                 image_index,
                 channel_index,
                 swZC,
@@ -61,22 +57,23 @@ public class BioFormatsBdvSourceUnsignedByte extends BioFormatsBdvSource<Unsigne
 
     @Override
     public RandomAccessibleInterval<UnsignedByteType> createSource(int t, int level) {
-        synchronized(reader) {
+        try {
+            IFormatReader reader_init = readerPool.acquire();
+            reader_init.setSeries(this.cSerie);
+
             if (!raiMap.containsKey(t)) {
                 raiMap.put(t, new ConcurrentHashMap<>());
             }
 
-            reader.setResolution(level);
-            int sx = reader.getSizeX();
-            int sy = reader.getSizeY();
-            int sz = (!is3D)?1:reader.getSizeZ();
+            reader_init.setResolution(level);
+            int sx = reader_init.getSizeX();
+            int sy = reader_init.getSizeY();
+            int sz = (!is3D)?1:reader_init.getSizeZ();
 
             // Cached Image Factory Options
             final ReadOnlyCachedCellImgOptions factoryOptions = ReadOnlyCachedCellImgOptions.options()
                     .cellDimensions( cellDimensions )
                     .cacheType( CacheOptions.CacheType.SOFTREF );
-                    //.cacheType( DiskCachedCellImgOptions.CacheType.BOUNDED )
-                    //.maxCacheSize( maxCacheSize );
 
             // Creates cached image factory of Type Byte
             final ReadOnlyCachedCellImgFactory factory = new ReadOnlyCachedCellImgFactory( factoryOptions );
@@ -87,7 +84,9 @@ public class BioFormatsBdvSourceUnsignedByte extends BioFormatsBdvSource<Unsigne
 
             final Img<UnsignedByteType> rai = factory.create(new long[]{sx, sy, sz}, new UnsignedByteType(),
                     cell -> {
-                        synchronized(reader) {
+                        try {
+                            IFormatReader reader = readerPool.acquire();
+                            reader.setSeries(this.cSerie);
                             reader.setResolution(level);
                             Cursor<UnsignedByteType> out = Views.flatIterable(cell).cursor();
                             int minZ = (int) cell.min(2);
@@ -114,12 +113,18 @@ public class BioFormatsBdvSourceUnsignedByte extends BioFormatsBdvSource<Unsigne
                                     idxPx++;
                                 }
                             }
+                            readerPool.recycle(reader);
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
                     });
 
             raiMap.get(t).put(level, rai);
-
+            readerPool.recycle(reader_init);
             return raiMap.get(t).get(level);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 

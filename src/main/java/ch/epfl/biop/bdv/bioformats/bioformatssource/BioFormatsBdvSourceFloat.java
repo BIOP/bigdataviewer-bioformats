@@ -4,8 +4,6 @@ import loci.formats.IFormatReader;
 import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.cache.img.DiskCachedCellImgFactory;
-import net.imglib2.cache.img.DiskCachedCellImgOptions;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
 import net.imglib2.cache.img.optional.CacheOptions;
@@ -23,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static net.imglib2.cache.img.ReadOnlyCachedCellImgOptions.options;
 
 public class BioFormatsBdvSourceFloat extends BioFormatsBdvSource<FloatType> {
-    public BioFormatsBdvSourceFloat(IFormatReader reader,
+    public BioFormatsBdvSourceFloat(ReaderPool readerPool,
                                     int image_index,
                                     int channel_index,
                                     boolean swZC,
@@ -41,7 +39,7 @@ public class BioFormatsBdvSourceFloat extends BioFormatsBdvSource<FloatType> {
                                     AffineTransform3D voxSizePreTransform,
                                     AffineTransform3D voxSizePostTransform,
                                     boolean[] axesFlip) {
-        super(reader,
+        super(readerPool,
                 image_index,
                 channel_index,
                 swZC,
@@ -64,24 +62,25 @@ public class BioFormatsBdvSourceFloat extends BioFormatsBdvSource<FloatType> {
 
     @Override
     public RandomAccessibleInterval<FloatType> createSource(int t, int level) {
-        synchronized(reader) {
+        try {
+            IFormatReader reader_init = readerPool.acquire();
+            reader_init.setSeries(this.cSerie);
+
             if (!raiMap.containsKey(t)) {
                 raiMap.put(t, new ConcurrentHashMap<>());
             }
 
-            reader.setResolution(level);
+            reader_init.setResolution(level);
 
-            boolean littleEndian = reader.isLittleEndian();
+            boolean littleEndian = reader_init.isLittleEndian();
 
-            int sx = reader.getSizeX();
-            int sy = reader.getSizeY();
-            int sz = (!is3D)?1:reader.getSizeZ();
+            int sx = reader_init.getSizeX();
+            int sy = reader_init.getSizeY();
+            int sz = (!is3D)?1:reader_init.getSizeZ();
 
             final ReadOnlyCachedCellImgOptions factoryOptions = options()
                     .cellDimensions( cellDimensions )
                     .cacheType( CacheOptions.CacheType.SOFTREF );
-                    //.cacheType( DiskCachedCellImgOptions.CacheType.BOUNDED )
-                    //.maxCacheSize( maxCacheSize );
 
             // Creates cached image factory of Type Byte
             final ReadOnlyCachedCellImgFactory factory = new ReadOnlyCachedCellImgFactory( factoryOptions );
@@ -90,11 +89,10 @@ public class BioFormatsBdvSourceFloat extends BioFormatsBdvSource<FloatType> {
             int yc = cellDimensions[1];
             int zc = cellDimensions[2];
 
-            // Creates border image, with cell Consumer method, which creates the image
-
             final Img<FloatType> rai = factory.create(new long[]{sx, sy, sz}, new FloatType(),
                     cell -> {
-                        synchronized(reader) {
+                        try {
+                            IFormatReader reader = readerPool.acquire();
                             reader.setResolution(level);
                             Cursor<FloatType> out = Views.flatIterable(cell).cursor();
                             int minZ = (int) cell.min(2);
@@ -110,7 +108,6 @@ public class BioFormatsBdvSourceFloat extends BioFormatsBdvSource<FloatType> {
                                 int w = maxX - minX;
                                 int h = maxY - minY;
 
-
                                 int totBytes = (w * h)*4;
 
                                 int idxPx = 0;
@@ -125,28 +122,30 @@ public class BioFormatsBdvSourceFloat extends BioFormatsBdvSource<FloatType> {
                                         curBytes[2]= bytes[idxPx+2];
                                         curBytes[3]= bytes[idxPx+3];
                                         out.next().set( ByteBuffer.wrap(curBytes).order(ByteOrder.LITTLE_ENDIAN).getFloat());
-
                                         idxPx += 4;
                                     }
                                 } else {
                                     while ((out.hasNext()) && (idxPx < totBytes)) {
-
                                         curBytes[0]= bytes[idxPx];
                                         curBytes[1]= bytes[idxPx+1];
                                         curBytes[2]= bytes[idxPx+2];
                                         curBytes[3]= bytes[idxPx+3];
                                         out.next().set( ByteBuffer.wrap(curBytes).order(ByteOrder.BIG_ENDIAN).getFloat());
-
                                         idxPx += 4;
                                     }
                                 }
                             }
+                            readerPool.recycle(reader);
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
                     });
-
             raiMap.get(t).put(level, rai);
-
+            readerPool.recycle(reader_init);
             return raiMap.get(t).get(level);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 

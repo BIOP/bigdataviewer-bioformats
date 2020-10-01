@@ -4,8 +4,7 @@ import bdv.AbstractViewerSetupImgLoader;
 import bdv.viewer.Source;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
-import ch.epfl.biop.bdv.bioformats.bioformatssource.VolatileBdvSource;
-import loci.formats.IFormatReader;
+import ch.epfl.biop.bdv.bioformats.bioformatssource.ReaderPool;
 import mpicbg.spim.data.generic.sequence.ImgLoaderHint;
 import mpicbg.spim.data.sequence.MultiResolutionSetupImgLoader;
 import mpicbg.spim.data.sequence.VoxelDimensions;
@@ -36,8 +35,8 @@ public class BioFormatsSetupLoader<T extends NumericType<T>,V extends Volatile<T
 
     Consumer<String> errlog = s -> System.err.println(BioFormatsSetupLoader.class+" error:"+s);
 
-    public IFormatReader getReader() {
-        return ((BioFormatsBdvSource) concreteSource).getReader();
+    public ReaderPool getReaderPool() {
+        return ((BioFormatsBdvSource) concreteSource).getReaderPool();
     }
 
     final BioFormatsBdvOpener opener;
