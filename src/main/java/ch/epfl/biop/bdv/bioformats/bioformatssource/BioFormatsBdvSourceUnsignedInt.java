@@ -22,7 +22,7 @@ import static net.imglib2.cache.img.DiskCachedCellImgOptions.options;
 
 // TODO : interleaved channels not supported
 public class BioFormatsBdvSourceUnsignedInt extends BioFormatsBdvSource<UnsignedIntType> {
-    public BioFormatsBdvSourceUnsignedInt(IFormatReader reader,
+    public BioFormatsBdvSourceUnsignedInt(ReaderPool readerPool,
                                           int image_index,
                                           int channel_index,
                                           boolean swZC,
@@ -40,7 +40,7 @@ public class BioFormatsBdvSourceUnsignedInt extends BioFormatsBdvSource<Unsigned
                                           AffineTransform3D voxSizePreTransform,
                                           AffineTransform3D voxSizePostTransform,
                                           boolean[] axesFlip) {
-        super(reader,
+        super(readerPool,
                 image_index,
                 channel_index,
                 swZC,
@@ -63,24 +63,25 @@ public class BioFormatsBdvSourceUnsignedInt extends BioFormatsBdvSource<Unsigned
 
     @Override
     public RandomAccessibleInterval<UnsignedIntType> createSource(int t, int level) {
-        synchronized(reader) {
+        try {
+            IFormatReader reader_init = readerPool.acquire();
+            reader_init.setSeries(this.cSerie);
+
             if (!raiMap.containsKey(t)) {
                 raiMap.put(t, new ConcurrentHashMap<>());
             }
 
-            reader.setResolution(level);
+            reader_init.setResolution(level);
 
-            boolean littleEndian = reader.isLittleEndian();
+            boolean littleEndian = reader_init.isLittleEndian();
 
-            int sx = reader.getSizeX();
-            int sy = reader.getSizeY();
-            int sz = (!is3D)?1:reader.getSizeZ();
+            int sx = reader_init.getSizeX();
+            int sy = reader_init.getSizeY();
+            int sz = (!is3D)?1:reader_init.getSizeZ();
 
             final ReadOnlyCachedCellImgOptions factoryOptions = ReadOnlyCachedCellImgOptions.options()
                     .cellDimensions( cellDimensions )
                     .cacheType( CacheOptions.CacheType.SOFTREF );
-                    //.cacheType( DiskCachedCellImgOptions.CacheType.BOUNDED )
-                    //.maxCacheSize( maxCacheSize );
 
             // Creates cached image factory of Type Byte
             final ReadOnlyCachedCellImgFactory factory = new ReadOnlyCachedCellImgFactory( factoryOptions );
@@ -89,11 +90,12 @@ public class BioFormatsBdvSourceUnsignedInt extends BioFormatsBdvSource<Unsigned
             int yc = cellDimensions[1];
             int zc = cellDimensions[2];
 
-            // Creates border image, with cell Consumer method, which creates the image
+            // Creates image, with cell Consumer, which creates the image
             final Img<UnsignedIntType> rai = factory.create(new long[]{sx, sy, sz}, new UnsignedIntType(),
                     cell -> {
-                        synchronized(reader) {
-                            reader.setResolution(level);
+                        try {
+                            IFormatReader reader = readerPool.acquire();
+                            reader.setSeries(this.cSerie);
                             Cursor<UnsignedIntType> out = Views.flatIterable(cell).cursor();
                             int minZ = (int) cell.min(2);
                             int maxZ = Math.min(minZ + zc, reader.getSizeZ());
@@ -129,12 +131,18 @@ public class BioFormatsBdvSourceUnsignedInt extends BioFormatsBdvSource<Unsigned
                                     }
                                 }
                             }
+                            readerPool.recycle(reader);
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
                     });
 
             raiMap.get(t).put(level, rai);
-
+            readerPool.recycle(reader_init);
             return raiMap.get(t).get(level);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 

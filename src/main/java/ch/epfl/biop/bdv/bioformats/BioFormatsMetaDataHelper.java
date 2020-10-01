@@ -557,34 +557,40 @@ public class BioFormatsMetaDataHelper {
      * @return ARGBType instance containing a color code for the source
      */
     public static ARGBType getSourceColor(BioFormatsBdvSource src) {
-        // Get color based on emission wavelength
-        IFormatReader reader = src.getReader();
+        try {
+            // Get color based on emission wavelength
+            IFormatReader reader = src.getReaderPool().acquire();//.getReader();
 
-        //final IMetadata omeMetaIdxOmeXml = MetadataTools.createOMEXMLMetadata();
-        //reader.setMetadataStore(omeMetaIdxOmeXml);
+            //final IMetadata omeMetaIdxOmeXml = MetadataTools.createOMEXMLMetadata();
+            //reader.setMetadataStore(omeMetaIdxOmeXml);
 
-        final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
+            final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
 
-        ARGBType color = new ARGBType(ARGBType.rgba(255,255,255,255)); // default is white
-        if ((src.getType() instanceof ARGBType)||(src.getType() instanceof VolatileARGBType)) {
+            ARGBType color = new ARGBType(ARGBType.rgba(255, 255, 255, 255)); // default is white
+            if ((src.getType() instanceof ARGBType) || (src.getType() instanceof VolatileARGBType)) {
 
-        } else {
-            if ((src.getType() instanceof NumericType)||(src.getType() instanceof VolatileNumericType)) {
-                ome.xml.model.primitives.Color c = omeMeta.getChannelColor(src.cSerie, src.cChannel);
-                if (c != null) {
-                    color = new ARGBType(ARGBType.rgba(c.getRed(), c.getGreen(), c.getBlue(), 255));
-                } else {
-                    if (omeMeta.getChannelEmissionWavelength(src.cSerie, src.cChannel) != null) {
-                        int emission = omeMeta.getChannelEmissionWavelength(src.cSerie, src.cChannel)
-                                .value(UNITS.NANOMETER)
-                                .intValue();
-                        Color cAwt = getColorFromWavelength(emission);
-                        color = new ARGBType(ARGBType.rgba(cAwt.getRed(), cAwt.getGreen(), cAwt.getBlue(), 255));
+            } else {
+                if ((src.getType() instanceof NumericType) || (src.getType() instanceof VolatileNumericType)) {
+                    ome.xml.model.primitives.Color c = omeMeta.getChannelColor(src.cSerie, src.cChannel);
+                    if (c != null) {
+                        color = new ARGBType(ARGBType.rgba(c.getRed(), c.getGreen(), c.getBlue(), 255));
+                    } else {
+                        if (omeMeta.getChannelEmissionWavelength(src.cSerie, src.cChannel) != null) {
+                            int emission = omeMeta.getChannelEmissionWavelength(src.cSerie, src.cChannel)
+                                    .value(UNITS.NANOMETER)
+                                    .intValue();
+                            Color cAwt = getColorFromWavelength(emission);
+                            color = new ARGBType(ARGBType.rgba(cAwt.getRed(), cAwt.getGreen(), cAwt.getBlue(), 255));
+                        }
                     }
                 }
             }
+            src.getReaderPool().recycle(reader);
+            return color;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ARGBType(ARGBType.rgba(255, 255, 255, 255));
         }
-        return color;
     }
 
     /** Taken from Earl F. Glynn's web page:

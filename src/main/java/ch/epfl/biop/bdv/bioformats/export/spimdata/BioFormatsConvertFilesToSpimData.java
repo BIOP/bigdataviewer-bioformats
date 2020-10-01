@@ -31,7 +31,7 @@ import static ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper.getColorFromW
  * Limitation
  * Series are considered as Tiles, no Illumination or Angle is considered
  *
- * @author nicolas.chiaruttini@epfl.ch
+ * @author nicolas.chiaruttini@epfl.ch, BIOP, EPFL 2020
  */
 
 public class BioFormatsConvertFilesToSpimData {

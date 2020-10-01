@@ -98,6 +98,8 @@ public class BioFormatsBdvOpener {
 
     transient SharedQueue cc = new SharedQueue(2,4);
 
+    transient ReaderPool pool = new ReaderPool(10, true, this::getNewReader);
+
     public String getDataLocation() {
         return dataLocation;
     }
@@ -119,6 +121,11 @@ public class BioFormatsBdvOpener {
 
     public BioFormatsBdvOpener voxSizeReferenceFrameLength(Length l) {
         this.voxSizeReferenceFrameLength = l;
+        return this;
+    }
+
+    public BioFormatsBdvOpener setReaderPool(ReaderPool pool) {
+        this.pool = pool;
         return this;
     }
 
@@ -311,6 +318,7 @@ public class BioFormatsBdvOpener {
         reader.setFlattenedResolutions(false);
         if (splitRGBChannels) {reader = new ChannelSeparator(reader);}
         Memoizer memo = new Memoizer(reader);
+
         final IMetadata omeMetaIdxOmeXml = MetadataTools.createOMEXMLMetadata();
         memo.setMetadataStore(omeMetaIdxOmeXml);
         try {
@@ -324,19 +332,10 @@ public class BioFormatsBdvOpener {
         return readerIdx;
     }
 
-    IFormatReader reusableReader=null;
-
-    public IFormatReader getCachedReader() {
-        if (reusableReader==null) {
-            reusableReader = getNewReader();
-        }
-        return reusableReader;
-    }
-
     public BioFormatsBdvSource getConcreteSource(int image_index, int channel_index) {
         try {
             // Huge performance issue with new reader when the memoization is large (typically the case for operetta data)
-            final IFormatReader readerIdx = getNewReader();
+            final IFormatReader readerIdx = pool.acquire();//getCachedReader();//getNewReader();
 
             Class<? extends BioFormatsBdvSource> c = BioFormatsBdvSource.getBioformatsBdvSourceClass(readerIdx, image_index);
 
@@ -364,28 +363,8 @@ public class BioFormatsBdvOpener {
                 voxSizePostTransform.set(voxSizePostTransformMatrixArray);
             }
 
-            /*
-            IFormatReader reader,
-                               int image_index,
-                               int channel_index,
-                               boolean swZC,
-                               FinalInterval cacheBlockSize,
-                               int maxCacheSize,
-                               boolean useBioFormatsXYBlockSize,
-                               boolean ignoreBioFormatsLocationMetaData,
-                               boolean ignoreBioFormatsVoxelSizeMetaData,
-                               boolean positionIsImageCenter,
-                               Length positionReferenceFrameLength,
-                               Length voxSizeReferenceFrameLength,
-                               Unit u,
-                               AffineTransform3D positionPreTransform,
-                               AffineTransform3D positionPostTransform,
-                               AffineTransform3D voxSizePreTransform,
-                               AffineTransform3D voxSizePostTransform,
-                               boolean[] axesFlip)
-             */
             BioFormatsBdvSource bdvSrc = c.getConstructor(
-                    IFormatReader.class,
+                    ReaderPool.class,
                     int.class,
                     int.class,
                     boolean.class,
@@ -404,7 +383,7 @@ public class BioFormatsBdvOpener {
                     AffineTransform3D.class, // positionPostTransform;
                     boolean[].class
             ).newInstance(
-                    readerIdx,
+                    pool,
                     image_index,
                     channel_index,
                     swZC,
@@ -422,6 +401,8 @@ public class BioFormatsBdvOpener {
                     voxSizePreTransform,
                     voxSizePostTransform,
                     axesOfImageFlip);
+
+            pool.recycle(readerIdx);
             return bdvSrc;
         } catch (Exception e) {
             e.printStackTrace();
@@ -451,17 +432,24 @@ public class BioFormatsBdvOpener {
     }
 
     public List<VolatileBdvSource> getVolatileSources(String codeSerieChannel) {
-        List<VolatileBdvSource> sources = BioFormatsMetaDataHelper.getListOfSeriesAndChannels(getCachedReader(), codeSerieChannel)
-                .stream()
-                .map(sc ->
-                        sc.getRight().stream().map(
-                                ch -> this.getVolatileSource(sc.getLeft(), ch)
-                        ).collect(Collectors.toList())
-                ).collect(Collectors.toList())
-                .stream()
-                .flatMap(List::stream)
-                .collect(Collectors.toList());
-        return sources;
+        try {
+            IFormatReader reader = pool.acquire();
+            List<VolatileBdvSource> sources = BioFormatsMetaDataHelper.getListOfSeriesAndChannels(reader, codeSerieChannel)
+                    .stream()
+                    .map(sc ->
+                            sc.getRight().stream().map(
+                                    ch -> this.getVolatileSource(sc.getLeft(), ch)
+                            ).collect(Collectors.toList())
+                    ).collect(Collectors.toList())
+                    .stream()
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList());
+            pool.recycle(reader);
+            return sources;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public List<VolatileBdvSource> getVolatileSources() {
@@ -473,17 +461,24 @@ public class BioFormatsBdvOpener {
     }
 
     public List<BioFormatsBdvSource> getConcreteSources(String codeSerieChannel) {
-        List<BioFormatsBdvSource> sources = BioFormatsMetaDataHelper.getListOfSeriesAndChannels(getCachedReader(),codeSerieChannel)
-                .stream()
-                .map(sc ->
-                        sc.getRight().stream().map(
-                                ch -> (BioFormatsBdvSource) this.getConcreteSource(sc.getLeft(),ch)
-                        ).collect(Collectors.toList())
-                ).collect(Collectors.toList())
-                .stream()
-                .flatMap(List::stream)
-                .collect(Collectors.toList());
-        return sources;
+        try {
+            IFormatReader reader = pool.acquire();
+            List<BioFormatsBdvSource> sources = BioFormatsMetaDataHelper.getListOfSeriesAndChannels(reader,codeSerieChannel)
+                    .stream()
+                    .map(sc ->
+                            sc.getRight().stream().map(
+                                    ch -> (BioFormatsBdvSource) this.getConcreteSource(sc.getLeft(),ch)
+                            ).collect(Collectors.toList())
+                    ).collect(Collectors.toList())
+                    .stream()
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList());
+            pool.recycle(reader);
+            return sources;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public static BioFormatsBdvOpener getOpener() {

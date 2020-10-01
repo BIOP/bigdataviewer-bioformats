@@ -11,8 +11,6 @@ import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccessible;
 import net.imglib2.Volatile;
-import net.imglib2.cache.img.CachedCellImg;
-import net.imglib2.cache.img.DiskCachedCellImg;
 import net.imglib2.img.Img;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.Type;
@@ -48,23 +46,8 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
 
     protected final DefaultInterpolators< T > interpolators = new DefaultInterpolators<>();
 
-    // Bioformat reader
-    volatile IFormatReader reader;
-
-    // Inner VoxelDimensions, taken from BioFormats
-    final VoxelDimensions voxelsDimensions;
-
-    // 2D or 3D supported (3D TODO)
-    //final int numDimensions;
-
     // Fix BioFormat confusion between c and z in some file formats
     public boolean switchZandC;
-
-    // Channel index of the current source
-    public final int cChannel;
-
-    // Serie index of the current source
-    public final int cSerie;
 
     // Number of timepoints of the source
     public int numberOfTimePoints;
@@ -102,24 +85,35 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
 
     final Unit<Length> targetUnit;
 
-    final Length positionReferenceFrameLength;
-    final Length voxSizeReferenceFrameLength;
+    // Inner VoxelDimensions, taken from BioFormats
+    VoxelDimensions voxelsDimensions;
 
-    final AffineTransform3D positionPreTransform;
-    final AffineTransform3D positionPostTransform;
-    final AffineTransform3D voxSizePreTransform;
-    final AffineTransform3D voxSizePostTransform;
+    // Channel index of the current source
+    public int cChannel;
 
-    final boolean[] axesOfImageFlip;
+    // Serie index of the current source
+    public int cSerie;
+
+    Length positionReferenceFrameLength;
+    Length voxSizeReferenceFrameLength;
+
+    AffineTransform3D positionPreTransform;
+    AffineTransform3D positionPostTransform;
+    AffineTransform3D voxSizePreTransform;
+    AffineTransform3D voxSizePostTransform;
+
+    boolean[] axesOfImageFlip;
+
+    final ReaderPool readerPool;
 
     /**
      * Bio Format source constructor
-     * @param reader bio format reader -> flatten should be set to false to allow for multiresolution handling
+     * @param readerPool bio format reader pool -> flatten should be set to false to allow for multiresolution handling
      * @param image_index image index within source
      * @param channel_index channel index within source
      * @param swZC switch or not z and c
      */
-    public BioFormatsBdvSource(IFormatReader reader,
+    public BioFormatsBdvSource(ReaderPool readerPool,
                                int image_index,
                                int channel_index,
                                boolean swZC,
@@ -138,6 +132,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
                                AffineTransform3D voxSizePostTransform,
                                boolean[] axesFlip)
     {
+        this.readerPool = readerPool;
         this.targetUnit = u;
         this.ignoreBioFormatsLocationMetaData = ignoreBioFormatsLocationMetaData;
         this.ignoreBioFormatsVoxelSizeMetaData = ignoreBioFormatsVoxelSizeMetaData;
@@ -145,57 +140,64 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
         this.cacheBlockSize = cacheBlockSize;
         this.maxCacheSize = maxCacheSize;
         this.switchZandC = swZC;
-        this.reader = reader;
-        this.reader.setSeries(image_index);
-        this.cSerie = image_index;
-        this.cChannel = channel_index;
-        this.numberOfTimePoints = this.reader.getSizeT();
-        this.positionIsImageCenter = positionIsImageCenter;
-        this.positionReferenceFrameLength = positionReferenceFrameLength;
-        this.voxSizeReferenceFrameLength = voxSizeReferenceFrameLength;
-        this.positionPostTransform = positionPostTransform;
-        this.positionPreTransform = positionPreTransform;
-        this.voxSizePostTransform = voxSizePostTransform;
-        this.voxSizePreTransform = voxSizePreTransform;
-        this.axesOfImageFlip = axesFlip;
 
-        // MetaData
-        final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
+        try {
+            IFormatReader reader = readerPool.acquire();
+            reader.setSeries(cSerie);
+            this.numberOfTimePoints = reader.getSizeT();
 
-        // SourceName
-        if (omeMeta.getChannelName(image_index, channel_index)!=null) {
-            if (omeMeta.getChannelName(image_index, channel_index).equals("null")) {
-                this.sourceName = omeMeta.getImageName(image_index);
+            this.cSerie = image_index;
+            this.cChannel = channel_index;
+            this.positionIsImageCenter = positionIsImageCenter;
+            this.positionReferenceFrameLength = positionReferenceFrameLength;
+            this.voxSizeReferenceFrameLength = voxSizeReferenceFrameLength;
+            this.positionPostTransform = positionPostTransform;
+            this.positionPreTransform = positionPreTransform;
+            this.voxSizePostTransform = voxSizePostTransform;
+            this.voxSizePreTransform = voxSizePreTransform;
+            this.axesOfImageFlip = axesFlip;
+
+            // MetaData
+            final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
+
+            // SourceName
+            if (omeMeta.getChannelName(image_index, channel_index) != null) {
+                if (omeMeta.getChannelName(image_index, channel_index).equals("null")) {
+                    this.sourceName = omeMeta.getImageName(image_index);
+                } else {
+                    this.sourceName = omeMeta.getImageName(image_index) + "_ch_" + omeMeta.getChannelName(image_index, channel_index);
+                }
             } else {
-                this.sourceName = omeMeta.getImageName(image_index) + "_ch_" + omeMeta.getChannelName(image_index, channel_index);
+                this.sourceName = omeMeta.getImageName(image_index);
             }
-        } else {
-            this.sourceName = omeMeta.getImageName(image_index);
+
+            if (this.sourceName == null) {
+                this.sourceName = "null";
+            }
+
+            setRootTransform(omeMeta, image_index);
+
+            if (reader.getSizeZ() > 1) {
+                is3D = true;
+            } else {
+                is3D = false;
+            }
+
+            voxelsDimensions = BioFormatsMetaDataHelper.getSeriesVoxelDimensions(
+                    omeMeta, image_index, u, voxSizeReferenceFrameLength
+            );
+
+            cellDimensions = new int[]{
+                    useBioFormatsXYBlockSize ? reader.getOptimalTileWidth() : (int) cacheBlockSize.dimension(0),
+                    useBioFormatsXYBlockSize ? reader.getOptimalTileHeight() : (int) cacheBlockSize.dimension(1),
+                    (!is3D) ? 1 : (int) cacheBlockSize.dimension(2)};
+
+            //fixedLevel = true;
+            //cLevel = this.getNumMipmapLevels()-1;
+            readerPool.recycle(reader);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        if (this.sourceName==null) {
-            this.sourceName="null";
-        }
-
-        setRootTransform(omeMeta, image_index);
-
-        if (reader.getSizeZ()>1) {
-            is3D=true;
-        } else {
-            is3D=false;
-        }
-
-        voxelsDimensions = BioFormatsMetaDataHelper.getSeriesVoxelDimensions(
-                omeMeta, image_index, u, voxSizeReferenceFrameLength
-        );
-
-        cellDimensions = new int[] {
-                useBioFormatsXYBlockSize?reader.getOptimalTileWidth():(int)cacheBlockSize.dimension(0),
-                useBioFormatsXYBlockSize?reader.getOptimalTileHeight():(int)cacheBlockSize.dimension(1),
-                (!is3D)?1:(int)cacheBlockSize.dimension(2)};
-
-        //fixedLevel = true;
-        //cLevel = this.getNumMipmapLevels()-1;
     }
 
     public void setRootTransform(IMetadata omeMeta, int image_index) {
@@ -215,8 +217,8 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
         }
     }
 
-    public IFormatReader getReader() {
-        return this.reader;
+    public ReaderPool getReaderPool() {
+        return this.readerPool;
     }
 
     /**
@@ -299,12 +301,19 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
                 tr.set(rootTransform);
 
                 // Apply ratio in numbers of pixel
-                long nPixXLvl0, nPixYLvl0, nPixZLvl0;
-                synchronized (reader) {
+                long nPixXLvl0 = 0;
+                long nPixYLvl0 = 0;
+                long nPixZLvl0 = 0;
+                try {
+                    IFormatReader reader = readerPool.acquire();
+                    reader.setSeries(cSerie);
                     reader.setResolution(0);
-                    nPixXLvl0 = reader.getSizeX();//this.getSource(t,0).dimension(0);
-                    nPixYLvl0 = reader.getSizeY();//this.getSource(t,0).dimension(1);
-                    nPixZLvl0 = reader.getSizeZ();//this.getSource(t,0).dimension(2);
+                    nPixXLvl0 = reader.getSizeX();
+                    nPixYLvl0 = reader.getSizeY();
+                    nPixZLvl0 = reader.getSizeZ();
+                    readerPool.recycle(reader);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
                 long nPixXCurrentLvl = this.getSource(t,level).dimension(0);
 
@@ -349,7 +358,16 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
 
     @Override
     public int getNumMipmapLevels() {
-        return reader.getResolutionCount();
+        int numMipMapLevels = -1;
+        try {
+            IFormatReader reader = readerPool.acquire();
+            reader.setSeries(cSerie);
+            numMipMapLevels = reader.getResolutionCount();
+            readerPool.recycle(reader);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return numMipMapLevels;
     }
 
     final public static String CONCRETE = "CONCRETE";
