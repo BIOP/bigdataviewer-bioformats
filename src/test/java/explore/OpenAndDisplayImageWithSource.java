@@ -45,14 +45,16 @@ public class OpenAndDisplayImageWithSource
 						.millimeter() // unit = millimeter
 						//.unit(UNITS.YARD) // Ok, if you really want...
 						//.getConcreteSources()
-						.positionReferenceFrameLength(new Length(1, UNITS.MICROMETER))
+						.positionReferenceFrameLength(new Length(1, UNITS.MICROMETER)) // Compulsory
 						.voxSizeReferenceFrameLength(new Length(100, UNITS.MICROMETER))
 						.getVolatileSources()
 						.stream().map(src -> (Source) src).collect(Collectors.toList());
 						//.getVolatileSources();
 
 		BdvStackSource<?> bss = BdvFunctions.show(sources.get(0));
+
 		bss.setColor(BioFormatsMetaDataHelper.getSourceColor(sources.get(0)));
+
 		bss.setDisplayRange(0,255);
 
 		BdvHandle bdvh = bss.getBdvHandle();

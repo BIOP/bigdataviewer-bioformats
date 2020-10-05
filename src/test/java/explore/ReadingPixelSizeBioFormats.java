@@ -1,5 +1,6 @@
 package explore;
 
+import ch.epfl.biop.bdv.bioformats.samples.DatasetHelper;
 import loci.common.services.ServiceFactory;
 import loci.formats.IFormatReader;
 import loci.formats.ImageReader;
@@ -12,14 +13,16 @@ public class ReadingPixelSizeBioFormats
 {
 	public static void main( String[] args )
 	{
-		final double pixelWidth = getNanometerPixelWidthUsingBF( new File( "/Users/tischer/Desktop/20x_g5_a1.nd2" ) );
+		DatasetHelper.getDataset(DatasetHelper.ND2_60X);
 
-		System.out.println( pixelWidth );
+		final double pixelWidth = getNanometerPixelWidthUsingBF( DatasetHelper.getDataset(DatasetHelper.ND2_60X) );
+
+		System.out.println( "Pixel Width = "+pixelWidth+" nm");
 	}
 
 	public static double getNanometerPixelWidthUsingBF( File file )
 	{
-		System.out.println( "Reading voxel size from " + file.getName() );
+		System.out.println( "Reading voxel size from file " + file.getName() );
 
 		// create OME-XML metadata store
 		ServiceFactory factory = null;
