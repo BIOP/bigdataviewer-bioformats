@@ -76,6 +76,8 @@ public class BioFormatsBdvOpener {
     // Unit used for display
     public Unit u;
 
+
+
     // Bioformats location fix
     public double[] positionPreTransformMatrixArray;
     public double[] positionPostTransformMatrixArray;

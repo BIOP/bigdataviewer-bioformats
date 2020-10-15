@@ -1,5 +1,6 @@
 import loci.common.DebugTools;
 import net.imagej.ImageJ;
+import ome.units.UNITS;
 
 public class SimpleIJLaunch {
 
@@ -9,5 +10,6 @@ public class SimpleIJLaunch {
         final ImageJ ij = new ImageJ();
         ij.ui().showUI();
         DebugTools.enableLogging("INFO");
+
     }
 }

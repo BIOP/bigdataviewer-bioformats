@@ -4,12 +4,12 @@ import bdv.util.BdvFunctions;
 import bdv.util.BdvStackSource;
 import ch.epfl.biop.bdv.bioformats.command.BioformatsBigdataviewerBridgeDatasetCommand;
 import ch.epfl.biop.bdv.bioformats.command.OpenFilesWithBigdataviewerBioformatsBridgeCommand;
-import ch.epfl.biop.bdv.bioformats.export.spimdata.Displaysettings;
 import ch.epfl.biop.bdv.bioformats.samples.DatasetHelper;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import net.imagej.ImageJ;
 import net.imglib2.type.numeric.ARGBType;
+import spimdata.util.Displaysettings;
 
 import java.io.File;
 import java.util.List;

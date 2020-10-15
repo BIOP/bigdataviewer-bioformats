@@ -673,12 +673,13 @@ public class BioFormatsMetaDataHelper {
         Field[] bfUnits = UNITS.class.getFields();
         for (Field f:bfUnits) {
             if (f.getType().equals(Unit.class)) {
-                if (f.getName()!=null)
-                if (f.getName().toUpperCase().equals(unit_string.trim().toUpperCase())) {
-                    try {
-                        // Field found
-                        Unit u = (Unit) f.get(null); // Field is assumed to be static
-                        return u;
+                if (f.getName()!=null) {
+                     try {
+                         if (f.getName().toUpperCase().equals(unit_string.trim().toUpperCase())||((Unit)(f.get(null))).getSymbol().toUpperCase().equals(unit_string.trim().toUpperCase())){//(f.getName().toUpperCase().equals(unit_string.trim().toUpperCase())) {
+                             // Field found
+                            Unit u = (Unit) f.get(null); // Field is assumed to be static
+                            return u;
+                         }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
