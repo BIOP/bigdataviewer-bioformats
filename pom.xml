@@ -82,15 +82,15 @@
 	<scm>
 		<connection>scm:git:git://github.com/BIOP/bigdataviewer-bioformats</connection>
 		<developerConnection>scm:git:git@github.com:BIOP/bigdataviewer-bioformats</developerConnection>
-		<tag>HEAD</tag>
 		<url>https://github.com/BIOP/bigdataviewer-bioformats</url>
+		<tag>HEAD</tag>
+
 	</scm>
-	
+
 	<issueManagement>
 		<system>GitHub Issues</system>
 		<url>https://github.com/BIOP/bigdataviewer-bioformats/issues</url>
 	</issueManagement>
-
 
 	<ciManagement>
 		<system>Travis CI</system>
@@ -103,6 +103,7 @@
 		<license.copyrightOwners>Nicolas Chiaruttini, BIOP, EPFL</license.copyrightOwners>
 		<scijava.app.directory>C:/Users/nicol/Desktop/fiji-win64-bdv-playground/Fiji.app/</scijava.app.directory>
 		<scijava.deleteOtherVersions>true</scijava.deleteOtherVersions>
+		<releaseProfiles>deploy-to-scijava</releaseProfiles>
 
 		<bigdataviewer-core.version>10.0.2</bigdataviewer-core.version>
 		<bigdataviewer-vistools.version>1.0.0-beta-22</bigdataviewer-vistools.version>
