@@ -108,7 +108,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
 
     /**
      * Bio Format source constructor
-     * @param readerPool bio format reader pool -> flatten should be set to false to allow for multiresolution handling
+     * @param readerPool bio format reader pool (flatten should be set to false to allow for multiresolution handling)
      * @param image_index image index within source
      * @param channel_index channel index within source
      * @param swZC switch or not z and c
@@ -232,7 +232,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
     }
 
     /**
-     * The core function of the source -> implemented in subclasses
+     * The core function of the source which is implemented in subclasses
      * @see BioFormatsBdvSourceRGB24bits
      * @see BioFormatsBdvSourceUnsignedByte
      * @see BioFormatsBdvSourceUnsignedShort

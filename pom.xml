@@ -33,37 +33,9 @@
 
 	<developers>
 		<developer>
-			<id>oburri</id>
-			<name>Olivier Burri</name>
-			<url>http://biop.epfl.ch/INFO_Facility.html</url>
-			<roles>
-				<role>founder</role>
-				<role>lead</role>
-				<role>developer</role>
-				<role>debugger</role>
-				<role>reviewer</role>
-				<role>support</role>
-				<role>maintainer</role>
-			</roles>
-		</developer>
-		<developer>
 			<id>nicokiaru</id>
 			<name>Nicolas Chiaruttini</name>
 			<url>http://imagej.net/User:NicoKiaru</url>
-			<roles>
-				<role>founder</role>
-				<role>lead</role>
-				<role>developer</role>
-				<role>debugger</role>
-				<role>reviewer</role>
-				<role>support</role>
-				<role>maintainer</role>
-			</roles>
-		</developer>
-		<developer>
-			<id>romainGuiet</id>
-			<name>Romain Guiet</name>
-			<url>http://biop.epfl.ch/INFO_Facility.html</url>
 			<roles>
 				<role>founder</role>
 				<role>lead</role>
@@ -108,34 +80,35 @@
 	</mailingLists>
 
 	<scm>
-		<connection>scm:git:git://github.com/</connection>
-		<developerConnection>scm:git:git@github.com:</developerConnection>
+		<connection>scm:git:git://github.com/BIOP/bigdataviewer-bioformats</connection>
+		<developerConnection>scm:git:git@github.com:BIOP/bigdataviewer-bioformats</developerConnection>
 		<tag>HEAD</tag>
-		<url>https://github.com/</url>
+		<url>https://github.com/BIOP/bigdataviewer-bioformats</url>
 	</scm>
 	
 	<issueManagement>
 		<system>GitHub Issues</system>
-		<url></url>
+		<url>https://github.com/BIOP/bigdataviewer-bioformats/issues</url>
 	</issueManagement>
 
+
 	<ciManagement>
-		<system>None</system>
+		<system>Travis CI</system>
+		<url>https://travis-ci.org/github/BIOP/bigdataviewer-bioformats</url>
 	</ciManagement>
 
 	<properties>
 		<package-name>ch.epfl.biop.bdv.bioformats</package-name>
-		<license.licenseName>N/A</license.licenseName>
-		<license.copyrightOwners>N/A</license.copyrightOwners>
+		<license.licenseName>bsd_3</license.licenseName>
+		<license.copyrightOwners>Nicolas Chiaruttini, BIOP, EPFL</license.copyrightOwners>
 		<scijava.app.directory>C:/Users/nicol/Desktop/fiji-win64-bdv-playground/Fiji.app/</scijava.app.directory>
 		<scijava.deleteOtherVersions>true</scijava.deleteOtherVersions>
 
-		<bigdataviewer-core.version>10.0.0</bigdataviewer-core.version>
+		<bigdataviewer-core.version>10.0.2</bigdataviewer-core.version>
 		<bigdataviewer-vistools.version>1.0.0-beta-22</bigdataviewer-vistools.version>
 		<imglib2-cache.version>1.0.0-beta-15</imglib2-cache.version>
-		<bigdataviewer-selector.version>0.1.5-SNAPSHOT</bigdataviewer-selector.version>
-		<bigdataviewer-playground.version>0.2.5-SNAPSHOT</bigdataviewer-playground.version>
-
+		<bigdataviewer-selector.version>0.1.5</bigdataviewer-selector.version>
+		<bigdataviewer-playground.version>0.2.5</bigdataviewer-playground.version>
 
 		<reflections.version>0.9.11</reflections.version>
 
@@ -185,7 +158,6 @@
 		<dependency>
 			<groupId>ome</groupId>
 			<artifactId>formats-gpl</artifactId>
-			<version>6.6.0-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<!-- NB: Exclude problematic uber-JAR that bundles commons-io. -->
