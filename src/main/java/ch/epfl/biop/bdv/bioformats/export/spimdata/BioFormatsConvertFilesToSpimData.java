@@ -13,6 +13,7 @@ import mpicbg.spim.data.sequence.*;
 import net.imglib2.Dimensions;
 import net.imglib2.type.numeric.ARGBType;
 import ome.units.UNITS;
+import spimdata.util.Displaysettings;
 
 import java.awt.*;
 import java.io.File;
