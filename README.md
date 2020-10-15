@@ -1,3 +1,5 @@
+[![](https://travis-ci.com/BIOP/bigdataviewer-bioformats.svg?branch=master)](https://travis-ci.com/BIOP/bigdataviewer-bioformats)
+
 # Bigdataviewer Bioformats Bridge 
 
 This repository enables the opening of files into BigDataViewer by using the BioFormats API.
