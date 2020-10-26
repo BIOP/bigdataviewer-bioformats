@@ -106,7 +106,7 @@
 		<bigdataviewer-vistools.version>1.0.0-beta-22</bigdataviewer-vistools.version>
 		<imglib2-cache.version>1.0.0-beta-15</imglib2-cache.version>
 		<bigdataviewer-selector.version>0.1.5</bigdataviewer-selector.version>-->
-
+		<bigdataviewer-spimdata-extras.version>0.1.0</bigdataviewer-spimdata-extras.version>
 		<reflections.version>0.9.11</reflections.version>
 
 	</properties>
@@ -187,13 +187,8 @@
 		<dependency>
 			<groupId>ch.epfl.biop</groupId>
 			<artifactId>bigdataviewer-spimdata-extras</artifactId>
-			<version>0.1.0-SNAPSHOT</version>
+			<version>${bigdataviewer-spimdata-extras.version}</version>
 		</dependency>
-
-		<!--<dependency>
-			<groupId>com.google.code.gson</groupId>
-			<artifactId>gson</artifactId>
-		</dependency>-->
 
 		<dependency>
 			<groupId>org.reflections</groupId>
