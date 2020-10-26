@@ -38,7 +38,6 @@ import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
-import net.imglib2.cache.img.optional.CacheOptions;
 import net.imglib2.img.Img;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
@@ -54,14 +53,14 @@ public class BioFormatsBdvSourceUnsignedByte extends BioFormatsBdvSource<Unsigne
                                            int channel_index,
                                            boolean swZC,
                                            FinalInterval cacheBlockSize,
-                                           int maxCacheSize,
+                                           ReadOnlyCachedCellImgOptions cacheOptions,
                                            boolean useBioFormatsXYBlockSize,
                                            boolean ignoreBioFormatsLocationMetaData,
                                            boolean ignoreBioFormatsVoxelSizeMetaData,
                                            boolean positionConventionIsCenter,
                                            Length locationReferenceFrameLength,
                                            Length voxSizeReferenceFrameLength,
-                                           Unit u,
+                                           Unit<Length> u,
                                            AffineTransform3D locationPreTransform,
                                            AffineTransform3D locationPostTransform,
                                            AffineTransform3D voxSizePreTransform,
@@ -72,7 +71,7 @@ public class BioFormatsBdvSourceUnsignedByte extends BioFormatsBdvSource<Unsigne
                 channel_index,
                 swZC,
                 cacheBlockSize,
-                maxCacheSize,
+                cacheOptions,
                 useBioFormatsXYBlockSize,
                 ignoreBioFormatsLocationMetaData,
                 ignoreBioFormatsVoxelSizeMetaData,
@@ -102,13 +101,8 @@ public class BioFormatsBdvSourceUnsignedByte extends BioFormatsBdvSource<Unsigne
             int sy = reader_init.getSizeY();
             int sz = (!is3D)?1:reader_init.getSizeZ();
 
-            // Cached Image Factory Options
-            final ReadOnlyCachedCellImgOptions factoryOptions = ReadOnlyCachedCellImgOptions.options()
-                    .cellDimensions( cellDimensions )
-                    .cacheType( CacheOptions.CacheType.SOFTREF );
-
             // Creates cached image factory of Type Byte
-            final ReadOnlyCachedCellImgFactory factory = new ReadOnlyCachedCellImgFactory( factoryOptions );
+            final ReadOnlyCachedCellImgFactory factory = new ReadOnlyCachedCellImgFactory( cacheOptions );
 
             int xc = cellDimensions[0];
             int yc = cellDimensions[1];

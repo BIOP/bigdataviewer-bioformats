@@ -43,6 +43,7 @@ import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccessible;
 import net.imglib2.Volatile;
+import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
 import net.imglib2.img.Img;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.Type;
@@ -99,7 +100,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
     // Source name
     public String sourceName;
 
-    final FinalInterval cacheBlockSize;
+    //final FinalInterval cacheBlockSize;
 
     public boolean useBioFormatsXYBlockSize;
 
@@ -138,6 +139,8 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
 
     final ReaderPool readerPool;
 
+    ReadOnlyCachedCellImgOptions cacheOptions; // can't be final because of the Exception...
+
     /**
      * Bio Format source constructor
      * @param readerPool bio format reader pool (flatten should be set to false to allow for multiresolution handling)
@@ -150,14 +153,14 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
                                int channel_index,
                                boolean swZC,
                                FinalInterval cacheBlockSize,
-                               int maxCacheSize,
+                               ReadOnlyCachedCellImgOptions cacheOptions,
                                boolean useBioFormatsXYBlockSize,
                                boolean ignoreBioFormatsLocationMetaData,
                                boolean ignoreBioFormatsVoxelSizeMetaData,
                                boolean positionIsImageCenter,
                                Length positionReferenceFrameLength,
                                Length voxSizeReferenceFrameLength,
-                               Unit u,
+                               Unit<Length> u,
                                AffineTransform3D positionPreTransform,
                                AffineTransform3D positionPostTransform,
                                AffineTransform3D voxSizePreTransform,
@@ -169,8 +172,6 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
         this.ignoreBioFormatsLocationMetaData = ignoreBioFormatsLocationMetaData;
         this.ignoreBioFormatsVoxelSizeMetaData = ignoreBioFormatsVoxelSizeMetaData;
         this.useBioFormatsXYBlockSize = useBioFormatsXYBlockSize;
-        this.cacheBlockSize = cacheBlockSize;
-        this.maxCacheSize = maxCacheSize;
         this.switchZandC = swZC;
 
         try {
@@ -224,8 +225,8 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
                     useBioFormatsXYBlockSize ? reader.getOptimalTileHeight() : (int) cacheBlockSize.dimension(1),
                     (!is3D) ? 1 : (int) cacheBlockSize.dimension(2)};
 
-            //fixedLevel = true;
-            //cLevel = this.getNumMipmapLevels()-1;
+            this.cacheOptions = cacheOptions.cellDimensions( cellDimensions );
+
             readerPool.recycle(reader);
         } catch (Exception e) {
             e.printStackTrace();

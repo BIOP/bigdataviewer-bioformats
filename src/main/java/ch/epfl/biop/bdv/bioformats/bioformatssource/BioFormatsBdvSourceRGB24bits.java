@@ -38,7 +38,6 @@ import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgFactory;
 import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
-import net.imglib2.cache.img.optional.CacheOptions;
 import net.imglib2.img.Img;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.ARGBType;
@@ -55,14 +54,14 @@ public class BioFormatsBdvSourceRGB24bits extends BioFormatsBdvSource<ARGBType> 
                                         int channel_index,
                                         boolean swZC,
                                         FinalInterval cacheBlockSize,
-                                        int maxCacheSize,
+                                        ReadOnlyCachedCellImgOptions cacheOptions,
                                         boolean useBioFormatsXYBlockSize,
                                         boolean ignoreBioFormatsLocationMetaData,
                                         boolean ignoreBioFormatsVoxelSizeMetaData,
                                         boolean positionConventionIsCenter,
                                         Length locationReferenceFrameLength,
                                         Length voxSizeReferenceFrameLength,
-                                        Unit u,
+                                        Unit<Length> u,
                                         AffineTransform3D locationPreTransform,
                                         AffineTransform3D locationPostTransform,
                                         AffineTransform3D voxSizePreTransform,
@@ -73,7 +72,7 @@ public class BioFormatsBdvSourceRGB24bits extends BioFormatsBdvSource<ARGBType> 
                 channel_index,
                 swZC,
                 cacheBlockSize,
-                maxCacheSize,
+                cacheOptions,
                 useBioFormatsXYBlockSize,
                 ignoreBioFormatsLocationMetaData,
                 ignoreBioFormatsVoxelSizeMetaData,
@@ -88,12 +87,6 @@ public class BioFormatsBdvSourceRGB24bits extends BioFormatsBdvSource<ARGBType> 
                 axesFlip);
     }
 
-    /**
-     * The core of the source...
-     * @param t
-     * @param level
-     * @return
-     */
     public RandomAccessibleInterval<ARGBType> createSource(int t, int level) {
         try {
             IFormatReader reader_init = readerPool.acquire();
@@ -107,14 +100,9 @@ public class BioFormatsBdvSourceRGB24bits extends BioFormatsBdvSource<ARGBType> 
             int sx = reader_init.getSizeX();
             int sy = reader_init.getSizeY();
             int sz = (!is3D)?1:reader_init.getSizeZ();
-            
-            // Cached Image Factory Options
-            final ReadOnlyCachedCellImgOptions factoryOptions = ReadOnlyCachedCellImgOptions.options()
-                    .cellDimensions( cellDimensions )
-                    .cacheType( CacheOptions.CacheType.SOFTREF );
 
             // Creates read only cached image factory
-            final ReadOnlyCachedCellImgFactory factory = new ReadOnlyCachedCellImgFactory( factoryOptions );
+            final ReadOnlyCachedCellImgFactory factory = new ReadOnlyCachedCellImgFactory( cacheOptions );
 
             int xc = cellDimensions[0];
             int yc = cellDimensions[1];
@@ -192,12 +180,12 @@ public class BioFormatsBdvSourceRGB24bits extends BioFormatsBdvSource<ARGBType> 
 
                                     int totBytes = (w * h) ;
 
-                                    int gOffset = totBytes;
+                                    //int gOffset = totBytes;
 
                                     int bOffset = 2*totBytes;
 
                                     while ((out.hasNext()) && (idxPx < totBytes)) {
-                                        int v = ((bytesR[idxPx] & 0xff) << 16 ) | ((bytesR[idxPx+gOffset] & 0xff) << 8) | (bytesR[idxPx+bOffset] & 0xff);
+                                        int v = ((bytesR[idxPx] & 0xff) << 16 ) | ((bytesR[idxPx+totBytes] & 0xff) << 8) | (bytesR[idxPx+bOffset] & 0xff);
                                         out.next().set(v);
                                         idxPx += 1;
                                     }

@@ -38,6 +38,8 @@ import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;
 import net.imglib2.FinalInterval;
+import net.imglib2.cache.img.DiskCachedCellImgOptions;
+import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.NumericType;
 import ome.units.UNITS;
@@ -65,6 +67,8 @@ public class BioFormatsBdvOpener {
         dataLocation=opener.dataLocation;
         useBioFormatsXYBlockSize = opener.useBioFormatsXYBlockSize;
         cacheBlockSize = new FinalInterval(opener.cacheBlockSize);
+        isSoftRef = opener.isSoftRef;
+        maxCacheSize = opener.maxCacheSize;
         swZC = opener.swZC;
         splitRGBChannels=opener.splitRGBChannels;
         u = opener.u; // No deep copy
@@ -99,6 +103,7 @@ public class BioFormatsBdvOpener {
     public String dataLocation = null; // URL or File
 
     public boolean useBioFormatsXYBlockSize = true; // Block size : use the one defined by BioFormats or
+    public boolean isSoftRef = true;
     public FinalInterval cacheBlockSize = new FinalInterval(new long[]{0,0,0}, new long[]{512,512,1}); // needs a default size for z
 
     // Channels options
@@ -106,9 +111,7 @@ public class BioFormatsBdvOpener {
     public boolean splitRGBChannels = false;
 
     // Unit used for display
-    public Unit u;
-
-
+    public Unit<Length> u;
 
     // Bioformats location fix
     public double[] positionPreTransformMatrixArray;
@@ -153,6 +156,17 @@ public class BioFormatsBdvOpener {
         return this;
     }
 
+    public BioFormatsBdvOpener cacheSoftRef() {
+        isSoftRef = true;
+        return this;
+    }
+
+    public BioFormatsBdvOpener cacheBounded(int maxCacheSize) {
+        isSoftRef = false;
+        this.maxCacheSize = maxCacheSize;
+        return this;
+    }
+
     public BioFormatsBdvOpener voxSizeReferenceFrameLength(Length l) {
         this.voxSizeReferenceFrameLength = l;
         return this;
@@ -163,10 +177,9 @@ public class BioFormatsBdvOpener {
         return this;
     }
 
-    public BioFormatsBdvOpener cacheOptions(int numFetcherThreads, int numPriorities, int maxCacheSize) {
+    public BioFormatsBdvOpener queueOptions(int numFetcherThreads, int numPriorities) {
         this.nFetcherThread = numFetcherThreads;
         this.numPriorities = numPriorities;
-        this.maxCacheSize = maxCacheSize;
         this.cc = new SharedQueue(this.nFetcherThread, this.numPriorities);
         return this;
     }
@@ -397,13 +410,20 @@ public class BioFormatsBdvOpener {
                 voxSizePostTransform.set(voxSizePostTransformMatrixArray);
             }
 
+            ReadOnlyCachedCellImgOptions cacheOptions = ReadOnlyCachedCellImgOptions.options();
+            if (isSoftRef) {
+                cacheOptions = cacheOptions.cacheType(DiskCachedCellImgOptions.CacheType.SOFTREF);
+            } else {
+                cacheOptions = cacheOptions.cacheType(DiskCachedCellImgOptions.CacheType.BOUNDED).maxCacheSize(maxCacheSize);
+            }
+
             BioFormatsBdvSource bdvSrc = c.getConstructor(
                     ReaderPool.class,
                     int.class,
                     int.class,
                     boolean.class,
                     FinalInterval.class,
-                    int.class,
+                    ReadOnlyCachedCellImgOptions.class,
                     boolean.class,
                     boolean.class,
                     boolean.class,
@@ -422,7 +442,7 @@ public class BioFormatsBdvOpener {
                     channel_index,
                     swZC,
                     cacheBlockSize,
-                    maxCacheSize,
+                    cacheOptions,
                     useBioFormatsXYBlockSize,
                     positionIgnoreBioFormatsMetaData,
                     voxSizeIgnoreBioFormatsMetaData,
