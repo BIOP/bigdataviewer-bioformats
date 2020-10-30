@@ -297,7 +297,7 @@ public class BioFormatsConvertFilesToSpimData {
         return channelName;
     }
 
-    private StringqgetImageName( String dataLocation, int seriesCount, IMetadata omeMeta, int iSerie )
+    private String getImageName( String dataLocation, int seriesCount, IMetadata omeMeta, int iSerie )
     {
         String imageName = omeMeta.getImageName(iSerie);
         String fileNameWithoutExtension = FilenameUtils.removeExtension( new File( dataLocation ).getName() );
