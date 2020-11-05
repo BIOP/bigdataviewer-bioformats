@@ -35,7 +35,6 @@ package ch.epfl.biop.bdv.bioformats.bioformatssource;
 import bdv.util.volatiles.SharedQueue;
 import bdv.viewer.Source;
 import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
-import gnu.trove.map.TByteByteMap;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;
 import net.imglib2.FinalInterval;
@@ -46,7 +45,6 @@ import net.imglib2.type.numeric.NumericType;
 import ome.units.UNITS;
 import ome.units.quantity.Length;
 import ome.units.unit.Unit;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -384,6 +382,7 @@ public class BioFormatsBdvOpener {
     }
 
     public BioFormatsBdvSource getConcreteSource(int image_index, int channel_index) {
+
         String imageAndLevelIndexKey = getImageAndLevelIndexKey( image_index, channel_index );
         if ( ! concreteSources.containsKey( imageAndLevelIndexKey ) )
         {
@@ -481,7 +480,6 @@ public class BioFormatsBdvOpener {
         return concreteSources.get( imageAndLevelIndexKey );
     }
 
-    @NotNull
     public String getImageAndLevelIndexKey( int image_index, int channel_index )
     {
         return image_index + "_" + channel_index;

@@ -44,7 +44,11 @@ import java.util.stream.Collectors;
 
 public class BuildDocumentation {
     static String doc = "";
+<<<<<<< HEAD
     static String linkGitHubRepoPrefix = "https://github.com/BIOP/bigdataviewer_scijava/tree/master/src/main/java/";
+=======
+    static String linkGitHubRepoPrefix = "https://github.com/BIOP/bigdataviewer-bioformats/tree/master/src/main/java/";
+>>>>>>> master
 
     public static void main(String... args) {
         //

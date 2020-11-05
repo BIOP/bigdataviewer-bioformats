@@ -45,6 +45,10 @@ import mpicbg.spim.data.sequence.*;
 import net.imglib2.Dimensions;
 import net.imglib2.type.numeric.ARGBType;
 import ome.units.UNITS;
+<<<<<<< HEAD
+=======
+import org.apache.commons.io.FilenameUtils;
+>>>>>>> master
 import spimdata.util.Displaysettings;
 
 import java.awt.*;
@@ -111,13 +115,20 @@ public class BioFormatsConvertFilesToSpimData {
         try {
             for (int iF=0;iF<openers.size();iF++) {
                 FileIndex fi = new FileIndex(iF);
+<<<<<<< HEAD
                 fi.setName(openers.get(iF).getDataLocation());
                 log.accept("Data : "+ openers.get(iF).getDataLocation());
+=======
+                String dataLocation = openers.get( iF ).getDataLocation();
+                fi.setName( dataLocation );
+                log.accept("Data : "+ dataLocation );
+>>>>>>> master
                 IFormatReader readerIdx = new ImageReader();
 
                 readerIdx.setFlattenedResolutions(false);
                 Memoizer memo = new Memoizer( readerIdx );
 
+<<<<<<< HEAD
                 memo.setId(openers.get(iF).getDataLocation());
                 final int iFile = iF;
 
@@ -128,11 +139,28 @@ public class BioFormatsConvertFilesToSpimData {
 
                 // -------------------------- SETUPS For each Series : one per timepoint and one per channel
                 IntStream series = IntStream.range(0, memo.getSeriesCount());
+=======
+                memo.setId( dataLocation );
+                final int iFile = iF;
+
+                final int seriesCount = memo.getSeriesCount();
+                log.accept("Number of Series : " + seriesCount );
+                final IMetadata omeMeta = (IMetadata) memo.getMetadataStore();
+
+                fileIdxToNumberOfSeries.put(iF, seriesCount );
+
+                // -------------------------- SETUPS For each Series : one per timepoint and one per channel
+                IntStream series = IntStream.range(0, seriesCount );
+>>>>>>> master
                 series.forEach(iSerie -> {
                     memo.setSeries(iSerie);
                     SeriesNumber sn = new SeriesNumber(iSerie);
                     sn.setName("Series_"+iSerie);
+<<<<<<< HEAD
                     fileIdxToNumberOfSeriesAndTimepoints.put(iFile, new SeriesTps(memo.getSeriesCount(),omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue()));
+=======
+                    fileIdxToNumberOfSeriesAndTimepoints.put(iFile, new SeriesTps( seriesCount,omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue()));
+>>>>>>> master
                     // One serie = one Tile
                     Tile tile = new Tile(nTileCounter);
                     nTileCounter++;
@@ -147,19 +175,31 @@ public class BioFormatsConvertFilesToSpimData {
                     if (omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue() > maxTimepoints) {
                         maxTimepoints = omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue();
                     }
+<<<<<<< HEAD
                     String imageName = omeMeta.getImageName(iSerie);
+=======
+                    String imageName = getImageName( dataLocation, seriesCount, omeMeta, iSerie );
+>>>>>>> master
                     Dimensions dims = BioFormatsMetaDataHelper.getSeriesDimensions(omeMeta, iSerie); // number of pixels .. no calibration
                     VoxelDimensions voxDims = BioFormatsMetaDataHelper.getSeriesVoxelDimensions(omeMeta, iSerie, openers.get(iFile).u, openers.get(iFile).voxSizeReferenceFrameLength);
                     // Register Setups (one per channel and one per timepoint)
                     channels.forEach(
                             iCh -> {
                                 int ch_id = getChannelId(omeMeta, iSerie, iCh, memo.isRGB());
+<<<<<<< HEAD
                                 String channelName = omeMeta.getChannelName(iSerie, iCh);
                                 //IntStream timepoints = IntStream.range(0, omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
                                 //timepoints.forEach(
                                 //        iTp -> {
                                 String setupName = imageName
                                         + "-" + channelName;// + ":" + iTp;
+=======
+                                String channelName = getChannelName( omeMeta, iSerie, iCh ) ;
+                                //IntStream timepoints = IntStream.range(0, omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
+                                //timepoints.forEach(
+                                //        iTp -> {
+                                String setupName = imageName + "-" + channelName;// + ":" + iTp;
+>>>>>>> master
                                 log.accept(setupName);
                                 ViewSetup vs = new ViewSetup(
                                         viewSetupCounter,
@@ -288,6 +328,26 @@ public class BioFormatsConvertFilesToSpimData {
         return null;
     }
 
+<<<<<<< HEAD
+=======
+    private String getChannelName( IMetadata omeMeta, int iSerie, int iCh )
+    {
+        String channelName = omeMeta.getChannelName(iSerie, iCh);
+        channelName = ( channelName == null || channelName.equals( "" ) )  ? "ch" + iCh : channelName;
+        return channelName;
+    }
+
+    private String getImageName( String dataLocation, int seriesCount, IMetadata omeMeta, int iSerie )
+    {
+        String imageName = omeMeta.getImageName(iSerie);
+        String fileNameWithoutExtension = FilenameUtils.removeExtension( new File( dataLocation ).getName() );
+        fileNameWithoutExtension = fileNameWithoutExtension.replace( ".ome", "" ); // above only removes .tif
+        imageName = ( imageName == null || imageName.equals( "" ) ) ? fileNameWithoutExtension : imageName;
+        imageName = seriesCount > 1 ?  imageName + "-s" + iSerie : imageName;
+        return imageName;
+    }
+
+>>>>>>> master
     public static AbstractSpimData getSpimData(List<BioFormatsBdvOpener> openers) {
         return new BioFormatsConvertFilesToSpimData().getSpimDataInstance(openers);
     }
