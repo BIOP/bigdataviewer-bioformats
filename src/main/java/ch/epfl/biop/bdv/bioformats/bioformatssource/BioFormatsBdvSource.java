@@ -140,6 +140,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
     final ReaderPool readerPool;
 
     ReadOnlyCachedCellImgOptions cacheOptions; // can't be final because of the Exception...
+    private int numMipMapLevels = -1;
 
     /**
      * Bio Format source constructor
@@ -391,14 +392,18 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
 
     @Override
     public int getNumMipmapLevels() {
-        int numMipMapLevels = -1;
-        try {
-            IFormatReader reader = readerPool.acquire();
-            reader.setSeries(cSerie);
-            numMipMapLevels = reader.getResolutionCount();
-            readerPool.recycle(reader);
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (numMipMapLevels == -1)
+        {
+            try
+            {
+                IFormatReader reader = readerPool.acquire();
+                reader.setSeries( cSerie );
+                numMipMapLevels = reader.getResolutionCount();
+                readerPool.recycle( reader );
+            } catch ( Exception e )
+            {
+                e.printStackTrace();
+            }
         }
         return numMipMapLevels;
     }
