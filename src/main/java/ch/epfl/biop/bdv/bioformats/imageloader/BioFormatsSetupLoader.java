@@ -158,13 +158,14 @@ public class BioFormatsSetupLoader<T extends NumericType<T>,V extends Volatile<T
     @Override
     public double[][] getMipmapResolutions() {
         // Needs to compute mipmap resolutions... pfou
-        double [][] mmResolutions = new double[concreteSource.getNumMipmapLevels()][3];
+        int numMipmapLevels = concreteSource.getNumMipmapLevels();
+        double [][] mmResolutions = new double[ numMipmapLevels ][3];
         mmResolutions[0][0]=1;
         mmResolutions[0][1]=1;
         mmResolutions[0][2]=1;
 
         RandomAccessibleInterval srcL0 = concreteSource.getSource(0,0);
-        for (int iLevel = 1; iLevel< concreteSource.getNumMipmapLevels(); iLevel++) {
+        for ( int iLevel = 1; iLevel< numMipmapLevels; iLevel++) {
             RandomAccessibleInterval srcLi = concreteSource.getSource(0,iLevel);
             mmResolutions[iLevel][0] = (double)srcL0.dimension(0)/(double)srcLi.dimension(0);
             mmResolutions[iLevel][1] = (double)srcL0.dimension(1)/(double)srcLi.dimension(1);
