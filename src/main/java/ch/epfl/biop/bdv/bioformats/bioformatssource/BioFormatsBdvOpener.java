@@ -35,6 +35,7 @@ package ch.epfl.biop.bdv.bioformats.bioformatssource;
 import bdv.util.volatiles.SharedQueue;
 import bdv.viewer.Source;
 import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
+import gnu.trove.map.TByteByteMap;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;
 import net.imglib2.FinalInterval;
@@ -45,6 +46,7 @@ import net.imglib2.type.numeric.NumericType;
 import ome.units.UNITS;
 import ome.units.quantity.Length;
 import ome.units.unit.Unit;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,6 +59,8 @@ import java.util.stream.Collectors;
 
 
 public class BioFormatsBdvOpener {
+
+    private Map< String, BioFormatsBdvSource > concreteSources = new HashMap<>(  );
 
     // For copying the object
     public BioFormatsBdvOpener copy() {
@@ -380,88 +384,107 @@ public class BioFormatsBdvOpener {
     }
 
     public BioFormatsBdvSource getConcreteSource(int image_index, int channel_index) {
-        try {
-            // Huge performance issue with new reader when the memoization is large (typically the case for operetta data)
-            final IFormatReader readerIdx = pool.acquire();//getCachedReader();//getNewReader();
+        String imageAndLevelIndexKey = getImageAndLevelIndexKey( image_index, channel_index );
+        if ( ! concreteSources.containsKey( imageAndLevelIndexKey ) )
+        {
+            try
+            {
+                // Huge performance issue with new reader when the memoization is large (typically the case for operetta data)
+                final IFormatReader readerIdx = pool.acquire();//getCachedReader();//getNewReader();
 
-            Class<? extends BioFormatsBdvSource> c = BioFormatsBdvSource.getBioformatsBdvSourceClass(readerIdx, image_index);
+                Class< ? extends BioFormatsBdvSource > c = BioFormatsBdvSource.getBioformatsBdvSourceClass( readerIdx, image_index );
 
-            AffineTransform3D positionPreTransform = null;
-            if (positionPreTransformMatrixArray!=null) {
-                positionPreTransform = new AffineTransform3D();
-                positionPreTransform.set(positionPreTransformMatrixArray);
+                AffineTransform3D positionPreTransform = null;
+                if ( positionPreTransformMatrixArray != null )
+                {
+                    positionPreTransform = new AffineTransform3D();
+                    positionPreTransform.set( positionPreTransformMatrixArray );
+                }
+
+                AffineTransform3D positionPostTransform = null;
+                if ( positionPostTransformMatrixArray != null )
+                {
+                    positionPostTransform = new AffineTransform3D();
+                    positionPostTransform.set( positionPostTransformMatrixArray );
+                }
+
+                AffineTransform3D voxSizePreTransform = null;
+                if ( voxSizePreTransformMatrixArray != null )
+                {
+                    voxSizePreTransform = new AffineTransform3D();
+                    voxSizePreTransform.set( voxSizePreTransformMatrixArray );
+                }
+
+                AffineTransform3D voxSizePostTransform = null;
+                if ( voxSizePreTransformMatrixArray != null )
+                {
+                    voxSizePostTransform = new AffineTransform3D();
+                    voxSizePostTransform.set( voxSizePostTransformMatrixArray );
+                }
+
+                ReadOnlyCachedCellImgOptions cacheOptions = ReadOnlyCachedCellImgOptions.options();
+                if ( isSoftRef )
+                {
+                    cacheOptions = cacheOptions.cacheType( DiskCachedCellImgOptions.CacheType.SOFTREF );
+                } else
+                {
+                    cacheOptions = cacheOptions.cacheType( DiskCachedCellImgOptions.CacheType.BOUNDED ).maxCacheSize( maxCacheSize );
+                }
+
+                BioFormatsBdvSource bdvSrc = c.getConstructor(
+                        ReaderPool.class,
+                        int.class,
+                        int.class,
+                        boolean.class,
+                        FinalInterval.class,
+                        ReadOnlyCachedCellImgOptions.class,
+                        boolean.class,
+                        boolean.class,
+                        boolean.class,
+                        boolean.class,
+                        Length.class,
+                        Length.class,
+                        Unit.class,
+                        AffineTransform3D.class, // public  positionPreTransform;
+                        AffineTransform3D.class, // positionPostTransform;
+                        AffineTransform3D.class, // public  positionPreTransform;
+                        AffineTransform3D.class, // positionPostTransform;
+                        boolean[].class
+                ).newInstance(
+                        pool,
+                        image_index,
+                        channel_index,
+                        swZC,
+                        cacheBlockSize,
+                        cacheOptions,
+                        useBioFormatsXYBlockSize,
+                        positionIgnoreBioFormatsMetaData,
+                        voxSizeIgnoreBioFormatsMetaData,
+                        positionIsImageCenter,
+                        positionReferenceFrameLength,
+                        voxSizeReferenceFrameLength,
+                        u,
+                        positionPreTransform,
+                        positionPostTransform,
+                        voxSizePreTransform,
+                        voxSizePostTransform,
+                        axesOfImageFlip );
+
+                pool.recycle( readerIdx );
+                concreteSources.put( imageAndLevelIndexKey, bdvSrc );
+            } catch ( Exception e )
+            {
+                e.printStackTrace();
+                return null;
             }
-
-            AffineTransform3D positionPostTransform = null;
-            if (positionPostTransformMatrixArray!=null) {
-                positionPostTransform = new AffineTransform3D();
-                positionPostTransform.set(positionPostTransformMatrixArray);
-            }
-
-            AffineTransform3D voxSizePreTransform = null;
-            if (voxSizePreTransformMatrixArray!=null) {
-                voxSizePreTransform = new AffineTransform3D();
-                voxSizePreTransform.set(voxSizePreTransformMatrixArray);
-            }
-
-            AffineTransform3D voxSizePostTransform = null;
-            if (voxSizePreTransformMatrixArray!=null) {
-                voxSizePostTransform = new AffineTransform3D();
-                voxSizePostTransform.set(voxSizePostTransformMatrixArray);
-            }
-
-            ReadOnlyCachedCellImgOptions cacheOptions = ReadOnlyCachedCellImgOptions.options();
-            if (isSoftRef) {
-                cacheOptions = cacheOptions.cacheType(DiskCachedCellImgOptions.CacheType.SOFTREF);
-            } else {
-                cacheOptions = cacheOptions.cacheType(DiskCachedCellImgOptions.CacheType.BOUNDED).maxCacheSize(maxCacheSize);
-            }
-
-            BioFormatsBdvSource bdvSrc = c.getConstructor(
-                    ReaderPool.class,
-                    int.class,
-                    int.class,
-                    boolean.class,
-                    FinalInterval.class,
-                    ReadOnlyCachedCellImgOptions.class,
-                    boolean.class,
-                    boolean.class,
-                    boolean.class,
-                    boolean.class,
-                    Length.class,
-                    Length.class,
-                    Unit.class,
-                    AffineTransform3D.class, // public  positionPreTransform;
-                    AffineTransform3D.class, // positionPostTransform;
-                    AffineTransform3D.class, // public  positionPreTransform;
-                    AffineTransform3D.class, // positionPostTransform;
-                    boolean[].class
-            ).newInstance(
-                    pool,
-                    image_index,
-                    channel_index,
-                    swZC,
-                    cacheBlockSize,
-                    cacheOptions,
-                    useBioFormatsXYBlockSize,
-                    positionIgnoreBioFormatsMetaData,
-                    voxSizeIgnoreBioFormatsMetaData,
-                    positionIsImageCenter,
-                    positionReferenceFrameLength,
-                    voxSizeReferenceFrameLength,
-                    u,
-                    positionPreTransform,
-                    positionPostTransform,
-                    voxSizePreTransform,
-                    voxSizePostTransform,
-                    axesOfImageFlip);
-
-            pool.recycle(readerIdx);
-            return bdvSrc;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
         }
+        return concreteSources.get( imageAndLevelIndexKey );
+    }
+
+    @NotNull
+    public String getImageAndLevelIndexKey( int image_index, int channel_index )
+    {
+        return image_index + "_" + channel_index;
     }
 
     public VolatileBdvSource getVolatileSource(int image_index, int channel_index) {
