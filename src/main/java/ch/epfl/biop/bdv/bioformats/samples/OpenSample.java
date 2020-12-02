@@ -47,7 +47,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 @Plugin(type = Command.class,
-        menuPath = "BigDataViewer>BDVDataset>Open sample dataset",
+        menuPath = "Plugins>BigDataViewer>Playground>BDVDataset>Open sample dataset",
         label = "Open sample datasets",
         description = "Downloads and cache datasets on first open attempt.")
 

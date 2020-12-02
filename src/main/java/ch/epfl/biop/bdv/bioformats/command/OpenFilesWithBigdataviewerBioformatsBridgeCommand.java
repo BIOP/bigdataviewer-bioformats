@@ -45,7 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Plugin(type = Command.class,
-        menuPath = "BigDataViewer>BDVDataset>Open [BioFormats Bdv Bridge]",
+        menuPath = "Plugins>BigDataViewer>Playground>BDVDataset>Open [BioFormats Bdv Bridge]",
         label = "Opens and show in a bdv window files by using bioformats reader",
         description = "Support bioformmats multiresolution api. Attempts to set colors based" +
                 "on bioformats metadata. Do not attempt auto contrast.")
