@@ -43,7 +43,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-abstract public class BioformatsBigdataviewerBridgeDatasetCommand implements Command {
+public class BioformatsBigdataviewerBridgeDatasetCommand implements Command {
 
     static public Map<String, Object> getDefaultParameters() {
         Map<String, Object> def = new HashMap();
@@ -160,4 +160,8 @@ abstract public class BioformatsBigdataviewerBridgeDatasetCommand implements Com
         return getOpener(f.getAbsolutePath());
     }
 
+    @Override
+    public void run() {
+
+    }
 }

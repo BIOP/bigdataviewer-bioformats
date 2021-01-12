@@ -45,10 +45,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Plugin(type = Command.class,
-        menuPath = "Plugins>BigDataViewer>Playground>BDVDataset>Open [BioFormats Bdv Bridge]",
+        menuPath = "Plugins>BigDataViewer>Playground>BDVDataset>Open [BioFormats Bdv Bridge (Basic)]",
         description = "Support bioformmats multiresolution api. Attempts to set colors based" +
                 "on bioformats metadata. Do not attempt auto contrast.")
-public class OpenFilesWithBigdataviewerBioformatsBridgeCommand extends BioformatsBigdataviewerBridgeDatasetCommand {
+public class BasicOpenFilesWithBigdataviewerBioformatsBridgeCommand implements Command {
+
+    @Parameter(required = false, label="Physical units of the dataset", choices = {"MILLIMETER","MICROMETER","NANOMETER"})
+    public String unit = "MILLIMETER";
 
     @Parameter
     File[] files;
@@ -58,8 +61,13 @@ public class OpenFilesWithBigdataviewerBioformatsBridgeCommand extends Bioformat
 
     public void run() {
         List<BioFormatsBdvOpener> openers = new ArrayList<>();
+
+        BioformatsBigdataviewerBridgeDatasetCommand settings = new BioformatsBigdataviewerBridgeDatasetCommand();
+
+        settings.unit = unit;
+
         for (File f:files) {
-            openers.add(getOpener(f));
+            openers.add(settings.getOpener(f));
         }
         spimData = BioFormatsConvertFilesToSpimData.getSpimData(openers);
     }

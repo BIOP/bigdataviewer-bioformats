@@ -287,7 +287,6 @@ public class BioFormatsBdvOpener {
 
     }
 
-
     public BioFormatsBdvOpener url(URL url) {
         this.dataLocation = url.toString();
         return this;
