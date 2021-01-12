@@ -211,7 +211,7 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
 
             setRootTransform(omeMeta, image_index);
 
-            if (reader.getSizeZ() > 1) {
+            if (omeMeta.getPixelsSizeZ(cSerie).getNumberValue().intValue() > 1) {
                 is3D = true;
             } else {
                 is3D = false;
