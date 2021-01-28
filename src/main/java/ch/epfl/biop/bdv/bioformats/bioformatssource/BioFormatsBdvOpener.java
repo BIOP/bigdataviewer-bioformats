@@ -276,7 +276,7 @@ public class BioFormatsBdvOpener {
         }
         final IFormatReader reader = memo;
 
-        System.out.println("Attempts to set opener settings for file format " + reader.getFormat());
+        System.out.println("Attempts to set opener settings for file format " + reader.getFormat() + "; data location = "+dataLocation);
 
         // Adjustements here!
 
