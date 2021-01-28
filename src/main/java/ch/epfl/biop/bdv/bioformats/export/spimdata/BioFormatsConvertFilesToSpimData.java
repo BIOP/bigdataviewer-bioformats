@@ -115,12 +115,9 @@ public class BioFormatsConvertFilesToSpimData {
                 String dataLocation = openers.get( iF ).getDataLocation();
                 fi.setName( dataLocation );
                 log.accept("Data : "+ dataLocation );
-                IFormatReader readerIdx = new ImageReader();
 
-                readerIdx.setFlattenedResolutions(false);
-                Memoizer memo = new Memoizer( readerIdx );
+                IFormatReader memo = openers.get(iF).getNewReader();
 
-                memo.setId( dataLocation );
                 final int iFile = iF;
 
                 final int seriesCount = memo.getSeriesCount();
@@ -183,19 +180,7 @@ public class BioFormatsConvertFilesToSpimData {
                                 ds.isSet = false;
 
                                 // ----------- Color
-                                ome.xml.model.primitives.Color c = omeMeta.getChannelColor(iSerie, iCh);
-                                ARGBType color = null;
-                                if (c != null) {
-                                    color = new ARGBType(ARGBType.rgba(c.getRed(), c.getGreen(), c.getBlue(), 255));
-                                } else {
-                                    if (omeMeta.getChannelEmissionWavelength(iSerie, iCh) != null) {
-                                        int emission = omeMeta.getChannelEmissionWavelength(iSerie, iCh)
-                                                .value(UNITS.NANOMETER)
-                                                .intValue();
-                                        Color cAwt = getColorFromWavelength(emission);
-                                        color = new ARGBType(ARGBType.rgba(cAwt.getRed(), cAwt.getGreen(), cAwt.getBlue(), 255));
-                                    }
-                                }
+                                ARGBType color = BioFormatsMetaDataHelper.getColorFromMetadata(omeMeta, iSerie, iCh);
 
                                 if (color!=null) {
                                     ds.isSet = true;
@@ -230,13 +215,7 @@ public class BioFormatsConvertFilesToSpimData {
             for (int iF=0;iF<openers.size();iF++) {
                 int iFile = iF;
 
-                IFormatReader readerIdx = new ImageReader();
-
-                readerIdx.setFlattenedResolutions(false);
-                Memoizer memo = new Memoizer( readerIdx );
-
-                memo.setId(openers.get(iF).getDataLocation());
-                //final IFormatReader reader = memo;
+                IFormatReader memo = openers.get(iF).getNewReader();
 
                 log.accept("Number of Series : " + memo.getSeriesCount());
                 final IMetadata omeMeta = (IMetadata) memo.getMetadataStore();

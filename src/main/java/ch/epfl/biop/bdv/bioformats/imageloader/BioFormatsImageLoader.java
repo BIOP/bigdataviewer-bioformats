@@ -94,16 +94,10 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
 
                     log.accept("Data location = "+opener.getDataLocation());
 
-                    IFormatReader readerIdx = new ImageReader();
-
-                    readerIdx.setFlattenedResolutions(false);
-                    Memoizer memo = new Memoizer( readerIdx );
-
-                    memo.setId(opener.getDataLocation());
+                    IFormatReader memo = opener.getNewReader();
 
                     tTypeGetter.put(iF,new HashMap<>());
                     vTypeGetter.put(iF,new HashMap<>());
-
 
                     log.accept("Number of Series : " + memo.getSeriesCount());
                     IMetadata omeMeta = (IMetadata) memo.getMetadataStore();

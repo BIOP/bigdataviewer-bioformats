@@ -580,6 +580,23 @@ public class BioFormatsMetaDataHelper {
         return getSourceColor((BioFormatsBdvSource) src.source);
     }
 
+    public static ARGBType getColorFromMetadata(IMetadata omeMeta, int iSerie, int iCh) {
+        ome.xml.model.primitives.Color c = omeMeta.getChannelColor(iSerie, iCh);
+        ARGBType color = null;
+        if (c != null) {
+            color = new ARGBType(ARGBType.rgba(c.getRed(), c.getGreen(), c.getBlue(), 255));
+        } else {
+            if (omeMeta.getChannelEmissionWavelength(iSerie, iCh) != null) {
+                int emission = omeMeta.getChannelEmissionWavelength(iSerie, iCh)
+                        .value(UNITS.NANOMETER)
+                        .intValue();
+                Color cAwt = getColorFromWavelength(emission);
+                color = new ARGBType(ARGBType.rgba(cAwt.getRed(), cAwt.getGreen(), cAwt.getBlue(), 255));
+            }
+        }
+        return color;
+    }
+
     /**
      * Looks into BioFormats metadata to find the color corresponding to the source
      * If source is RGB null is returned

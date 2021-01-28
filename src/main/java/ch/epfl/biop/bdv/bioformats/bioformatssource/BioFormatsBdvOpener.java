@@ -260,6 +260,7 @@ public class BioFormatsBdvOpener {
             return this;
         }
         IFormatReader readerIdx = new ImageReader();
+        if (splitRGBChannels) readerIdx = new ChannelSeparator(readerIdx);
 
         readerIdx.setFlattenedResolutions(false);
         Memoizer memo = new Memoizer(readerIdx);
@@ -362,7 +363,9 @@ public class BioFormatsBdvOpener {
     public IFormatReader getNewReader() {
         IFormatReader reader = new ImageReader();
         reader.setFlattenedResolutions(false);
-        if (splitRGBChannels) {reader = new ChannelSeparator(reader);}
+        if (splitRGBChannels) {
+            reader = new ChannelSeparator(reader);
+        }
         Memoizer memo = new Memoizer(reader);
 
         final IMetadata omeMetaIdxOmeXml = MetadataTools.createOMEXMLMetadata();

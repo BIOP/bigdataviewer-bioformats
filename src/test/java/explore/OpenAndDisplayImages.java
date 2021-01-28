@@ -58,6 +58,7 @@ public class OpenAndDisplayImages {
         DatasetHelper.getSampleVSIDataset(); // Cached : no need to worry about double download
 
         Map<String, Object> params = BioformatsBigdataviewerBridgeDatasetCommand.getDefaultParameters();
+        //params.put("splitRGBChannels",true);
 
         params.put("files", new File[] {
                 DatasetHelper.getDataset(DatasetHelper.VSI)

@@ -56,6 +56,9 @@ public class BasicOpenFilesWithBigdataviewerBioformatsBridgeCommand implements C
     @Parameter
     File[] files;
 
+    @Parameter(label = "Split RGB channels")
+    boolean splitRGBChannels;
+
     @Parameter(type = ItemIO.OUTPUT)
     AbstractSpimData spimData;
 
@@ -63,7 +66,7 @@ public class BasicOpenFilesWithBigdataviewerBioformatsBridgeCommand implements C
         List<BioFormatsBdvOpener> openers = new ArrayList<>();
 
         BioformatsBigdataviewerBridgeDatasetCommand settings = new BioformatsBigdataviewerBridgeDatasetCommand();
-
+        settings.splitRGBChannels = splitRGBChannels;
         settings.unit = unit;
 
         for (File f:files) {

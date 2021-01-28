@@ -46,9 +46,12 @@ import ome.units.quantity.Length;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class OpenAndDisplayImageFromOmero {
+public class OpenAndDisplayImageFromFile {
 
-    final static public String dataLocation = "omero:https://omero.epfl.ch/webclient/img_detail/1864/?dataset=408";
+    //final static public String dataLocation = "Path to your file";
+    //"omero:https://omero.epfl.ch/webclient/img_detail/1864/?dataset=408";
+    final static public String dataLocation = "C:\\Users\\nicol\\Downloads\\CZI_Testdata\\S=1_HE_Slide_RGB.czi";//"omero:https://omero.epfl.ch/webclient/img_detail/1864/?dataset=408";
+
 
     // See also https://github.com/ome/ome-common-java/blob/master/src/main/java/loci/common/Location.java
     // See : https://github.com/imagej/imagej-omero
@@ -62,14 +65,14 @@ public class OpenAndDisplayImageFromOmero {
                         //.location(DatasetHelper.getDataset(DatasetHelper.OLYMPUS_OIR))
                         //.location(DatasetHelper.getDataset(DatasetHelper.LIF))
                         .auto() // patches opener based on specific file formats (-> PR to be  modified)
-                        //.splitRGBChannels() // split RGB channels into 3 channels
+                        //.splitRGBChannels() // split RGB channels into 3 channels necessary for 16 bits images
                         //.switchZandC(true) // switch Z and C
                         //.centerPositionConvention() // bioformats location is center of the image
                         .cornerPositionConvention() // bioformats location is corner of the image
                         //.useCacheBlockSizeFromBioFormats(true) // true by default
                         //.cacheBlockSize(512,512,10) // size of cache block used by diskcached image
-                        //.micronmeter() // unit = micrometer
-                        .millimeter() // unit = millimeter
+                        .micrometer() // unit = micrometer
+                        //.millimeter() // unit = millimeter
                         //.unit(UNITS.YARD) // Ok, if you really want...
                         //.getConcreteSources()
                         .positionReferenceFrameLength(new Length(1, UNITS.MICROMETER)) // Compulsory
