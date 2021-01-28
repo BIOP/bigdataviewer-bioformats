@@ -539,6 +539,8 @@ public class BioFormatsBdvOpener {
 
     public static BioFormatsBdvOpener getOpener() {
         BioFormatsBdvOpener opener = new BioFormatsBdvOpener()
+                .positionReferenceFrameLength(new Length(1, UNITS.MICROMETER)) // Compulsory
+                .voxSizeReferenceFrameLength(new Length(1, UNITS.MICROMETER))
                 .millimeter()
                 .useCacheBlockSizeFromBioFormats(true);
         return opener;
