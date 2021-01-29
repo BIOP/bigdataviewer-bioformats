@@ -32,6 +32,7 @@
  */
 package ch.epfl.biop.bdv.bioformats.command;
 
+import bdv.util.BdvFunctions;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.export.spimdata.BioFormatsConvertFilesToSpimData;
 import mpicbg.spim.data.generic.AbstractSpimData;
@@ -45,7 +46,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Plugin(type = Command.class,
-        menuPath = "Plugins>BigDataViewer>Playground>BDVDataset>Open [BioFormats Bdv Bridge (Basic)]",
+        menuPath = "Plugins>BigDataViewer>Bio-Formats>Open File with Bio-Formats",
         description = "Support bioformmats multiresolution api. Attempts to set colors based" +
                 "on bioformats metadata. Do not attempt auto contrast.")
 public class StandaloneOpenFileWithBigdataviewerBioformatsBridgeCommand implements Command {
@@ -54,25 +55,24 @@ public class StandaloneOpenFileWithBigdataviewerBioformatsBridgeCommand implemen
     public String unit = "MILLIMETER";
 
     @Parameter
-    File[] files;
+    File file;
 
-    @Parameter(label = "Split RGB channels")
-    boolean splitRGBChannels;
+    //@Parameter(label = "Split RGB channels")
+    boolean splitRGBChannels = true;
 
-    @Parameter(type = ItemIO.OUTPUT)
-    AbstractSpimData spimData;
+    //@Parameter(type = ItemIO.OUTPUT)
+    //AbstractSpimData spimData;
 
     public void run() {
-        List<BioFormatsBdvOpener> openers = new ArrayList<>();
 
         BioformatsBigdataviewerBridgeDatasetCommand settings = new BioformatsBigdataviewerBridgeDatasetCommand();
         settings.splitRGBChannels = splitRGBChannels;
         settings.unit = unit;
 
-        for (File f:files) {
-            openers.add(settings.getOpener(f));
-        }
-        spimData = BioFormatsConvertFilesToSpimData.getSpimData(openers);
+        List<BioFormatsBdvOpener> openers = new ArrayList<>();
+        openers.add(settings.getOpener(file));
+        final AbstractSpimData spimData = BioFormatsConvertFilesToSpimData.getSpimData( openers );
+        BdvFunctions.show( spimData );
     }
 
 }

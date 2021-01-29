@@ -32,7 +32,6 @@
  */
 package ch.epfl.biop.bdv.bioformats.command;
 
-import bdv.util.BdvFunctions;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.export.spimdata.BioFormatsConvertFilesToSpimData;
 import mpicbg.spim.data.generic.AbstractSpimData;
@@ -46,7 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Plugin(type = Command.class,
-        menuPath = "Plugins>BigDataViewer>Bio-Formats>Open File with Bio-Formats",
+        menuPath = "Plugins>BigDataViewer>Playground>BDVDataset>Open [BioFormats Bdv Bridge (Basic)]",
         description = "Support bioformmats multiresolution api. Attempts to set colors based" +
                 "on bioformats metadata. Do not attempt auto contrast.")
 public class BasicOpenFilesWithBigdataviewerBioformatsBridgeCommand implements Command {
@@ -55,24 +54,25 @@ public class BasicOpenFilesWithBigdataviewerBioformatsBridgeCommand implements C
     public String unit = "MILLIMETER";
 
     @Parameter
-    File file;
+    File[] files;
 
-    //@Parameter(label = "Split RGB channels")
-    boolean splitRGBChannels = true;
+    @Parameter(label = "Split RGB channels")
+    boolean splitRGBChannels;
 
-    //@Parameter(type = ItemIO.OUTPUT)
-    //AbstractSpimData spimData;
+    @Parameter(type = ItemIO.OUTPUT)
+    AbstractSpimData spimData;
 
     public void run() {
+        List<BioFormatsBdvOpener> openers = new ArrayList<>();
 
         BioformatsBigdataviewerBridgeDatasetCommand settings = new BioformatsBigdataviewerBridgeDatasetCommand();
         settings.splitRGBChannels = splitRGBChannels;
         settings.unit = unit;
 
-        List<BioFormatsBdvOpener> openers = new ArrayList<>();
-        openers.add(settings.getOpener(file));
-        final AbstractSpimData spimData = BioFormatsConvertFilesToSpimData.getSpimData( openers );
-        BdvFunctions.show( spimData );
+        for (File f:files) {
+            openers.add(settings.getOpener(f));
+        }
+        spimData = BioFormatsConvertFilesToSpimData.getSpimData(openers);
     }
 
 }
