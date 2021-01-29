@@ -36,7 +36,6 @@ import bdv.util.BdvFunctions;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.export.spimdata.BioFormatsConvertFilesToSpimData;
 import mpicbg.spim.data.generic.AbstractSpimData;
-import org.scijava.ItemIO;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -47,7 +46,7 @@ import java.util.List;
 
 @Plugin(type = Command.class,
         menuPath = "Plugins>BigDataViewer>Bio-Formats>Open File with Bio-Formats",
-        description = "Support bioformmats multiresolution api. Attempts to set colors based" +
+        description = "Support bioformats multiresolution api. Attempts to set colors based" +
                 "on bioformats metadata. Do not attempt auto contrast.")
 public class StandaloneOpenFileWithBigdataviewerBioformatsBridgeCommand implements Command {
 
@@ -57,11 +56,7 @@ public class StandaloneOpenFileWithBigdataviewerBioformatsBridgeCommand implemen
     @Parameter
     File file;
 
-    //@Parameter(label = "Split RGB channels")
-    boolean splitRGBChannels = true;
-
-    //@Parameter(type = ItemIO.OUTPUT)
-    //AbstractSpimData spimData;
+    boolean splitRGBChannels = true; // Split rgb channels to allow for best compatibility (RGB 16 bits)
 
     public void run() {
 
