@@ -20,8 +20,8 @@ In theory all files supported by the Bioformats API can be opened using this pac
 ## Limitations:
 * Signed pixels values are not supported (yet)
 
-## Usage:
-* Enable https://biop.epfl.ch/Fiji-Update-Bdv/
+## Usage in fiji:
+* Bdv-bioformats is shipped with the bdv-playground update site : https://biop.epfl.ch/Fiji-Bdv-Playground/
 
 # List of commands
 
