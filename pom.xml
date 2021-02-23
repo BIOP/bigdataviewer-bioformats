@@ -101,6 +101,7 @@
 		<scijava.app.directory>C:/Users/nicol/Desktop/fiji-win64-bdv-playground/Fiji.app/</scijava.app.directory>
 		<scijava.deleteOtherVersions>true</scijava.deleteOtherVersions>
 		<releaseProfiles>deploy-to-scijava</releaseProfiles>
+		<license.excludes>**/resources/**</license.excludes>
 
 		<bigdataviewer-core.version>10.0.2</bigdataviewer-core.version>
 		<bigdataviewer-vistools.version>1.0.0-beta-28</bigdataviewer-vistools.version>
