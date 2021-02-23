@@ -46,7 +46,7 @@ import java.util.List;
 
 @Plugin(type = Command.class,
         menuPath = "Plugins>BigDataViewer>Bio-Formats>Open File with Bio-Formats",
-        description = "Support bioformats multiresolution api. Attempts to set colors based" +
+        description = "Support bioformats multiresolution api. Attempts to set colors based " +
                 "on bioformats metadata. Do not attempt auto contrast.")
 public class StandaloneOpenFileWithBigdataviewerBioformatsBridgeCommand implements Command {
 
@@ -56,6 +56,7 @@ public class StandaloneOpenFileWithBigdataviewerBioformatsBridgeCommand implemen
     @Parameter
     File file;
 
+    @Parameter(required = false, label="Split RGB channels if you have 16 bits RGB images")
     boolean splitRGBChannels = true; // Split rgb channels to allow for best compatibility (RGB 16 bits)
 
     public void run() {
