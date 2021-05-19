@@ -57,22 +57,22 @@ public class BasicOpenFilesWithBigdataviewerBioformatsBridgeCommand implements C
     File[] files;
 
     @Parameter(label = "Split RGB channels")
-    boolean splitRGBChannels;
+    boolean splitrgbchannels;
 
     @Parameter(type = ItemIO.OUTPUT)
-    AbstractSpimData spimData;
+    AbstractSpimData spimdata;
 
     public void run() {
         List<BioFormatsBdvOpener> openers = new ArrayList<>();
 
         BioformatsBigdataviewerBridgeDatasetCommand settings = new BioformatsBigdataviewerBridgeDatasetCommand();
-        settings.splitRGBChannels = splitRGBChannels;
+        settings.splitrgbchannels = splitrgbchannels;
         settings.unit = unit;
 
         for (File f:files) {
             openers.add(settings.getOpener(f));
         }
-        spimData = BioFormatsConvertFilesToSpimData.getSpimData(openers);
+        spimdata = BioFormatsConvertFilesToSpimData.getSpimData(openers);
     }
 
 }

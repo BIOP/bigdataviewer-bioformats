@@ -36,12 +36,14 @@ import bdv.util.BdvStackSource;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.export.spimdata.BioFormatsConvertFilesToSpimData;
 import ch.epfl.biop.bdv.bioformats.samples.DatasetHelper;
+import loci.common.DebugTools;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import net.imagej.ImageJ;
 import net.imglib2.type.numeric.ARGBType;
 import ome.units.UNITS;
 import ome.units.quantity.Length;
+import org.apache.log4j.BasicConfigurator;
 import spimdata.util.Displaysettings;
 
 import java.io.File;
@@ -53,15 +55,24 @@ import java.util.List;
 
 public class OpenAndDisplayImageWithSpimData
 {
+
 	public static void main( String[] args )
 	{
+
+		//BasicConfigurator.configure();
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 
 		DatasetHelper.getSampleVSIDataset(); // Cached : no need to worry about double download
+		DebugTools.setRootLevel("ch.epfl.biop.bdv.bioformats.export");
+		DebugTools.enableLogging();
+		//DebugTools.enableIJLogging(true);
 
-		File f = DatasetHelper.getDataset(DatasetHelper.VSI);
-		BioFormatsBdvOpener opener = BioFormatsConvertFilesToSpimData.getDefaultOpener(f.getAbsolutePath());
+		//File f = DatasetHelper.getDataset(DatasetHelper.VSI);
+
+		String dataLocation = "N:\\Temp Oli\\Kunal\\Project001_Kunal.lif";
+
+		BioFormatsBdvOpener opener = BioFormatsConvertFilesToSpimData.getDefaultOpener(dataLocation);//f.getAbsolutePath());
 
 		AbstractSpimData asd = BioFormatsConvertFilesToSpimData.getSpimData(
 				opener

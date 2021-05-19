@@ -110,6 +110,7 @@
 		<bigdataviewer-selector.version>0.1.8</bigdataviewer-selector.version>
 		<bigdataviewer-spimdata-extras.version>0.1.0</bigdataviewer-spimdata-extras.version>
 		<reflections.version>0.9.11</reflections.version>
+		<slf4j-log4j12.version>1.7.30</slf4j-log4j12.version>
 	</properties>
 
 	<repositories>
@@ -196,6 +197,13 @@
 			<groupId>org.reflections</groupId>
 			<artifactId>reflections</artifactId>
 			<version>${reflections.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>${slf4j-log4j12.version}</version>
 			<scope>test</scope>
 		</dependency>
 

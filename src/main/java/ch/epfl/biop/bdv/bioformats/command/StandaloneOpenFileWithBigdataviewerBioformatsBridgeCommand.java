@@ -57,12 +57,12 @@ public class StandaloneOpenFileWithBigdataviewerBioformatsBridgeCommand implemen
     File file;
 
     @Parameter(required = false, label="Split RGB channels if you have 16 bits RGB images")
-    boolean splitRGBChannels = true; // Split rgb channels to allow for best compatibility (RGB 16 bits)
+    boolean splitrgbchannels = true; // Split rgb channels to allow for best compatibility (RGB 16 bits)
 
     public void run() {
 
         BioformatsBigdataviewerBridgeDatasetCommand settings = new BioformatsBigdataviewerBridgeDatasetCommand();
-        settings.splitRGBChannels = splitRGBChannels;
+        settings.splitrgbchannels = splitrgbchannels;
         settings.unit = unit;
 
         List<BioFormatsBdvOpener> openers = new ArrayList<>();

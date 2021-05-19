@@ -52,24 +52,26 @@ import java.awt.*;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.logging.Logger;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BioFormatsMetaDataHelper {
 
-    private static final Logger LOGGER = Logger.getLogger( BioFormatsMetaDataHelper.class.getName() );
+    protected static Logger logger = LoggerFactory.getLogger(BioFormatsMetaDataHelper.class);
 
-    public static Consumer<String> log = (s) -> {};//System.out.println(BioFormatsMetaDataHelper.class.getName()+":"+s);
+    //private static final Logger log = Logger.getLogger( BioFormatsMetaDataHelper.class.getName() );
+
+    //public static Consumer<String> log = (s) -> LOGGER.info(s);//(s) -> {};//System.out.println(BioFormatsMetaDataHelper.class.getName()+":"+s);
 
     public static class BioformatsChannel {
 
         int iSerie;
         int iChannel;
-        int emissionWl;
+        int emissionWl = 1;
         public String chName="";
         String pxType="";
         boolean isRGB;
@@ -84,7 +86,8 @@ public class BioFormatsMetaDataHelper {
             if (m.getChannelName(iSerie,iChannel)!=null) {
                this.chName=m.getChannelName(iSerie,iChannel);
             } else {
-                System.out.println("No name found for serie "+iSerie+" ch "+iChannel);
+                this.chName= "ch_"+iChannel;
+                logger.warn("No name found for serie "+iSerie+" ch "+iChannel+" setting name to "+this.chName);
             }
             if (m.getPixelsType(iSerie)!=null) {
                this.pxType=m.getPixelsType(iSerie).getValue();
@@ -93,18 +96,18 @@ public class BioFormatsMetaDataHelper {
 
         @Override
         public int hashCode() {
-            return this.chName.hashCode()*this.pxType.hashCode();
+            return this.chName.hashCode()*this.pxType.hashCode()*emissionWl*(iChannel+1);
         }
 
         @Override
         public boolean equals(Object obj) {
             if (obj instanceof BioFormatsMetaDataHelper.BioformatsChannel) {
                 BioFormatsMetaDataHelper.BioformatsChannel bc = (BioFormatsMetaDataHelper.BioformatsChannel) obj;
-                return //(iChannel==bc.iChannel)
-                        //&&
-                        (isRGB==bc.isRGB)
+                return  (isRGB==bc.isRGB)
                         &&(chName.equals(bc.chName))
-                        &&(pxType.equals(bc.pxType));
+                        &&(pxType.equals(bc.pxType))
+                        &&(iChannel == bc.iChannel)
+                        &&(emissionWl == (bc.emissionWl));
             } else {
                 return false;
             }
@@ -132,15 +135,15 @@ public class BioFormatsMetaDataHelper {
             pos[2] = new Length(0,UNITS.REFERENCEFRAME);
         }} catch (Exception e) {
             //e.printStackTrace();
-            log.accept("Could not access omeMeta.getPlanePosition");
+            logger.warn("Could not access omeMeta.getPlanePosition serie "+iSerie);
             pos[0] = new Length(0,UNITS.REFERENCEFRAME);
             pos[1] = new Length(0,UNITS.REFERENCEFRAME);
             pos[2] = new Length(0,UNITS.REFERENCEFRAME);
         }
-        log.accept("Ch Name="+omeMeta.getChannelName(iSerie,0));
-        log.accept("pos[0]="+pos[0].value()+" "+pos[0].unit().getSymbol());
-        log.accept("pos[1]="+pos[1].value()+" "+pos[1].unit().getSymbol());
-        log.accept("pos[2]="+pos[2].value()+" "+pos[2].unit().getSymbol());
+        logger.debug("Ch Name="+omeMeta.getChannelName(iSerie,0));
+        logger.debug("pos[0]="+pos[0].value()+" "+pos[0].unit().getSymbol());
+        logger.debug("pos[1]="+pos[1].value()+" "+pos[1].unit().getSymbol());
+        logger.debug("pos[2]="+pos[2].value()+" "+pos[2].unit().getSymbol());
 
         return pos;
     }
@@ -166,10 +169,10 @@ public class BioFormatsMetaDataHelper {
             vox[2] = new Length(1,UNITS.REFERENCEFRAME);
         }
 
-        log.accept("Ch Name="+omeMeta.getChannelName(iSerie,0));
-        log.accept("vox[0]="+vox[0].value()+" "+vox[0].unit().getSymbol());
-        log.accept("vox[1]="+vox[1].value()+" "+vox[1].unit().getSymbol());
-        log.accept("vox[2]="+vox[2].value()+" "+vox[2].unit().getSymbol());
+        logger.debug("Ch Name="+omeMeta.getChannelName(iSerie,0));
+        logger.debug("vox[0]="+vox[0].value()+" "+vox[0].unit().getSymbol());
+        logger.debug("vox[1]="+vox[1].value()+" "+vox[1].unit().getSymbol());
+        logger.debug("vox[2]="+vox[2].value()+" "+vox[2].unit().getSymbol());
 
         return vox;
     }
@@ -446,7 +449,7 @@ public class BioFormatsMetaDataHelper {
                     seriesIdentifier = boundIndex[0];
                     channelIdentifier = boundIndex[1];
                 } else {
-                    LOGGER.warning("Number format problem with expression:"+str+" - Expression ignored");
+                    logger.warn("Number format problem with expression:"+str+" - Expression ignored");
                     break;
                 }
             }
@@ -501,7 +504,7 @@ public class BioFormatsMetaDataHelper {
 
                 }
             } catch (NumberFormatException e) {
-                LOGGER.warning("Number format problem with expression:"+str+" - Expression ignored");
+                logger.warn("Number format problem with expression:"+str+" - Expression ignored");
             }
 
         }
@@ -541,10 +544,10 @@ public class BioFormatsMetaDataHelper {
                             }
                         }
                     } catch (NumberFormatException e) {
-                        LOGGER.warning("Number format problem with expression:"+str+" - Expression ignored");
+                        logger.warn("Number format problem with expression:"+str+" - Expression ignored");
                     }
                 } else {
-                    LOGGER.warning("Cannot parse expression "+str+" to pattern 'begin-end' (2-5) for instance, omitted");
+                    logger.warn("Cannot parse expression "+str+" to pattern 'begin-end' (2-5) for instance, omitted");
                 }
             } else {
                 // Single source
@@ -559,7 +562,7 @@ public class BioFormatsMetaDataHelper {
                         arrayOfIndexes.add(index);
                     }
                 } catch (NumberFormatException e) {
-                    LOGGER.warning("Number format problem with expression:"+str+" - Expression ignored");
+                    logger.warn("Number format problem with expression:"+str+" - Expression ignored");
                 }
             }
         }
@@ -580,18 +583,28 @@ public class BioFormatsMetaDataHelper {
         return getSourceColor((BioFormatsBdvSource) src.source);
     }
 
+    final static int[] loopR = {1,0,0,1,1,1,0};
+    final static int[] loopG = {0,1,0,1,1,0,1};
+    final static int[] loopB = {0,0,1,1,0,1,1};
+
     public static ARGBType getColorFromMetadata(IMetadata omeMeta, int iSerie, int iCh) {
         ome.xml.model.primitives.Color c = omeMeta.getChannelColor(iSerie, iCh);
         ARGBType color = null;
         if (c != null) {
+            logger.debug("c = ["+c.getRed()+","+c.getGreen()+","+c.getBlue()+"]");
             color = new ARGBType(ARGBType.rgba(c.getRed(), c.getGreen(), c.getBlue(), 255));
         } else {
             if (omeMeta.getChannelEmissionWavelength(iSerie, iCh) != null) {
                 int emission = omeMeta.getChannelEmissionWavelength(iSerie, iCh)
                         .value(UNITS.NANOMETER)
                         .intValue();
+
+                logger.debug("emission = "+emission);
                 Color cAwt = getColorFromWavelength(emission);
                 color = new ARGBType(ARGBType.rgba(cAwt.getRed(), cAwt.getGreen(), cAwt.getBlue(), 255));
+            } else {
+                // Default colors based on iSerie index
+                color = new ARGBType(ARGBType.rgba(255 * loopR[iCh % 7], 255 * loopG[iCh % 7], 255 * loopB[iCh % 7],255));
             }
         }
         return color;

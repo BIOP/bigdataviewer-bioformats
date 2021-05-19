@@ -48,18 +48,18 @@ public class BioformatsBigdataviewerBridgeDatasetCommand implements Command {
     static public Map<String, Object> getDefaultParameters() {
         Map<String, Object> def = new HashMap();
         def.put("unit", "MILLIMETER");
-        def.put("splitRGBChannels",false);
-        def.put("positionIsCenter","AUTO");
-        def.put("switchZandC","AUTO");
-        def.put("flipPositionX","AUTO");
-        def.put("flipPositionY","AUTO");
-        def.put("flipPositionZ","AUTO");
-        def.put("useBioFormatsCacheBlockSize",true);
-        def.put("cacheSizeX",512);
-        def.put("cacheSizeY",512);
-        def.put("cacheSizeZ",1);
-        def.put("refFrameSizeInUnitLocation",1);
-        def.put("refFrameSizeInUnitVoxSize",1);
+        def.put("splitrgbchannels",false);
+        def.put("positioniscenter","AUTO");
+        def.put("switchzandc","AUTO");
+        def.put("flippositionx","AUTO");
+        def.put("flippositiony","AUTO");
+        def.put("flippositionz","AUTO");
+        def.put("usebioformatscacheblocksize",true);
+        def.put("cachesizex",512);
+        def.put("cachesizey",512);
+        def.put("cachesizez",1);
+        def.put("refframesizeinunitlocation",1);
+        def.put("refframesizeinunitvoxsize",1);
         return def;
     }
 
@@ -68,41 +68,41 @@ public class BioformatsBigdataviewerBridgeDatasetCommand implements Command {
     public String unit = "MILLIMETER";
 
     @Parameter(required = false, label="Split RGB channels")
-    public boolean splitRGBChannels = false;
+    public boolean splitrgbchannels = false;
 
     @Parameter(required = false, choices = {"AUTO", "TRUE", "FALSE"})
-    public String positionIsCenter = "AUTO";
+    public String positioniscenter = "AUTO";
 
     @Parameter(required = false, choices = {"AUTO", "TRUE", "FALSE"})
-    public String switchZandC = "AUTO";
+    public String switchzandc = "AUTO";
 
     @Parameter(required = false, choices = {"AUTO", "TRUE", "FALSE"})
-    public String flipPositionX = "AUTO";
+    public String flippositionx = "AUTO";
 
     @Parameter(required = false, choices = {"AUTO", "TRUE", "FALSE"})
-    public String flipPositionY = "AUTO";
+    public String flippositiony = "AUTO";
 
     @Parameter(required = false, choices = {"AUTO", "TRUE", "FALSE"})
-    public String flipPositionZ = "AUTO";
+    public String flippositionz = "AUTO";
 
     @Parameter(required = false)
-    public boolean useBioFormatsCacheBlockSize = true;
+    public boolean usebioformatscacheblocksize = true;
 
     @Parameter(required = false)
-    public int cacheSizeX = 512, cacheSizeY = 512, cacheSizeZ = 1;
+    public int cachesizex = 512, cachesizey = 512, cachesizez = 1;
 
     @Parameter(required = false, label="Reference frame size in unit (position)")
-    public double refFrameSizeInUnitLocation = 1;
+    public double refframesizeinunitlocation = 1;
 
     @Parameter(required = false, label="Reference frame size in unit (voxel size)")
-    public double refFrameSizeInUnitVoxSize = 1;
+    public double refframesizeinunitvoxsize = 1;
 
     public BioFormatsBdvOpener getOpener(String datalocation) {
 
         Unit bfUnit = BioFormatsMetaDataHelper.getUnitFromString(unit);
 
-        Length positionReferenceFrameLength = new Length(refFrameSizeInUnitLocation, bfUnit);
-        Length voxSizeReferenceFrameLength = new Length(refFrameSizeInUnitVoxSize, bfUnit);
+        Length positionReferenceFrameLength = new Length(refframesizeinunitlocation, bfUnit);
+        Length voxSizeReferenceFrameLength = new Length(refframesizeinunitvoxsize, bfUnit);
 
         BioFormatsBdvOpener opener = BioFormatsBdvOpener.getOpener()
                 .location(datalocation)
@@ -110,37 +110,37 @@ public class BioformatsBigdataviewerBridgeDatasetCommand implements Command {
                 .auto()
                 .ignoreMetadata();
 
-        if (!switchZandC.equals("AUTO")) {
-            opener = opener.switchZandC(switchZandC.equals("TRUE"));
+        if (!switchzandc.equals("AUTO")) {
+            opener = opener.switchZandC(switchzandc.equals("TRUE"));
         }
 
-        if (!useBioFormatsCacheBlockSize) {
-            opener = opener.cacheBlockSize(cacheSizeX,cacheSizeY,cacheSizeZ);
+        if (!usebioformatscacheblocksize) {
+            opener = opener.cacheBlockSize(cachesizex,cachesizey,cachesizez);
         }
 
         // Not sure it is useful here because the metadata location is handled somewhere else
-        if (!positionIsCenter.equals("AUTO")) {
-            if (positionIsCenter.equals("TRUE")) {
+        if (!positioniscenter.equals("AUTO")) {
+            if (positioniscenter.equals("TRUE")) {
                 opener = opener.centerPositionConvention();
             } else {
                 opener=opener.cornerPositionConvention();
             }
         }
 
-        if (!flipPositionX.equals("AUTO")) {
-            if (flipPositionX.equals("TRUE")) {
+        if (!flippositionx.equals("AUTO")) {
+            if (flippositionx.equals("TRUE")) {
                 opener = opener.flipPositionX();
             }
         }
 
-        if (!flipPositionY.equals("AUTO")) {
-            if (flipPositionY.equals("TRUE")) {
+        if (!flippositiony.equals("AUTO")) {
+            if (flippositiony.equals("TRUE")) {
                 opener = opener.flipPositionY();
             }
         }
 
-        if (!flipPositionZ.equals("AUTO")) {
-            if (flipPositionZ.equals("TRUE")) {
+        if (!flippositionz.equals("AUTO")) {
+            if (flippositionz.equals("TRUE")) {
                 opener = opener.flipPositionZ();
             }
         }
@@ -151,7 +151,7 @@ public class BioformatsBigdataviewerBridgeDatasetCommand implements Command {
 
         opener = opener.voxSizeReferenceFrameLength(voxSizeReferenceFrameLength);
 
-        if (splitRGBChannels) opener = opener.splitRGBChannels();
+        if (splitrgbchannels) opener = opener.splitRGBChannels();
 
         return opener;
     }

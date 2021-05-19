@@ -50,7 +50,7 @@ public class OpenAndDisplayImageFromFile {
 
     //final static public String dataLocation = "Path to your file";
     //"omero:https://omero.epfl.ch/webclient/img_detail/1864/?dataset=408";
-    final static public String dataLocation = "C:\\Users\\nicol\\Downloads\\CZI_Testdata\\S=1_HE_Slide_RGB.czi";//"omero:https://omero.epfl.ch/webclient/img_detail/1864/?dataset=408";
+    final static public String dataLocation = "N:\\Temp Oli\\Kunal\\Project001_Kunal.lif";//C:\\Users\\nicol\\Downloads\\CZI_Testdata\\S=1_HE_Slide_RGB.czi";//"omero:https://omero.epfl.ch/webclient/img_detail/1864/?dataset=408";
 
 
     // See also https://github.com/ome/ome-common-java/blob/master/src/main/java/loci/common/Location.java

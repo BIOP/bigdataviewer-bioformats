@@ -54,14 +54,14 @@ public class OpenFilesWithBigdataviewerBioformatsBridgeCommand extends Bioformat
     File[] files;
 
     @Parameter(type = ItemIO.OUTPUT)
-    AbstractSpimData spimData;
+    AbstractSpimData spimdata;
 
     public void run() {
         List<BioFormatsBdvOpener> openers = new ArrayList<>();
         for (File f:files) {
             openers.add(getOpener(f));
         }
-        spimData = BioFormatsConvertFilesToSpimData.getSpimData(openers);
+        spimdata = BioFormatsConvertFilesToSpimData.getSpimData(openers);
     }
 
 }

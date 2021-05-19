@@ -62,8 +62,6 @@ public class DisplayDatasetInfo
 
 		File f = new File (pathTestFile);
 
-		BioFormatsConvertFilesToSpimData.log = (s) -> System.out.println("BF2SD:"+s);
-
 		BioFormatsBdvOpener opener = BioFormatsConvertFilesToSpimData.getDefaultOpener(f.getAbsolutePath());
 
 		AbstractSpimData asd = BioFormatsConvertFilesToSpimData.getSpimData(

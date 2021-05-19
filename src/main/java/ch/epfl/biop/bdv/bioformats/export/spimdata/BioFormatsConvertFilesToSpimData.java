@@ -44,20 +44,17 @@ import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.*;
 import net.imglib2.Dimensions;
 import net.imglib2.type.numeric.ARGBType;
-import ome.units.UNITS;
 import org.apache.commons.io.FilenameUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import spimdata.util.Displaysettings;
 
-import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.stream.IntStream;
-
-import static ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper.getColorFromWavelength;
 
 /**
  * Converting BioFormats structure into an Xml Dataset, compatible for BigDataViewer and FIJI BIG Plugins
@@ -69,16 +66,18 @@ import static ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper.getColorFromW
 
 public class BioFormatsConvertFilesToSpimData {
 
-    public static Consumer<String> log = s -> {};
+    protected static Logger logger = LoggerFactory.getLogger(BioFormatsConvertFilesToSpimData.class);
 
     private int getChannelId(IMetadata omeMeta, int iSerie, int iChannel, boolean isRGB) {
         BioFormatsMetaDataHelper.BioformatsChannel channel = new BioFormatsMetaDataHelper.BioformatsChannel(omeMeta, iSerie, iChannel, false);
         if (!channelToId.containsKey(channel)) {
             // No : add it in the channel hashmap
             channelToId.put(channel,channelCounter);
-            log.accept(" \t \t \t New Channel, set as number "+channelCounter);
+            logger.debug("New Channel for series "+iSerie+", channel "+iChannel+", set as number "+channelCounter);
             channelIdToChannel.put(channelCounter, new Channel(channelCounter));
             channelCounter++;
+        } else {
+            logger.debug("Channel for series "+iSerie+", channel "+iChannel+", already known.");
         }
         int idChannel = channelIdToChannel.get(channelToId.get(channel)).getId();
         return idChannel;
@@ -114,14 +113,14 @@ public class BioFormatsConvertFilesToSpimData {
                 FileIndex fi = new FileIndex(iF);
                 String dataLocation = openers.get( iF ).getDataLocation();
                 fi.setName( dataLocation );
-                log.accept("Data : "+ dataLocation );
+                logger.debug("Data located at "+ dataLocation );
 
                 IFormatReader memo = openers.get(iF).getNewReader();
 
                 final int iFile = iF;
 
                 final int seriesCount = memo.getSeriesCount();
-                log.accept("Number of Series : " + seriesCount );
+                logger.debug("Number of Series " + seriesCount );
                 final IMetadata omeMeta = (IMetadata) memo.getMetadataStore();
 
                 fileIdxToNumberOfSeries.put(iF, seriesCount );
@@ -138,9 +137,9 @@ public class BioFormatsConvertFilesToSpimData {
                     nTileCounter++;
                     // ---------- Serie >
                     // ---------- Serie > Timepoints
-                    log.accept("\t Serie " + iSerie + " Number of timesteps = " + omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
+                    logger.debug("\t Serie " + iSerie + " Number of timesteps = " + omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
                     // ---------- Serie > Channels
-                    log.accept("\t Serie " + iSerie + " Number of channels = " + omeMeta.getChannelCount(iSerie));
+                    logger.debug("\t Serie " + iSerie + " Number of channels = " + omeMeta.getChannelCount(iSerie));
                     //final int iS = iSerie;
                     // Properties of the serie
                     IntStream channels = IntStream.range(0, omeMeta.getChannelCount(iSerie));
@@ -149,18 +148,16 @@ public class BioFormatsConvertFilesToSpimData {
                     }
                     String imageName = getImageName( dataLocation, seriesCount, omeMeta, iSerie );
                     Dimensions dims = BioFormatsMetaDataHelper.getSeriesDimensions(omeMeta, iSerie); // number of pixels .. no calibration
-                    log.accept("X:"+dims.dimension(0)+" Y:"+dims.dimension(1)+" Z:"+dims.dimension(2));
+                    logger.debug("X:"+dims.dimension(0)+" Y:"+dims.dimension(1)+" Z:"+dims.dimension(2));
                     VoxelDimensions voxDims = BioFormatsMetaDataHelper.getSeriesVoxelDimensions(omeMeta, iSerie, openers.get(iFile).u, openers.get(iFile).voxSizeReferenceFrameLength);
                     // Register Setups (one per channel and one per timepoint)
                     channels.forEach(
                             iCh -> {
                                 int ch_id = getChannelId(omeMeta, iSerie, iCh, memo.isRGB());
                                 String channelName = getChannelName( omeMeta, iSerie, iCh ) ;
-                                //IntStream timepoints = IntStream.range(0, omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
-                                //timepoints.forEach(
-                                //        iTp -> {
-                                String setupName = imageName + "-" + channelName;// + ":" + iTp;
-                                log.accept(setupName);
+
+                                String setupName = imageName + "-" + channelName;
+                                logger.debug(setupName);
                                 ViewSetup vs = new ViewSetup(
                                         viewSetupCounter,
                                         setupName,
@@ -195,7 +192,7 @@ public class BioFormatsConvertFilesToSpimData {
                                 viewSetups.add(vs);
                                 viewSetupToBFFileSerieChannel.put(viewSetupCounter, new FileSerieChannel(iFile, iSerie, iCh));
                                 viewSetupCounter++;
-                                //       });
+
                             });
                 });
                 memo.close();
@@ -217,7 +214,7 @@ public class BioFormatsConvertFilesToSpimData {
 
                 IFormatReader memo = openers.get(iF).getNewReader();
 
-                log.accept("Number of Series : " + memo.getSeriesCount());
+                logger.debug("Number of Series : " + memo.getSeriesCount());
                 final IMetadata omeMeta = (IMetadata) memo.getMetadataStore();
 
                 int nSeries = fileIdxToNumberOfSeries.get(iF);
