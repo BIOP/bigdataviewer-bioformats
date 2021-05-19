@@ -45,6 +45,8 @@ import mpicbg.spim.data.sequence.*;
 import net.imglib2.Volatile;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.NumericType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -58,7 +60,9 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
 
     final AbstractSequenceDescription<?, ?, ?> sequenceDescription;
 
-    public Consumer<String> log = s -> {};//System.out.println(s);
+    protected static Logger logger = LoggerFactory.getLogger(BioFormatsBdvOpener.class);
+
+    public Consumer<String> log = logger::debug;
 
     Map<Integer, FileSerieChannel> viewSetupToBFFileSerieChannel = new HashMap<>();
 

@@ -35,6 +35,7 @@ package ch.epfl.biop.bdv.bioformats.bioformatssource;
 import bdv.util.volatiles.SharedQueue;
 import bdv.viewer.Source;
 import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
+import ch.epfl.biop.bdv.bioformats.export.spimdata.BioFormatsConvertFilesToSpimData;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;
 import net.imglib2.FinalInterval;
@@ -45,6 +46,8 @@ import net.imglib2.type.numeric.NumericType;
 import ome.units.UNITS;
 import ome.units.quantity.Length;
 import ome.units.unit.Unit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,6 +60,8 @@ import java.util.stream.Collectors;
 
 
 public class BioFormatsBdvOpener {
+
+    protected static Logger logger = LoggerFactory.getLogger(BioFormatsBdvOpener.class);
 
     // For copying the object
     public BioFormatsBdvOpener copy() {
@@ -276,7 +281,7 @@ public class BioFormatsBdvOpener {
         }
         final IFormatReader reader = memo;
 
-        System.out.println("Attempts to set opener settings for file format " + reader.getFormat() + "; data location = "+dataLocation);
+        logger.info("Attempts to set opener settings for file format " + reader.getFormat() + "; data location = "+dataLocation);
 
         // Adjustements here!
 
