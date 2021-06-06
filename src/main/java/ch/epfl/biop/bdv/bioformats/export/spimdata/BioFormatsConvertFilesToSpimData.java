@@ -43,6 +43,7 @@ import mpicbg.spim.data.registration.ViewRegistration;
 import mpicbg.spim.data.registration.ViewRegistrations;
 import mpicbg.spim.data.sequence.*;
 import net.imglib2.Dimensions;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.ARGBType;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -223,32 +224,33 @@ public class BioFormatsConvertFilesToSpimData {
 
                 series.forEach(iSerie -> {
                     final int nTimepoints = omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue();
-
+                    AffineTransform3D rootTransform = BioFormatsMetaDataHelper.getSeriesRootTransform(
+                            omeMeta,
+                            iSerie,
+                            openers.get(iFile).u,
+                            openers.get(iFile).positionPreTransformMatrixArray, //AffineTransform3D positionPreTransform,
+                            openers.get(iFile).positionPostTransformMatrixArray, //AffineTransform3D positionPostTransform,
+                            openers.get(iFile).positionReferenceFrameLength,
+                            openers.get(iFile).positionIsImageCenter, //boolean positionIsImageCenter,
+                            openers.get(iFile).voxSizePreTransformMatrixArray, //voxSizePreTransform,
+                            openers.get(iFile).voxSizePostTransformMatrixArray, //AffineTransform3D voxSizePostTransform,
+                            openers.get(iFile).voxSizeReferenceFrameLength, //null, //Length voxSizeReferenceFrameLength,
+                            openers.get(iFile).axesOfImageFlip // axesOfImageFlip
+                    );
                     timePoints.forEach(iTp -> {
                         viewSetupToBFFileSerieChannel
-                                .keySet()
-                                .stream()
-                                .filter(viewSetupId -> (viewSetupToBFFileSerieChannel.get(viewSetupId).iFile == iFile))
-                                .filter(viewSetupId -> (viewSetupToBFFileSerieChannel.get(viewSetupId).iSerie == iSerie))
-                                .forEach(viewSetupId -> {
-                                    if (iTp.getId()<nTimepoints) {
-                                        registrations.add(new ViewRegistration(iTp.getId(), viewSetupId, BioFormatsMetaDataHelper.getSeriesRootTransform(
-                                                omeMeta,
-                                                iSerie,
-                                                openers.get(iFile).u,
-                                                openers.get(iFile).positionPreTransformMatrixArray, //AffineTransform3D positionPreTransform,
-                                                openers.get(iFile).positionPostTransformMatrixArray, //AffineTransform3D positionPostTransform,
-                                                openers.get(iFile).positionReferenceFrameLength,
-                                                openers.get(iFile).positionIsImageCenter, //boolean positionIsImageCenter,
-                                                openers.get(iFile).voxSizePreTransformMatrixArray, //voxSizePreTransform,
-                                                openers.get(iFile).voxSizePostTransformMatrixArray, //AffineTransform3D voxSizePostTransform,
-                                                openers.get(iFile).voxSizeReferenceFrameLength, //null, //Length voxSizeReferenceFrameLength,
-                                                openers.get(iFile).axesOfImageFlip // axesOfImageFlip
-                                        )));
-                                    } else {
-                                        missingViews.add(new ViewId(iTp.getId(), viewSetupId));
-                                    }
-                                });
+                            .keySet()
+                            .stream()
+                            .filter(viewSetupId -> (viewSetupToBFFileSerieChannel.get(viewSetupId).iFile == iFile))
+                            .filter(viewSetupId -> (viewSetupToBFFileSerieChannel.get(viewSetupId).iSerie == iSerie))
+                            .forEach(viewSetupId -> {
+                                if (iTp.getId()<nTimepoints) {
+
+                                    registrations.add(new ViewRegistration(iTp.getId(), viewSetupId, rootTransform));
+                                } else {
+                                    missingViews.add(new ViewId(iTp.getId(), viewSetupId));
+                                }
+                            });
                     });
 
                 });

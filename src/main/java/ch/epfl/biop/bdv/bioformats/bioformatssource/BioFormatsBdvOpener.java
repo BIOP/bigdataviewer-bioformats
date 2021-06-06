@@ -46,6 +46,7 @@ import net.imglib2.type.numeric.NumericType;
 import ome.units.UNITS;
 import ome.units.quantity.Length;
 import ome.units.unit.Unit;
+import org.apache.commons.lang.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -366,6 +367,7 @@ public class BioFormatsBdvOpener {
     }
 
     public IFormatReader getNewReader() {
+        logger.debug("Getting new reader for "+dataLocation);
         IFormatReader reader = new ImageReader();
         reader.setFlattenedResolutions(false);
         if (splitRGBChannels) {
@@ -376,7 +378,12 @@ public class BioFormatsBdvOpener {
         final IMetadata omeMetaIdxOmeXml = MetadataTools.createOMEXMLMetadata();
         memo.setMetadataStore(omeMetaIdxOmeXml);
         try {
+            logger.debug("setId for reader "+dataLocation);
+            StopWatch watch = new StopWatch();
+            watch.start();
             memo.setId(dataLocation);
+            watch.stop();
+            logger.debug("id set in "+(int)(watch.getTime()/1000)+" s");
         } catch (FormatException e) {
             e.printStackTrace();
         } catch (IOException e) {

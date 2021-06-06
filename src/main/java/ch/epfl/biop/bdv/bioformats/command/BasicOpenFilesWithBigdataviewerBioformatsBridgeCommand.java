@@ -35,10 +35,13 @@ package ch.epfl.biop.bdv.bioformats.command;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.export.spimdata.BioFormatsConvertFilesToSpimData;
 import mpicbg.spim.data.generic.AbstractSpimData;
+import org.apache.commons.lang.time.StopWatch;
 import org.scijava.ItemIO;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -49,6 +52,8 @@ import java.util.List;
         description = "Support bioformats multiresolution api. Attempts to set colors based " +
                 "on bioformats metadata. Do not attempt auto contrast.")
 public class BasicOpenFilesWithBigdataviewerBioformatsBridgeCommand implements Command {
+
+    final private static Logger logger = LoggerFactory.getLogger(BasicOpenFilesWithBigdataviewerBioformatsBridgeCommand.class);
 
     @Parameter(required = false, label="Physical units of the dataset", choices = {"MILLIMETER","MICROMETER","NANOMETER"})
     public String unit = "MILLIMETER";
@@ -70,9 +75,17 @@ public class BasicOpenFilesWithBigdataviewerBioformatsBridgeCommand implements C
         settings.unit = unit;
 
         for (File f:files) {
+            logger.debug("Getting opener for file f "+f.getAbsolutePath());
             openers.add(settings.getOpener(f));
         }
+
+        StopWatch watch = new StopWatch();
+        logger.debug("All openers obtained, converting to spimdata object ");
+        watch.start();
         spimdata = BioFormatsConvertFilesToSpimData.getSpimData(openers);
+        watch.stop();
+        logger.debug("Converted to SpimData in "+(int)(watch.getTime()/1000)+" s");
+
     }
 
 }
