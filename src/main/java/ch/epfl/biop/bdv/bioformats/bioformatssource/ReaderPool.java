@@ -52,7 +52,7 @@ public class ReaderPool extends ResourcePool<IFormatReader> {
     }
 
     @Override
-    protected IFormatReader createObject() {
+    public IFormatReader createObject() {
         return readerSupplier.get();
     }
 }
