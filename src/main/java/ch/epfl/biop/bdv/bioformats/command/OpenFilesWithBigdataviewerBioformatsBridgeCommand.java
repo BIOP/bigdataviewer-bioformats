@@ -55,6 +55,9 @@ public class OpenFilesWithBigdataviewerBioformatsBridgeCommand extends Bioformat
 
     final private static Logger logger = LoggerFactory.getLogger(OpenFilesWithBigdataviewerBioformatsBridgeCommand.class);
 
+    @Parameter(label = "Name of this dataset")
+    public String datasetname = "dataset";
+
     @Parameter
     File[] files;
 

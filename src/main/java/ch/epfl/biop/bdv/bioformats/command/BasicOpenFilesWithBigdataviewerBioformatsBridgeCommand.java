@@ -55,6 +55,9 @@ public class BasicOpenFilesWithBigdataviewerBioformatsBridgeCommand implements C
 
     final private static Logger logger = LoggerFactory.getLogger(BasicOpenFilesWithBigdataviewerBioformatsBridgeCommand.class);
 
+    @Parameter(label = "Name of this dataset")
+    public String datasetname = "dataset";
+
     @Parameter(required = false, label="Physical units of the dataset", choices = {"MILLIMETER","MICROMETER","NANOMETER"})
     public String unit = "MILLIMETER";
 
