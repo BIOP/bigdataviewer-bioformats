@@ -1,4 +1,4 @@
-[![](https://travis-ci.com/BIOP/bigdataviewer-bioformats.svg?branch=master)](https://travis-ci.com/BIOP/bigdataviewer-bioformats)
+[![](https://github.com/BIOP/bigdataviewer-bioformats/actions/workflows/build-main.yml/badge.svg)](https://github.com/BIOP/bigdataviewer-bioformats/actions/workflows/build-main.yml)
 
 # Bigdataviewer Bioformats Bridge 
 
