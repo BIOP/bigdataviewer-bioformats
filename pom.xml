@@ -90,8 +90,8 @@
 	</issueManagement>
 
 	<ciManagement>
-		<system>Travis CI</system>
-		<url>https://travis-ci.com/BIOP/bigdataviewer-bioformats</url>
+		<system>GitHub Actions</system>
+		<url>https://github.com/BIOP/bigdataviewer-bioformats/actions</url>
 	</ciManagement>
 
 	<properties>
