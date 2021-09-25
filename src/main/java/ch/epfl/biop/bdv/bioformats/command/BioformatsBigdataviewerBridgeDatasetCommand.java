@@ -107,7 +107,7 @@ public class BioformatsBigdataviewerBridgeDatasetCommand implements Command {
         BioFormatsBdvOpener opener = BioFormatsBdvOpener.getOpener()
                 .location(datalocation)
                 .unit(unit)
-                //.auto()
+                .auto()
                 .ignoreMetadata();
 
         if (!switchzandc.equals("AUTO")) {

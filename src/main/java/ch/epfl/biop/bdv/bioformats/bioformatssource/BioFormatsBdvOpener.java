@@ -288,6 +288,8 @@ public class BioFormatsBdvOpener {
 
         if (reader.getFormat().equals("Nikon ND2")) {
             return BioFormatsBdvOpenerFix.fixNikonND2(this);
+        } else if (reader.getFormat().equals("Leica Image File Format")) {
+            return BioFormatsBdvOpenerFix.fixLif(this);
         } else {
             return this;
         }
@@ -384,6 +386,7 @@ public class BioFormatsBdvOpener {
             memo.setId(dataLocation);
             watch.stop();
             logger.debug("id set in "+(int)(watch.getTime()/1000)+" s");
+
         } catch (FormatException e) {
             e.printStackTrace();
         } catch (IOException e) {

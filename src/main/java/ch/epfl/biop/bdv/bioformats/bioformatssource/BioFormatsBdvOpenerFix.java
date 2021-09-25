@@ -38,4 +38,7 @@ public class BioFormatsBdvOpenerFix {
         return opener.centerPositionConvention().flipPositionX().flipPositionY();
     }
 
+    public static BioFormatsBdvOpener fixLif(BioFormatsBdvOpener bioFormatsBdvOpener) {
+        return bioFormatsBdvOpener.centerPositionConvention();
+    }
 }
