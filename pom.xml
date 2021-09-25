@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>30.0.0</version>
+		<version>31.1.0</version>
 		<relativePath />
 	</parent>
 
@@ -103,12 +103,11 @@
 		<releaseProfiles>deploy-to-scijava</releaseProfiles>
 		<license.excludes>**/resources/**</license.excludes>
 
-		<bigdataviewer-core.version>10.2.0</bigdataviewer-core.version>
-		<bigdataviewer-vistools.version>1.0.0-beta-28</bigdataviewer-vistools.version>
+		<bigdataviewer-core.version>10.2.1</bigdataviewer-core.version>
+		<bigdataviewer-vistools.version>1.0.0-beta-29</bigdataviewer-vistools.version>
 		<imglib2-cache.version>1.0.0-beta-16</imglib2-cache.version>
 
-		<bigdataviewer-selector.version>0.1.8</bigdataviewer-selector.version>
-		<bigdataviewer-spimdata-extras.version>0.1.0</bigdataviewer-spimdata-extras.version>
+		<bigdataviewer-spimdata-extras.version>0.1.4</bigdataviewer-spimdata-extras.version>
 		<reflections.version>0.9.11</reflections.version>
 		<slf4j-log4j12.version>1.7.30</slf4j-log4j12.version>
 	</properties>
