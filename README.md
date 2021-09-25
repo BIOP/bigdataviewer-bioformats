@@ -1,5 +1,7 @@
 [![](https://github.com/BIOP/bigdataviewer-bioformats/actions/workflows/build-main.yml/badge.svg)](https://github.com/BIOP/bigdataviewer-bioformats/actions/workflows/build-main.yml)
 
+[![](https://github.com/BIOP/bigdataviewer-bioformats/actions/workflows/build-main.yml/badge.svg)](https://github.com/BIOP/bigdataviewer-bioformats/actions/workflows/build-main.yml)
+
 # Bigdataviewer Bioformats Bridge 
 
 This repository enables the opening of files into BigDataViewer by using the BioFormats API.
