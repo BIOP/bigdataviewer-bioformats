@@ -61,12 +61,13 @@ public class OpenAndDisplayImages {
         //params.put("splitRGBChannels",true);
 
         params.put("files", new File[] {
+                //new File("C:\\Users\\chiarutt\\Desktop\\vsipb\\Image_01.vsi") // See https://forum.image.sc/t/qupath-omero-weird-pyramid-levels/65484
                 DatasetHelper.getDataset(DatasetHelper.VSI)
         });
 
         AbstractSpimData asd = (AbstractSpimData) ij.command()
                 .run(OpenFilesWithBigdataviewerBioformatsBridgeCommand.class,true,params)
-                .get().getOutput("spimData");
+                .get().getOutput("spimdata");
 
         List<BdvStackSource<?>> bss_list =  BdvFunctions.show(asd);
 

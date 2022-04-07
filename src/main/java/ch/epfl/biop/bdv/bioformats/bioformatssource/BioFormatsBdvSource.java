@@ -338,6 +338,11 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
                 long nPixXLvl0 = 0;
                 long nPixYLvl0 = 0;
                 long nPixZLvl0 = 0;
+
+                // Fix vsi issue see https://forum.image.sc/t/qupath-omero-weird-pyramid-levels/65484
+                // TODO : HOW Z IS BEHAVING with CellSens VSI ??
+                double downscalingFactor = -1;
+
                 try {
                     IFormatReader reader = readerPool.acquire();
                     reader.setSeries(cSerie);
@@ -345,6 +350,11 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
                     nPixXLvl0 = reader.getSizeX();
                     nPixYLvl0 = reader.getSizeY();
                     nPixZLvl0 = reader.getSizeZ();
+
+                    if (reader.getFormat().equals("CellSens VSI")) { // Fix vsi issue see https://forum.image.sc/t/qupath-omero-weird-pyramid-levels/65484
+                        downscalingFactor = Math.pow(2, level);
+                    }
+
                     readerPool.recycle(reader);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -357,9 +367,15 @@ public abstract class BioFormatsBdvSource<T extends NumericType< T > > implement
 
                 tr.translate(-pXmm, -pYmm, -pZmm);
 
-                tr.set(tr.get(0,0)*((double)nPixXLvl0/(double)nPixXCurrentLvl),0,0);
-                tr.set(tr.get(1,1)*((double)nPixYLvl0/(double)nPixYCurrentLvl),1,1);
-                tr.set(tr.get(2,2)*((double)nPixZLvl0/(double)nPixZCurrentLvl),2,2);
+                if (downscalingFactor == -1) {
+                    tr.set(tr.get(0,0)*((double)nPixXLvl0/(double)nPixXCurrentLvl),0,0);
+                    tr.set(tr.get(1,1)*((double)nPixYLvl0/(double)nPixYCurrentLvl),1,1);
+                    tr.set(tr.get(2,2)*((double)nPixZLvl0/(double)nPixZCurrentLvl),2,2);
+                } else {
+                    tr.set(tr.get(0,0)*downscalingFactor,0,0);
+                    tr.set(tr.get(1,1)*downscalingFactor,1,1);
+                    tr.set(tr.get(2,2)*((double)nPixZLvl0/(double)nPixZCurrentLvl),2,2); // Keeps Z with the normal behaviour
+                }
 
                 tr.translate(pXmm, pYmm, pZmm);
                 transforms.put(level, tr);

@@ -64,15 +64,16 @@ public class OpenAndDisplayImageWithSpimData
 		ij.ui().showUI();
 
 		DatasetHelper.getSampleVSIDataset(); // Cached : no need to worry about double download
-		DebugTools.setRootLevel("ch.epfl.biop.bdv.bioformats.export");
-		DebugTools.enableLogging();
+
+		//DebugTools.setRootLevel("ch.epfl.biop.bdv.bioformats.export");
+		//DebugTools.enableLogging();
 		//DebugTools.enableIJLogging(true);
 
-		//File f = DatasetHelper.getDataset(DatasetHelper.VSI);
+		File f = DatasetHelper.getDataset(DatasetHelper.VSI);
 
-		String dataLocation = "N:\\Temp Oli\\Kunal\\Project001_Kunal.lif";
+		//String dataLocation = "N:\\Temp Oli\\Kunal\\Project001_Kunal.lif";
 
-		BioFormatsBdvOpener opener = BioFormatsConvertFilesToSpimData.getDefaultOpener(dataLocation);//f.getAbsolutePath());
+		BioFormatsBdvOpener opener = BioFormatsConvertFilesToSpimData.getDefaultOpener(f.getAbsolutePath());
 
 		AbstractSpimData asd = BioFormatsConvertFilesToSpimData.getSpimData(
 				opener

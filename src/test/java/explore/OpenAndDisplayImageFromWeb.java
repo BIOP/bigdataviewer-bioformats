@@ -50,12 +50,12 @@ public class OpenAndDisplayImageFromWeb {
 
     final static public String dataLocation = "https://www.epfl.ch/research/facilities/ptbiop/wp-content/uploads/2019/11/CellsSegmented-1536x864.png";
 
-    final static public String dataLocationBigFile = "https://viv-demo.storage.googleapis.com/LuCa-7color_3x3component_data.ome.tif";
+    //final static public String dataLocationBigFile = "https://viv-demo.storage.googleapis.com/LuCa-7color_3x3component_data.ome.tif";
 
     static public void main(String... args) {
         List<Source> sources =
                 BioFormatsBdvOpener.getOpener()
-                        .location(dataLocationBigFile)
+                        .location(dataLocation)
                         //.location(DatasetHelper.getDataset(DatasetHelper.TIF_TIMELAPSE_3D))
                         //.location(DatasetHelper.getDataset(DatasetHelper.JPG_RGB))
                         //.location(DatasetHelper.getDataset(DatasetHelper.OLYMPUS_OIR))
