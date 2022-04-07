@@ -37,6 +37,8 @@ import bdv.util.BdvStackSource;
 import ch.epfl.biop.bdv.bioformats.command.BioformatsBigdataviewerBridgeDatasetCommand;
 import ch.epfl.biop.bdv.bioformats.command.OpenFilesWithBigdataviewerBioformatsBridgeCommand;
 import ch.epfl.biop.bdv.bioformats.samples.DatasetHelper;
+import mpicbg.spim.data.SpimData;
+import mpicbg.spim.data.XmlIoSpimData;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import net.imagej.ImageJ;
@@ -83,4 +85,11 @@ public class OpenAndDisplayImages {
             bss.setColor(new ARGBType(ARGBType.rgba(ds.color[0],ds.color[1], ds.color[2],ds.color[3])));
         }
     }
+
+    /*
+        asd.setBasePath(new File("C:\\Users\\chiarutt\\Desktop\\vsipb\\"));
+        new XmlIoSpimData().save((SpimData) asd, "C:\\Users\\chiarutt\\Desktop\\vsipb\\Image_01.xml");
+        SpimData reopened = new XmlIoSpimData().load("C:\\Users\\chiarutt\\Desktop\\vsipb\\Image_01.xml");
+        BdvFunctions.show(reopened);
+     */
 }
