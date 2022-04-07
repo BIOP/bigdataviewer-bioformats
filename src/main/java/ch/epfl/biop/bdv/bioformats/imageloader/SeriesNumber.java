@@ -2,7 +2,7 @@
  * #%L
  * Commands and function for opening, conversion and easy use of bioformats format into BigDataViewer
  * %%
- * Copyright (C) 2019 - 2021 Nicolas Chiaruttini, BIOP, EPFL
+ * Copyright (C) 2019 - 2022 Nicolas Chiaruttini, BIOP, EPFL
  * %%
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
