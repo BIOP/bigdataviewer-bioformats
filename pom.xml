@@ -77,7 +77,7 @@
 	</mailingLists>
 
 	<scm>
-		<connection>scm:git:git://github.com/BIOP/bigdataviewer-bioformats</connection>
+		<connection>scm:git:https://github.com/BIOP/bigdataviewer-bioformats</connection>
 		<developerConnection>scm:git:git@github.com:BIOP/bigdataviewer-bioformats</developerConnection>
 		<url>https://github.com/BIOP/bigdataviewer-bioformats</url>
 		<tag>HEAD</tag>
