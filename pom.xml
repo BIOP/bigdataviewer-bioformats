@@ -11,7 +11,7 @@
 
 	<groupId>ch.epfl.biop</groupId>
 	<artifactId>bigdataviewer-bioformats</artifactId>
-	<version>0.2.24-SNAPSHOT</version>
+	<version>0.2.24</version>
 
 	<name>BigDataViewer Bioformats Bridge</name>
 	<description>Commands and function for opening, conversion and easy use of bioformats format into BigDataViewer</description>
@@ -80,7 +80,7 @@
 		<connection>scm:git:https://github.com/BIOP/bigdataviewer-bioformats</connection>
 		<developerConnection>scm:git:git@github.com:BIOP/bigdataviewer-bioformats</developerConnection>
 		<url>https://github.com/BIOP/bigdataviewer-bioformats</url>
-		<tag>HEAD</tag>
+		<tag>bigdataviewer-bioformats-0.2.24</tag>
 
 	</scm>
 
