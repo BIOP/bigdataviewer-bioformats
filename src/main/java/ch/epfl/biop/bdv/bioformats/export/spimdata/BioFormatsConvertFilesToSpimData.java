@@ -130,8 +130,7 @@ public class BioFormatsConvertFilesToSpimData {
                 IntStream series = IntStream.range(0, seriesCount );
                 series.forEach(iSerie -> {
                     memo.setSeries(iSerie);
-                    SeriesNumber sn = new SeriesNumber(iSerie);
-                    sn.setName("Series_"+iSerie);
+                    SeriesNumber sn = new SeriesNumber(iSerie, omeMeta.getImageName(iSerie));
                     fileIdxToNumberOfSeriesAndTimepoints.put(iFile, new SeriesTps( seriesCount,omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue()));
                     // One serie = one Tile
                     Tile tile = new Tile(nTileCounter);
@@ -148,6 +147,7 @@ public class BioFormatsConvertFilesToSpimData {
                         maxTimepoints = omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue();
                     }
                     String imageName = getImageName( dataLocation, seriesCount, omeMeta, iSerie );
+                    sn.setName(imageName);
                     Dimensions dims = BioFormatsMetaDataHelper.getSeriesDimensions(omeMeta, iSerie); // number of pixels .. no calibration
                     logger.debug("X:"+dims.dimension(0)+" Y:"+dims.dimension(1)+" Z:"+dims.dimension(2));
                     VoxelDimensions voxDims = BioFormatsMetaDataHelper.getSeriesVoxelDimensions(omeMeta, iSerie, openers.get(iFile).u, openers.get(iFile).voxSizeReferenceFrameLength);
@@ -281,9 +281,16 @@ public class BioFormatsConvertFilesToSpimData {
         String imageName = omeMeta.getImageName(iSerie);
         String fileNameWithoutExtension = FilenameUtils.removeExtension( new File( dataLocation ).getName() );
         fileNameWithoutExtension = fileNameWithoutExtension.replace( ".ome", "" ); // above only removes .tif
-        imageName = ( imageName == null || imageName.equals( "" ) ) ? fileNameWithoutExtension : imageName;
-        imageName = seriesCount > 1 ?  imageName + "-s" + iSerie : imageName;
-        return imageName;
+        if  ( imageName == null || imageName.equals( "" ) ) {
+           imageName =  fileNameWithoutExtension;
+           if (seriesCount>1) {
+               return imageName + "-s" + iSerie;
+           } else {
+               return imageName;
+           }
+        } else {
+            return imageName;
+        }
     }
 
     public static AbstractSpimData getSpimData(List<BioFormatsBdvOpener> openers) {
