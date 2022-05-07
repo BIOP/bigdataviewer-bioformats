@@ -61,7 +61,7 @@ public class BasicOpenFilesWithBigdataviewerBioformatsBridgeCommand implements C
     @Parameter(required = false, label="Physical units of the dataset", choices = {"MILLIMETER","MICROMETER","NANOMETER"})
     public String unit = "MILLIMETER";
 
-    @Parameter
+    @Parameter(label = "Dataset files")
     File[] files;
 
     @Parameter(label = "Split RGB channels")

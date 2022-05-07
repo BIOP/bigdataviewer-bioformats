@@ -58,7 +58,7 @@ public class OpenFilesWithBigdataviewerBioformatsBridgeCommand extends Bioformat
     @Parameter(label = "Name of this dataset")
     public String datasetname = "dataset";
 
-    @Parameter
+    @Parameter(label = "Dataset files")
     File[] files;
 
     @Parameter(type = ItemIO.OUTPUT)

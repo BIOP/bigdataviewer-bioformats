@@ -21,22 +21,22 @@ public class ExportToOMETiffBuildPyramidCommand implements Command {
     @Parameter(label = "Sources to export")
     public SourceAndConverter[] sacs;
 
-    @Parameter(label = "Save to file...", style = "save")
+    @Parameter(label = "Output file", style = "save")
     public File file;
 
-    @Parameter( label = "Unit", choices = {"MILLIMETER", "MICROMETER"})
+    @Parameter(label = "Physical unit", choices = {"MILLIMETER", "MICROMETER"})
     String unit;
 
     @Parameter( label = "Number of resolution levels")
     int n_resolution_levels = 4;
 
-    @Parameter( label = "Downscaling between resolution levels")
+    @Parameter( label = "Scaling factor between resolution levels")
     int downscaling = 2;
 
-    @Parameter( label = "Tile Size X (negative for no tiling)")
+    @Parameter( label = "Tile Size X (negative: no tiling)")
     int tile_size_x = 512;
 
-    @Parameter( label = "Tile Size Y (negative for no tiling)")
+    @Parameter( label = "Tile Size Y (negative: no tiling)")
     int tile_size_y = 512;
 
     @Parameter( label = "Number of threads (0 = serial)")
@@ -45,7 +45,7 @@ public class ExportToOMETiffBuildPyramidCommand implements Command {
     @Parameter( label = "Number of tiles computed in advance")
     int max_tiles_queue = 256;
 
-    @Parameter( label = "Compress (LZW)")
+    @Parameter( label = "Use LZW compression")
     Boolean lzw_compression = false;
 
     @Parameter

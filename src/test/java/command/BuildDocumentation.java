@@ -37,6 +37,9 @@ import org.scijava.ItemIO;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.service.SciJavaService;
+import org.scijava.service.Service;
+import org.scijava.task.TaskService;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -61,7 +64,9 @@ public class BuildDocumentation {
             Plugin plugin = c.getAnnotation(Plugin.class);
             if (plugin!=null) {
                 String url = linkGitHubRepoPrefix+c.getName().replaceAll("\\.","\\/")+".java";
-                doc = "## [" + c.getSimpleName() + "]("+url+") [" + (plugin.menuPath() == null ? "null" : plugin.menuPath()) + "]\n";
+                String[] paths = plugin.menuPath().split(">");
+                doc = "## [" + paths[paths.length-1] + "]("+url+") \n";
+                //" [" + (plugin.menuPath() == null ? "null" : plugin.menuPath()) + "]\n";
                 if (!plugin.label().equals(""))
                     doc+=plugin.label()+"\n";
                 if (!plugin.description().equals(""))
@@ -70,6 +75,10 @@ public class BuildDocumentation {
                 Field[] fields = c.getDeclaredFields();
                 List<Field> inputFields = Arrays.stream(fields)
                                             .filter(f -> f.isAnnotationPresent(Parameter.class))
+                                            .filter(f -> {
+                                                //Arrays.stream(f.getType().getInterfaces()).forEach(e -> System.out.println(e));
+                                                return !Arrays.stream(f.getType().getInterfaces()).anyMatch(cl -> cl.equals(SciJavaService.class));
+                                            })
                                             .filter(f -> {
                                                 Parameter p = f.getAnnotation(Parameter.class);
                                                 return (p.type()==ItemIO.INPUT) || (p.type()==ItemIO.BOTH);

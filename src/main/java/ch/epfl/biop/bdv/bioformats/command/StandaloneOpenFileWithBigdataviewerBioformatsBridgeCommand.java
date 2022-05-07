@@ -53,7 +53,7 @@ public class StandaloneOpenFileWithBigdataviewerBioformatsBridgeCommand implemen
     @Parameter(required = false, label="Physical units of the dataset", choices = {"MILLIMETER","MICROMETER","NANOMETER"})
     public String unit = "MILLIMETER";
 
-    @Parameter
+    @Parameter(label = "File to open", style = "open")
     File file;
 
     @Parameter(required = false, label="Split RGB channels if you have 16 bits RGB images")
