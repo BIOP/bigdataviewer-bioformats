@@ -48,8 +48,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Plugin(type = Command.class,
-        menuPath = "Plugins>BigDataViewer>Playground>BDVDataset>Open [BioFormats Bdv Bridge (Basic)]",
-        description = "Support bioformats multiresolution api. Attempts to set colors based " +
+        menuPath = "Plugins>BigDataViewer-Playground>BDVDataset>Open [BioFormats Bdv Bridge (Basic)]",
+        description = "Support bioformats multiresolution API. Attempts to set colors based " +
                 "on bioformats metadata. Do not attempt auto contrast.")
 public class BasicOpenFilesWithBigdataviewerBioformatsBridgeCommand implements Command {
 

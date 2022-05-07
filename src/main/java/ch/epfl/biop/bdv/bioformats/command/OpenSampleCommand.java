@@ -30,10 +30,11 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
-package ch.epfl.biop.bdv.bioformats.samples;
+package ch.epfl.biop.bdv.bioformats.command;
 
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.export.spimdata.BioFormatsConvertFilesToSpimData;
+import ch.epfl.biop.bdv.bioformats.samples.DatasetHelper;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import ome.units.UNITS;
 import ome.units.quantity.Length;
@@ -47,11 +48,11 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 @Plugin(type = Command.class,
-        menuPath = "Plugins>BigDataViewer>Playground>BDVDataset>Open sample dataset",
+        menuPath = "Plugins>BigDataViewer-Playground>BDVDataset>Open sample dataset",
         label = "Open sample datasets",
         description = "Downloads and cache datasets on first open attempt.")
 
-public class OpenSample implements Command {
+public class OpenSampleCommand implements Command {
 
     @Parameter(label = "Choose a sample dataset", choices = {"VSI", "JPG_RGB", "OLYMPUS_OIR", "LIF", "TIF_TIMELAPSE_3D", "ND2_20X", "ND2_60X", "BOTH_ND2"})
     String datasetName;
