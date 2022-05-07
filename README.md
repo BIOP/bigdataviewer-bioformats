@@ -12,7 +12,7 @@ Note: signed pixels values are not supported.
 ## Usage in ImageJ/Fiji
 BigDataViewer-BioFormats is shipped with the [Bigdataviewer-Playground](https://imagej.github.io/plugins/bdv/playground) update site.
 
-#Fiji Plugins List
+# Fiji Plugins List
 
 ## [Open [BioFormats Bdv Bridge]](https://github.com/BIOP/bigdataviewer-bioformats/tree/master/src/main/java/ch/epfl/biop/bdv/bioformats/command/OpenFilesWithBigdataviewerBioformatsBridgeCommand.java)
 Support bioformats multiresolution api. Attempts to set colors based on bioformats metadata. Do not attempt auto contrast.
