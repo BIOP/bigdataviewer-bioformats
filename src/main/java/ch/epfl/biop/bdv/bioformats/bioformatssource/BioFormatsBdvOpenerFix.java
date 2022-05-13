@@ -32,6 +32,10 @@
  */
 package ch.epfl.biop.bdv.bioformats.bioformatssource;
 
+import loci.formats.IFormatReader;
+import loci.formats.in.DynamicMetadataOptions;
+import loci.formats.in.ZeissCZIReader;
+
 public class BioFormatsBdvOpenerFix {
 
     static public BioFormatsBdvOpener fixNikonND2(BioFormatsBdvOpener opener) {
@@ -40,5 +44,16 @@ public class BioFormatsBdvOpenerFix {
 
     public static BioFormatsBdvOpener fixLif(BioFormatsBdvOpener bioFormatsBdvOpener) {
         return bioFormatsBdvOpener.centerPositionConvention();
+    }
+
+    public static BioFormatsBdvOpener fixCzi(BioFormatsBdvOpener bioFormatsBdvOpener) {
+        return bioFormatsBdvOpener.addReaderModifier(BioFormatsBdvOpenerFix::fixCziReader);
+    }
+
+    public static void fixCziReader(IFormatReader reader) {
+        DynamicMetadataOptions m = new DynamicMetadataOptions();
+        m.setBoolean(ZeissCZIReader.ALLOW_AUTOSTITCHING_KEY, Boolean.FALSE);
+        m.setBoolean(ZeissCZIReader.RELATIVE_POSITIONS_KEY, Boolean.TRUE);
+        reader.setMetadataOptions(m);
     }
 }

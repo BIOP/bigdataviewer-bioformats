@@ -497,7 +497,6 @@ public class OMETiffPyramidizerExporter {
         }
 
         for (int r = 0; r < nResolutionLevels; r++) {
-            currentLevelWritten = r;
 
             synchronized (tileLock) { // Notifies that a new resolution level is being written
                 tileLock.notifyAll();
@@ -534,6 +533,8 @@ public class OMETiffPyramidizerExporter {
 
             logger.debug("Saving resolution size " + r);
             writer.setResolution(r);
+
+            currentLevelWritten = r;
 
             for (int t=0;t<sizeT;t++) {
                 for (int c=0;c<sizeC;c++) {

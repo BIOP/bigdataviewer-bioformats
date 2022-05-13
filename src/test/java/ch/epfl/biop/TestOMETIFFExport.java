@@ -1,3 +1,5 @@
+package ch.epfl.biop;
+
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
 import loci.formats.meta.IPyramidStore;

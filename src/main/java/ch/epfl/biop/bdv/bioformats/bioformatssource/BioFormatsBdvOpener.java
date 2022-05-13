@@ -64,6 +64,8 @@ public class BioFormatsBdvOpener {
 
     protected static Logger logger = LoggerFactory.getLogger(BioFormatsBdvOpener.class);
 
+    transient protected Consumer<IFormatReader> readerModifier = (e) -> {};
+
     // For copying the object
     public BioFormatsBdvOpener copy() {
         return new BioFormatsBdvOpener(this);
@@ -94,6 +96,7 @@ public class BioFormatsBdvOpener {
         axesOfImageFlip = opener.axesOfImageFlip.clone();
         nFetcherThread = opener.nFetcherThread;
         numPriorities = opener.numPriorities;
+        readerModifier = opener.readerModifier;
     }
 
     public BioFormatsBdvOpener() {}
@@ -254,6 +257,16 @@ public class BioFormatsBdvOpener {
         return this;
     }
 
+    public BioFormatsBdvOpener addReaderModifier(Consumer<IFormatReader> modifier) {
+        Consumer<IFormatReader> originModifier = this.readerModifier;
+        // Concatenate modifiers
+        readerModifier = (r) -> {
+            originModifier.accept(r);
+            modifier.accept(r);
+        };
+        return this;
+    }
+
     public BioFormatsBdvOpener setPositionPostTransform(AffineTransform3D at3d) {
         positionPostTransformMatrixArray = at3d.getRowPackedCopy();
         return this;
@@ -274,6 +287,8 @@ public class BioFormatsBdvOpener {
         final IMetadata omeMetaOmeXml = MetadataTools.createOMEXMLMetadata();
         memo.setMetadataStore(omeMetaOmeXml);
 
+        if (dataLocation.endsWith("czi")) BioFormatsBdvOpenerFix.fixCziReader(memo);
+
         try {
             memo.setId(dataLocation);
         } catch (Exception e) {
@@ -290,6 +305,8 @@ public class BioFormatsBdvOpener {
             return BioFormatsBdvOpenerFix.fixNikonND2(this);
         } else if (reader.getFormat().equals("Leica Image File Format")) {
             return BioFormatsBdvOpenerFix.fixLif(this);
+        } else if (dataLocation.endsWith("czi")) {
+            return BioFormatsBdvOpenerFix.fixCzi(this);
         } else {
             return this;
         }
@@ -379,6 +396,8 @@ public class BioFormatsBdvOpener {
 
         final IMetadata omeMetaIdxOmeXml = MetadataTools.createOMEXMLMetadata();
         memo.setMetadataStore(omeMetaIdxOmeXml);
+        readerModifier.accept(memo); // Specific modifications of the genrated readers
+
         try {
             logger.debug("setId for reader "+dataLocation);
             StopWatch watch = new StopWatch();
