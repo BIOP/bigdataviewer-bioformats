@@ -53,6 +53,15 @@ public class ExportToOMETiffCommand implements Command {
     @Parameter(label = "Sources to export")
     public SourceAndConverter[] sacs;
 
+    @Parameter( label = "Selected Channels. Leave blank for all", required = false )
+    String range_channels = "";
+
+    @Parameter( label = "Selected Slices. Leave blank for all", required = false )
+    String range_slices = "";
+
+    @Parameter( label = "Selected Timepoints. Leave blank for all", required = false )
+    String range_frames = "";
+
     @Parameter(label = "Output file", style = "save")
     public File file;
 
@@ -86,6 +95,9 @@ public class ExportToOMETiffCommand implements Command {
 
         OMETiffExporter.Builder builder = OMETiffExporter
                 .builder()
+                .rangeC(range_channels)
+                .rangeT(range_frames)
+                .rangeZ(range_slices)
                 .monitor(taskService)
                 .savePath(file.getAbsolutePath());
 
