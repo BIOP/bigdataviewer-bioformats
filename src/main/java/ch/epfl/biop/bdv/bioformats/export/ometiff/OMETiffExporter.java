@@ -34,6 +34,7 @@ package ch.epfl.biop.bdv.bioformats.export.ometiff;
 
 import bdv.viewer.Source;
 import bdv.viewer.SourceAndConverter;
+import ch.epfl.biop.bdv.bioformats.export.CZTRange;
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
 import loci.formats.meta.IPyramidStore;
@@ -59,6 +60,7 @@ import ome.xml.model.primitives.Color;
 import ome.xml.model.primitives.PositiveInteger;
 import org.apache.commons.io.FilenameUtils;
 import org.scijava.task.Task;
+import org.scijava.task.TaskService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,7 +93,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * This class should not be memory hungry, the number of data kept into ram should never exceed
  * (max queue size + nThreads) * tile size in bytes, even with really large dataset.
  *
- * A {@link Task} object can be given in {@link Builder#monitor(Task)}to monitor the saving and
+ * A {@link Task} object can be given in {@link Builder#monitor(TaskService)}to monitor the saving and
  * also to cancel the export (TODO for cancellation).
  *
  * The RAM occupation depends on the caching mechanism (if any) in the input {@link SourceAndConverter} array.
@@ -114,7 +116,7 @@ public class OMETiffExporter {
     final AtomicLong writtenTiles = new AtomicLong();
     long totalTiles;
 
-    final int nChannels;
+    //final int nChannels;
     final NumericType pixelType;
     final int width, height, sizeT, sizeC, sizeZ;
     final double[] voxelSizes = new double[3];
@@ -128,9 +130,11 @@ public class OMETiffExporter {
     final Map<Integer, Integer> resToNX = new HashMap<>();
     final TileIterator tileIterator;
     final int nThreads;
-    final Task task;
+    final Task writerTask;
+    final Task readerTask;
 
-    volatile Object tileLock = new Object();
+    final Object tileLock = new Object();
+    final CZTRange range;
 
     private OMETiffExporter(Source[] sources,
                             ColorConverter[] converters,
@@ -142,8 +146,17 @@ public class OMETiffExporter {
                             String name,
                             int nThreads,
                             int maxTilesInQueue,
-                            Task task) {
-        this.task = task;
+                            String rangeC,
+                            String rangeZ,
+                            String rangeT,
+                            TaskService taskService) throws Exception {
+        if (taskService!=null) {
+            this.writerTask = taskService.createTask("Writing: "+file.getName());
+            this.readerTask = taskService.createTask("Reading: "+file.getName());
+        } else {
+            this.writerTask = null;
+            this.readerTask = null;
+        }
         Source model = sources[0];
         this.tileX = tileX;
         this.tileY = tileY;
@@ -157,7 +170,7 @@ public class OMETiffExporter {
         writtenTiles.set(0);
 
         // Prepare = gets all dimensions
-        nChannels = sources.length;
+        //nChannels = sources.length;
 
         if (!(model.getType() instanceof NumericType)) throw new UnsupportedOperationException("Can't export pixel type "+model.getType().getClass());
 
@@ -166,9 +179,13 @@ public class OMETiffExporter {
         width = (int) model.getSource(0,0).max(0)+1;
         height = (int) model.getSource(0,0).max(1)+1;
 
-        sizeZ = (int) model.getSource(0,0).max(2)+1;
-        sizeT = OMETiffPyramidizerExporter.getMaxTimepoint(model);
-        sizeC = sources.length;
+        int iniSizeZ = (int) model.getSource(0,0).max(2)+1;
+        int iniSizeT = OMETiffPyramidizerExporter.getMaxTimepoint(model);
+        int iniSizeC = sources.length;
+        range = CZTRange.builder().setC(rangeC).setT(rangeT).setZ(rangeZ).get(iniSizeC, iniSizeZ, iniSizeT);
+        sizeC = range.getRangeC().size();
+        sizeZ = range.getRangeZ().size();
+        sizeT = range.getRangeT().size();
 
         AffineTransform3D mat = new AffineTransform3D();
         model.getSourceTransform(0,0, mat);
@@ -240,8 +257,8 @@ public class OMETiffExporter {
         if (endX>maxX) endX = maxX;
         if (endY>maxY) endY = maxY;
 
-        RandomAccessibleInterval<NumericType<?>> rai = sources[c].getSource(t,r);
-        RandomAccessibleInterval<NumericType<?>> slice = Views.hyperSlice(rai, 2, z);
+        RandomAccessibleInterval<NumericType<?>> rai = sources[range.getRangeC().get(c)].getSource(range.getRangeT().get(t),r);
+        RandomAccessibleInterval<NumericType<?>> slice = Views.hyperSlice(rai, 2, range.getRangeZ().get(z));
         byte[] tileByte = SourceToByteArray.raiToByteArray(
                 Views.interval(slice, new FinalInterval(new long[]{startX,startY}, new long[]{endX-1, endY-1})),
                 pixelType);
@@ -271,7 +288,7 @@ public class OMETiffExporter {
     }
 
     public void export() throws Exception {
-        if (task!=null) task.setStatusMessage("Exporting "+file.getName()+" with "+nThreads+" threads.");
+        if (writerTask!=null) writerTask.setStatusMessage("Exporting "+file.getName()+" with "+nThreads+" threads.");
         // Copy metadata from ImagePlus:
         IMetadata omeMeta = MetadataTools.createOMEXMLMetadata();
 
@@ -307,7 +324,7 @@ public class OMETiffExporter {
         omeMeta.setPixelsSizeY(new PositiveInteger(height), series);
         omeMeta.setPixelsSizeZ(new PositiveInteger(sizeZ), series);
         omeMeta.setPixelsSizeT(new PositiveInteger(sizeT), series);
-        omeMeta.setPixelsSizeC(new PositiveInteger(isRGB?nChannels*3:nChannels), series);
+        omeMeta.setPixelsSizeC(new PositiveInteger(isRGB?sizeC*3:sizeC), series);
 
         if (isRGB) {
             omeMeta.setChannelID("Channel:0", series, 0);
@@ -317,10 +334,10 @@ public class OMETiffExporter {
         } else {
             //omeMeta.setChannelSamplesPerPixel(new PositiveInteger(1), series, 0);
             omeMeta.setPixelsInterleaved(isInterleaved, series);
-            for (int c = 0; c < nChannels; c++) {
+            for (int c = 0; c < sizeC; c++) {
                 omeMeta.setChannelID("Channel:0:" + c, series, c);
                 omeMeta.setChannelSamplesPerPixel(new PositiveInteger(1), series, c);
-                int colorCode = converters[c].getColor().get();
+                int colorCode = converters[range.getRangeC().get(c)].getColor().get();
                 int colorRed = ARGBType.red(colorCode); //channelLUT.getRed(255);
                 int colorGreen = ARGBType.green(colorCode);
                 int colorBlue = ARGBType.blue(colorCode);
@@ -381,7 +398,7 @@ public class OMETiffExporter {
 
         totalTiles *= sizeT*sizeC*sizeZ;
 
-        if (task!=null) task.setProgressMaximum(totalTiles);
+        if (writerTask!=null) writerTask.setProgressMaximum(totalTiles);
 
         for (int i=0;i<nThreads;i++) {
             new Thread(() -> {
@@ -441,16 +458,26 @@ public class OMETiffExporter {
 
                                 computedBlocks.remove(key);
                                 tileIterator.decrementQueue();
-                                if(task!=null) task.setProgressValue(writtenTiles.incrementAndGet());
+                                if(writerTask!=null) writerTask.setProgressValue(writtenTiles.incrementAndGet());
                             }
                         }
                     }
                 }
             }
         }
-        writer.close();
+        if (readerTask!=null) readerTask.run(() -> {});
+        if (writerTask!=null) {
+            // Let's do a quick computation based on the following estimation: 5 minutes for 100k blocks
+            int estimateTimeMin = (int) (5 * totalTiles/1e5);
+            if (estimateTimeMin<2) {
+                writerTask.setStatusMessage("Closing writer... please wait a few minutes.");
+            } else {
+                writerTask.setStatusMessage("Closing writer... please wait, this can take around "+estimateTimeMin+" minutes.");
+            }
+        }
         computedBlocks.clear();
-        if (task!=null) task.run(()->{});
+        writer.close();
+        if (writerTask!=null) writerTask.run(()->{});
     }
 
     public static Builder builder() {
@@ -466,11 +493,29 @@ public class OMETiffExporter {
         String compression = "Uncompressed";
         int nThreads = 0;
         int maxTilesInQueue = 10;
-        transient Task task = null;
+        transient TaskService taskService = null;
+
+        String rangeC = "";
+        String rangeZ = "";
+        String rangeT = "";
 
         public Builder tileSize(int tileX, int tileY) {
             this.tileX = tileX;
             this.tileY = tileY;
+            return this;
+        }
+
+        public Builder rangeC(String rangeC) {
+            this.rangeC = rangeC;
+            return this;
+        }
+
+        public Builder rangeZ(String rangeZ) {
+            this.rangeZ = rangeZ;
+            return this;
+        }
+        public Builder rangeT(String rangeT) {
+            this.rangeT = rangeT;
             return this;
         }
 
@@ -479,8 +524,8 @@ public class OMETiffExporter {
             return this;
         }
 
-        public Builder monitor(Task task) {
-            this.task = task;
+        public Builder monitor(TaskService taskService) {
+            this.taskService = taskService;
             return this;
         }
 
@@ -519,7 +564,7 @@ public class OMETiffExporter {
             return this;
         }
 
-        public OMETiffExporter create(SourceAndConverter... sacs) {
+        public OMETiffExporter create(SourceAndConverter... sacs) throws Exception {
             if (path == null) throw new UnsupportedOperationException("Path not specified");
             Source[] sources = new Source[sacs.length];
             ColorConverter[] converters = new ColorConverter[sacs.length];
@@ -530,7 +575,9 @@ public class OMETiffExporter {
             }
             File f = new File(path);
             String imageName = FilenameUtils.removeExtension(f.getName());
-            return new OMETiffExporter(sources, converters, unit, f, tileX, tileY, compression, imageName, nThreads, maxTilesInQueue, task);
+            return new OMETiffExporter(sources, converters,
+                    unit, f, tileX, tileY, compression, imageName, nThreads, maxTilesInQueue,
+                    rangeC, rangeZ, rangeT, taskService);
         }
     }
 

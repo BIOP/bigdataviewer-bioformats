@@ -34,6 +34,7 @@ package ch.epfl.biop.bdv.bioformats.export.ometiff;
 
 import bdv.viewer.Source;
 import bdv.viewer.SourceAndConverter;
+import ch.epfl.biop.bdv.bioformats.export.CZTRange;
 import loci.common.image.IImageScaler;
 import loci.formats.MetadataTools;
 import loci.formats.in.OMETiffReader;
@@ -61,6 +62,7 @@ import ome.xml.model.primitives.Color;
 import ome.xml.model.primitives.PositiveInteger;
 import org.apache.commons.io.FilenameUtils;
 import org.scijava.task.Task;
+import org.scijava.task.TaskService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,7 +96,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * This class should not be memory hungry, the number of data kept into ram should never exceed
  * (max queue size + nThreads) * tile size in bytes, even with really large dataset.
  *
- * A {@link Task} object can be given in {@link OMETiffPyramidizerExporter.Builder#monitor(Task)}to monitor the saving and
+ * A {@link Task} object can be given in {@link OMETiffPyramidizerExporter.Builder#monitor(TaskService)}to monitor the saving and
  * also to cancel the export (TODO for cancellation).
  *
  * The RAM occupation depends on the caching mechanism (if any) in the input {@link SourceAndConverter} array.
@@ -126,7 +128,7 @@ public class OMETiffPyramidizerExporter {
     final AtomicLong writtenTiles = new AtomicLong();
     long totalTiles;
 
-    final int nChannels;
+    //final int nChannels;
     final NumericType pixelType;
     final int width, height, sizeT, sizeC, sizeZ;
     final double[] voxelSizes = new double[3];
@@ -140,12 +142,14 @@ public class OMETiffPyramidizerExporter {
     final Map<Integer, Integer> resToNX = new HashMap<>();
     final TileIterator tileIterator;
     final int nThreads;
-    final Task task;
+    final Task writerTask;
+    final Task readerTask;
 
-    volatile Object tileLock = new Object();
+    final Object tileLock = new Object();
 
     final boolean overridePixelSize;
     final double voxSX, voxSY, voxSZ;
+    final CZTRange range;
 
     public OMETiffPyramidizerExporter(Source[] sources,
                                       ColorConverter[] converters,
@@ -159,14 +163,23 @@ public class OMETiffPyramidizerExporter {
                                       String name,
                                       int nThreads,
                                       int maxTilesInQueue,
-                                      Task task,
+                                      TaskService taskService,
                                       boolean overridePixelSize,
-                                      double voxSX, double voxSY, double voxSZ) {
+                                      double voxSX, double voxSY, double voxSZ,
+                                      String rangeC,
+                                      String rangeZ,
+                                      String rangeT) throws Exception {
         this.overridePixelSize = overridePixelSize;
         this.voxSX = voxSX;
         this.voxSY = voxSY;
         this.voxSZ = voxSZ;
-        this.task = task;
+        if (taskService!=null) {
+            this.writerTask = taskService.createTask("Writing: "+file.getName());
+            this.readerTask = taskService.createTask("Reading: "+file.getName());
+        } else {
+            this.writerTask = null;
+            this.readerTask = null;
+        }
         Source model = sources[0];
         this.tileX = tileX;
         this.tileY = tileY;
@@ -181,9 +194,6 @@ public class OMETiffPyramidizerExporter {
         this.compression = compression;
         writtenTiles.set(0);
 
-        // Prepare = gets all dimensions
-        nChannels = sources.length;
-
         if (!(model.getType() instanceof NumericType)) throw new UnsupportedOperationException("Can't export pixel type "+model.getType().getClass());
 
         pixelType = (NumericType) model.getType();
@@ -191,9 +201,13 @@ public class OMETiffPyramidizerExporter {
         width = (int) model.getSource(0,0).max(0)+1;
         height = (int) model.getSource(0,0).max(1)+1;
 
-        sizeZ = (int) model.getSource(0,0).max(2)+1;
-        sizeT = getMaxTimepoint(model);
-        sizeC = sources.length;
+        int iniSizeZ = (int) model.getSource(0,0).max(2)+1;
+        int iniSizeT = getMaxTimepoint(model);
+        int iniSizeC = sources.length;
+        range = CZTRange.builder().setC(rangeC).setT(rangeT).setZ(rangeZ).get(iniSizeC, iniSizeZ, iniSizeT);
+        sizeC = range.getRangeC().size();
+        sizeZ = range.getRangeZ().size();
+        sizeT = range.getRangeT().size();
 
         AffineTransform3D mat = new AffineTransform3D();
         model.getSourceTransform(0,0, mat);
@@ -237,6 +251,7 @@ public class OMETiffPyramidizerExporter {
         }
 
         tileIterator = new TileIterator(nResolutionLevels, sizeT, sizeC, sizeZ, resToNY, resToNX, maxTilesInQueue);
+        if (readerTask!=null) tileIterator.setTask(readerTask);
         this.nThreads = nThreads;
         computedBlocks = new ConcurrentHashMap<>(nThreads*3+1); // should be enough to avoiding overlap of hash
     }
@@ -276,8 +291,8 @@ public class OMETiffPyramidizerExporter {
 
         if (r==0) {
             localResolution.set(r);
-            RandomAccessibleInterval<NumericType<?>> rai = sources[c].getSource(t, r);
-            RandomAccessibleInterval<NumericType<?>> slice = Views.hyperSlice(rai, 2, z);
+            RandomAccessibleInterval<NumericType<?>> rai = sources[range.getRangeC().get(c)].getSource(range.getRangeT().get(t), r);
+            RandomAccessibleInterval<NumericType<?>> slice = Views.hyperSlice(rai, 2, range.getRangeZ().get(z));
             byte[] tileByte = SourceToByteArray.raiToByteArray(
                     Views.interval(slice, new FinalInterval(new long[]{startX, startY}, new long[]{endX - 1, endY - 1})),
                     pixelType);
@@ -405,17 +420,17 @@ public class OMETiffPyramidizerExporter {
         meta.setPixelsSizeY(new PositiveInteger(height), series);
         meta.setPixelsSizeZ(new PositiveInteger(sizeZ), series);
         meta.setPixelsSizeT(new PositiveInteger(sizeT), series);
-        meta.setPixelsSizeC(new PositiveInteger(isRGB?nChannels*3:nChannels), series);
+        meta.setPixelsSizeC(new PositiveInteger(isRGB?sizeC*3:sizeC), series);
 
         if (isRGB) {
             meta.setChannelID("Channel:0", series, 0);
             meta.setChannelName("Channel_0", series, 0);
             meta.setChannelSamplesPerPixel(new PositiveInteger(3), series, 0);
         } else {
-            for (int c = 0; c < nChannels; c++) {
+            for (int c = 0; c < sizeC; c++) {
                 meta.setChannelID("Channel:0:" + c, series, c);
                 meta.setChannelSamplesPerPixel(new PositiveInteger(1), series, c);
-                int colorCode = converters[c].getColor().get();
+                int colorCode = converters[range.getRangeC().get(c)].getColor().get();
                 int colorRed = ARGBType.red(colorCode);
                 int colorGreen = ARGBType.green(colorCode);
                 int colorBlue = ARGBType.blue(colorCode);
@@ -444,7 +459,7 @@ public class OMETiffPyramidizerExporter {
     OMETiffWriter currentLevelWriter;
 
     public void export() throws Exception {
-        if (task!=null) task.setStatusMessage("Exporting "+file.getName()+" with "+nThreads+" threads.");
+        if (writerTask !=null) writerTask.setStatusMessage("Exporting "+file.getName()+" with "+nThreads+" threads.");
         // Copy metadata from ImagePlus:
         IMetadata omeMeta = MetadataTools.createOMEXMLMetadata();
         IMetadata currentLevelOmeMeta = MetadataTools.createOMEXMLMetadata();
@@ -483,7 +498,7 @@ public class OMETiffPyramidizerExporter {
         }
         totalTiles *= sizeT*sizeC*sizeZ;
 
-        if (task!=null) task.setProgressMaximum(totalTiles);
+        if (writerTask !=null) writerTask.setProgressMaximum(totalTiles);
 
         for (int i=0;i<nThreads;i++) {
             new Thread(() -> {
@@ -569,7 +584,7 @@ public class OMETiffPyramidizerExporter {
 
                                 computedBlocks.remove(key);
                                 tileIterator.decrementQueue();
-                                if (task!=null) task.setProgressValue(writtenTiles.incrementAndGet());
+                                if (writerTask !=null) writerTask.setProgressValue(writtenTiles.incrementAndGet());
                             }
                         }
                     }
@@ -579,20 +594,34 @@ public class OMETiffPyramidizerExporter {
                 currentLevelWriter.close();
             }
         }
+
+        if (readerTask!=null) readerTask.run(() -> {});
         if (nThreads == 0) {
+            if (writerTask!=null) {
+                writerTask.setStatusMessage("Closing readers.");
+            }
             if (localReader.get()!=null) {
                 localReader.get().close();
             }
         }
-
+        if (writerTask!=null) {
+            writerTask.setStatusMessage("Deleting temporary files.");
+        }
         for (int r = 0; r < nResolutionLevels-1; r++) {
             new File(getFileName(r)).delete();
         }
-
-        writer.close();
         computedBlocks.clear();
-
-        if (task!=null) task.run(()->{});
+        if (writerTask!=null) {
+            // Let's do a quick computation based on the following estimation: 5 minutes for 100k blocks
+            int estimateTimeMin = (int) (5 * totalTiles/1e5);
+            if (estimateTimeMin<2) {
+                writerTask.setStatusMessage("Closing writer... please wait a few minutes.");
+            } else {
+                writerTask.setStatusMessage("Closing writer... please wait, this can take around "+estimateTimeMin+" minutes.");
+            }
+        }
+        writer.close();
+        if (writerTask !=null) writerTask.run(()->{});
     }
 
     private String getFileName(int r) {
@@ -612,13 +641,16 @@ public class OMETiffPyramidizerExporter {
         String compression = "Uncompressed";
         int nThreads = 0;
         int maxTilesInQueue = 10;
-        transient Task task = null;
+        transient TaskService taskService = null;
         int nResolutions = 5;
         int downSample = 2;
         boolean overridePixSize = false;
         double voxSizeX = -1;
         double voxSizeY = -1;
         double voxSizeZ = -1;
+        String rangeC = "";
+        String rangeZ = "";
+        String rangeT = "";
 
         public Builder tileSize(int tileX, int tileY) {
             this.tileX = tileX;
@@ -641,8 +673,8 @@ public class OMETiffPyramidizerExporter {
             return this;
         }
 
-        public Builder monitor(Task task) {
-            this.task = task;
+        public Builder monitor(TaskService taskService) {
+            this.taskService = taskService;
             return this;
         }
 
@@ -681,14 +713,29 @@ public class OMETiffPyramidizerExporter {
             return this;
         }
 
-        public void setPixelSize(double sX, double sY, double sZ) {
+        public Builder rangeC(String rangeC) {
+            this.rangeC = rangeC;
+            return this;
+        }
+
+        public Builder rangeZ(String rangeZ) {
+            this.rangeZ = rangeZ;
+            return this;
+        }
+        public Builder rangeT(String rangeT) {
+            this.rangeT = rangeT;
+            return this;
+        }
+
+        public Builder setPixelSize(double sX, double sY, double sZ) {
             overridePixSize = true;
             voxSizeX = sX;
             voxSizeY = sY;
             voxSizeZ = sZ;
+            return this;
         }
 
-        public OMETiffPyramidizerExporter create(SourceAndConverter... sacs) {
+        public OMETiffPyramidizerExporter create(SourceAndConverter... sacs) throws Exception {
             if (path == null) throw new UnsupportedOperationException("Path not specified");
             Source[] sources = new Source[sacs.length];
             ColorConverter[] converters = new ColorConverter[sacs.length];
@@ -711,13 +758,12 @@ public class OMETiffPyramidizerExporter {
                     imageName,
                     nThreads,
                     maxTilesInQueue,
-                    task,
+                    taskService,
                     overridePixSize,
                     voxSizeX,
                     voxSizeY,
-                    voxSizeZ);
+                    voxSizeZ,rangeC,rangeZ,rangeT);
         }
-
 
     }
 

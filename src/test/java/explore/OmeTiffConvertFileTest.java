@@ -36,9 +36,9 @@ public class OmeTiffConvertFileTest {
 
     static public void main(String... args) throws Exception {
 
-        String path = "C:\\Users\\nicol\\Desktop\\";
+        String path = "./src/test/resources/";
 
-        SourcesInfo sourcesInfo = getSourcesFromFile(path+"HyperStack-8bit.tif", 512, 521, 10, 0);
+        SourcesInfo sourcesInfo = getSourcesFromFile(path+"HyperStack-Test.tif", 512, 521, 10, 0);
 
         OMETiffPyramidizerExporter.builder()
                 .micrometer()
@@ -47,8 +47,10 @@ public class OmeTiffConvertFileTest {
                 .maxTilesInQueue(10)
                 .nThreads(0)
                 .nResolutionLevels(2)
-                .tileSize(512,512)
-                .savePath(path+"HyperStack-8bit.ome.tif")
+                .tileSize(256,256)
+                .rangeC("0,2") // removes middle channel
+                .rangeZ("-1") // last slice
+                .savePath(path+"HyperStack-Test.ome.tif")
                 .create(sourcesInfo.idToSources.get(0).toArray(new SourceAndConverter[0])).export();
 
     }

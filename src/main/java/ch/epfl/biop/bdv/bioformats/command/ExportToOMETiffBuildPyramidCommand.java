@@ -90,11 +90,9 @@ public class ExportToOMETiffBuildPyramidCommand implements Command {
 
         sacs = sources.toArray(new SourceAndConverter[0]);
 
-        Task task = taskService.createTask("Export: "+file.getName());
-
         OMETiffPyramidizerExporter.Builder builder = OMETiffPyramidizerExporter
                 .builder()
-                .monitor(task)
+                .monitor(taskService)
                 .downsample(downscaling)
                 .nResolutionLevels(n_resolution_levels)
                 .savePath(file.getAbsolutePath());

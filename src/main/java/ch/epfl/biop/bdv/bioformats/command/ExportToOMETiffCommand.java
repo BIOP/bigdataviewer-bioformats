@@ -84,11 +84,9 @@ public class ExportToOMETiffCommand implements Command {
 
         sacs = sources.toArray(new SourceAndConverter[0]);
 
-        Task task = taskService.createTask("Export: "+file.getName());
-
         OMETiffExporter.Builder builder = OMETiffExporter
                 .builder()
-                .monitor(task)
+                .monitor(taskService)
                 .savePath(file.getAbsolutePath());
 
         if (lzw_compression) builder.lzw();
