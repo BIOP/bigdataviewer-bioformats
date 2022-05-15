@@ -513,9 +513,6 @@ public class OMETiffPyramidizerExporter {
 
         for (int r = 0; r < nResolutionLevels; r++) {
 
-            synchronized (tileLock) { // Notifies that a new resolution level is being written
-                tileLock.notifyAll();
-            }
             int maxX = mapResToWidth.get(r);
             int maxY = mapResToHeight.get(r);
             int nXTiles = (int) Math.ceil(maxX/(double)tileX);
@@ -550,6 +547,9 @@ public class OMETiffPyramidizerExporter {
             writer.setResolution(r);
 
             currentLevelWritten = r;
+            synchronized (tileLock) { // Notifies that a new resolution level is being written
+                tileLock.notifyAll();
+            }
 
             for (int t=0;t<sizeT;t++) {
                 for (int c=0;c<sizeC;c++) {

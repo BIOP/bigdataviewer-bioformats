@@ -78,7 +78,7 @@ public class OmeTiffConvertFileTest {
                 .downsample(2)
                 .maxTilesInQueue(10)
                 .nThreads(0)
-                .nResolutionLevels(2)
+                .nResolutionLevels(3)
                 .tileSize(256,256)
                 .rangeC("0,2") // removes middle channel
                 .rangeZ("-1") // last slice
