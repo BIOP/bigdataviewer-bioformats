@@ -136,6 +136,9 @@ public class OMETiffExporter {
     final Object tileLock = new Object();
     final CZTRange range;
 
+    final boolean overridePixelSize;
+    final double voxSX, voxSY, voxSZ;
+
     private OMETiffExporter(Source[] sources,
                             ColorConverter[] converters,
                             Unit<Length> unit,
@@ -149,7 +152,12 @@ public class OMETiffExporter {
                             String rangeC,
                             String rangeZ,
                             String rangeT,
-                            TaskService taskService) throws Exception {
+                            TaskService taskService, boolean overridePixelSize,
+                            double voxSX, double voxSY, double voxSZ) throws Exception {
+        this.overridePixelSize = overridePixelSize;
+        this.voxSX = voxSX;
+        this.voxSY = voxSY;
+        this.voxSZ = voxSZ;
         if (taskService!=null) {
             this.writerTask = taskService.createTask("Writing: "+file.getName());
             this.readerTask = taskService.createTask("Reading: "+file.getName());
@@ -347,9 +355,15 @@ public class OMETiffExporter {
             }
         }
 
-        omeMeta.setPixelsPhysicalSizeX(new Length(voxelSizes[0], unit), series);
-        omeMeta.setPixelsPhysicalSizeY(new Length(voxelSizes[1], unit), series);
-        omeMeta.setPixelsPhysicalSizeZ(new Length(voxelSizes[2], unit), series);
+        if (overridePixelSize) {
+            omeMeta.setPixelsPhysicalSizeX(new Length(voxSX, unit), series);
+            omeMeta.setPixelsPhysicalSizeY(new Length(voxSY, unit), series);
+            omeMeta.setPixelsPhysicalSizeZ(new Length(voxSZ, unit), series);
+        } else {
+            omeMeta.setPixelsPhysicalSizeX(new Length(voxelSizes[0], unit), series);
+            omeMeta.setPixelsPhysicalSizeY(new Length(voxelSizes[1], unit), series);
+            omeMeta.setPixelsPhysicalSizeZ(new Length(voxelSizes[2], unit), series);
+        }
         // set Origin in XYZ
         // TODO : check if enough or other planes need to be set ?
         omeMeta.setPlanePositionX(new Length(origin.getDoublePosition(0), unit),0,0);
@@ -499,6 +513,11 @@ public class OMETiffExporter {
         String rangeZ = "";
         String rangeT = "";
 
+        boolean overridePixSize = false;
+        double voxSizeX = -1;
+        double voxSizeY = -1;
+        double voxSizeZ = -1;
+
         public Builder tileSize(int tileX, int tileY) {
             this.tileX = tileX;
             this.tileY = tileY;
@@ -559,6 +578,14 @@ public class OMETiffExporter {
             return this;
         }
 
+        public Builder setPixelSize(double sX, double sY, double sZ) {
+            overridePixSize = true;
+            voxSizeX = sX;
+            voxSizeY = sY;
+            voxSizeZ = sZ;
+            return this;
+        }
+
         public Builder nThreads(int nThreads) {
             this.nThreads = nThreads;
             return this;
@@ -577,8 +604,12 @@ public class OMETiffExporter {
             String imageName = FilenameUtils.removeExtension(f.getName());
             return new OMETiffExporter(sources, converters,
                     unit, f, tileX, tileY, compression, imageName, nThreads, maxTilesInQueue,
-                    rangeC, rangeZ, rangeT, taskService);
+                    rangeC, rangeZ, rangeT, taskService, overridePixSize,
+                    voxSizeX,
+                    voxSizeY,
+                    voxSizeZ);
         }
+
     }
 
 }

@@ -68,6 +68,15 @@ public class ExportToOMETiffBuildPyramidCommand implements Command {
     @Parameter(label = "Physical unit", choices = {"MILLIMETER", "MICROMETER"})
     String unit;
 
+    @Parameter(label="Override voxel sizes")
+    boolean override_voxel_size;
+
+    @Parameter(label="Voxel size in micrometer (XY)", style="format:#.000")
+    double vox_size_xy;
+
+    @Parameter(label="Voxel Z size in micrometer (Z)", style="format:#.000")
+    double vox_size_z;
+
     @Parameter( label = "Number of resolution levels")
     int n_resolution_levels = 4;
 
@@ -112,6 +121,7 @@ public class ExportToOMETiffBuildPyramidCommand implements Command {
         if (lzw_compression) builder.lzw();
         if (unit.equals("MILLIMETER")) builder.millimeter();
         if (unit.equals("MICROMETER")) builder.micrometer();
+        if (override_voxel_size) builder.micrometer().setPixelSize(vox_size_xy, vox_size_xy, vox_size_z);
         if ((tile_size_x>0)&&(tile_size_y>0)) builder.tileSize(tile_size_x, tile_size_y);
         builder.maxTilesInQueue(max_tiles_queue);
         builder.nThreads(n_threads);
