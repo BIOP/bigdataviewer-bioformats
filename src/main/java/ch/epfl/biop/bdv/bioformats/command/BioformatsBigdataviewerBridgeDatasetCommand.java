@@ -60,6 +60,7 @@ public class BioformatsBigdataviewerBridgeDatasetCommand implements Command {
         def.put("cachesizez",1);
         def.put("refframesizeinunitlocation",1);
         def.put("refframesizeinunitvoxsize",1);
+        def.put("numberofblockskeptinmemory",-1);
         return def;
     }
 
@@ -91,6 +92,9 @@ public class BioformatsBigdataviewerBridgeDatasetCommand implements Command {
     @Parameter(required = false)
     public int cachesizex = 512, cachesizey = 512, cachesizez = 1;
 
+    @Parameter(required = false)
+    public int numberofblockskeptinmemory = -1;
+
     @Parameter(required = false, label="Reference frame size in unit (position)")
     public double refframesizeinunitlocation = 1;
 
@@ -116,6 +120,10 @@ public class BioformatsBigdataviewerBridgeDatasetCommand implements Command {
 
         if (!usebioformatscacheblocksize) {
             opener = opener.cacheBlockSize(cachesizex,cachesizey,cachesizez);
+        }
+
+        if (numberofblockskeptinmemory>0) {
+            opener = opener.cacheBounded(numberofblockskeptinmemory);
         }
 
         // Not sure it is useful here because the metadata location is handled somewhere else
