@@ -287,7 +287,7 @@ public class BioFormatsBdvOpener {
         final IMetadata omeMetaOmeXml = MetadataTools.createOMEXMLMetadata();
         memo.setMetadataStore(omeMetaOmeXml);
 
-        if (dataLocation.endsWith("czi")) BioFormatsBdvOpenerFix.fixCziReader(memo);
+        //if (dataLocation.endsWith("czi")) BioFormatsBdvOpenerFix.fixCziReader(memo);
 
         try {
             memo.setId(dataLocation);
@@ -305,9 +305,9 @@ public class BioFormatsBdvOpener {
             return BioFormatsBdvOpenerFix.fixNikonND2(this);
         } else if (reader.getFormat().equals("Leica Image File Format")) {
             return BioFormatsBdvOpenerFix.fixLif(this);
-        } else if (dataLocation.endsWith("czi")) {
+        } /*else if (dataLocation.endsWith("czi")) {
             return BioFormatsBdvOpenerFix.fixCzi(this);
-        } else {
+        } */ else {
             return this;
         }
 

@@ -46,6 +46,7 @@ public class BioFormatsBdvOpenerFix {
         return bioFormatsBdvOpener.centerPositionConvention();
     }
 
+    /*
     public static BioFormatsBdvOpener fixCzi(BioFormatsBdvOpener bioFormatsBdvOpener) {
         return bioFormatsBdvOpener.addReaderModifier(BioFormatsBdvOpenerFix::fixCziReader);
     }
@@ -53,7 +54,7 @@ public class BioFormatsBdvOpenerFix {
     public static void fixCziReader(IFormatReader reader) {
         DynamicMetadataOptions m = new DynamicMetadataOptions();
         m.setBoolean(ZeissCZIReader.ALLOW_AUTOSTITCHING_KEY, Boolean.FALSE);
-        m.setBoolean(ZeissCZIReader.RELATIVE_POSITIONS_KEY, Boolean.TRUE);
+        //m.setBoolean(ZeissCZIReader.RELATIVE_POSITIONS_KEY, Boolean.TRUE);
         reader.setMetadataOptions(m);
-    }
+    }*/
 }
