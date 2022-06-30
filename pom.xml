@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>31.1.0</version>
+		<version>32.0.0-beta-4</version>
 		<relativePath />
 	</parent>
 
@@ -103,23 +103,13 @@
 		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
 		<license.excludes>**/resources/**</license.excludes>
 
-		<bigdataviewer-core.version>10.2.2</bigdataviewer-core.version>
-		<bigdataviewer-vistools.version>1.0.0-beta-29</bigdataviewer-vistools.version>
+		<bigdataviewer-core.version>10.4.1</bigdataviewer-core.version>
+		<bigdataviewer-vistools.version>1.0.0-beta-30</bigdataviewer-vistools.version>
 		<imglib2-cache.version>1.0.0-beta-16</imglib2-cache.version>
 
 		<bigdataviewer-spimdata-extras.version>0.1.6</bigdataviewer-spimdata-extras.version>
 		<reflections.version>0.9.11</reflections.version>
 		<slf4j-log4j12.version>1.7.30</slf4j-log4j12.version>
-
-		<bio-formats.version>6.9.1</bio-formats.version>
-		<bio-formats_plugins.version>${bio-formats.version}</bio-formats_plugins.version>
-		<formats-api.version>${bio-formats.version}</formats-api.version>
-		<formats-bsd.version>${bio-formats.version}</formats-bsd.version>
-		<formats-gpl.version>${bio-formats.version}</formats-gpl.version>
-		<ome.bio-formats_plugins.version>${bio-formats_plugins.version}</ome.bio-formats_plugins.version>
-		<ome.formats-api.version>${formats-api.version}</ome.formats-api.version>
-		<ome.formats-bsd.version>${formats-bsd.version}</ome.formats-bsd.version>
-		<ome.formats-gpl.version>${formats-gpl.version}</ome.formats-gpl.version>
 
 	</properties>
 
