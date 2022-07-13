@@ -11,7 +11,7 @@
 
 	<groupId>ch.epfl.biop</groupId>
 	<artifactId>bigdataviewer-bioformats</artifactId>
-	<version>0.3.7-SNAPSHOT</version>
+	<version>0.3.7-SNAPSHOT-10.4.1</version>
 
 	<name>BigDataViewer Bioformats Bridge</name>
 	<description>Commands and function for opening, conversion and easy use of bioformats format into BigDataViewer</description>
@@ -103,11 +103,11 @@
 		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
 		<license.excludes>**/resources/**</license.excludes>
 
-		<bigdataviewer-core.version>10.4.1</bigdataviewer-core.version>
+		<bigdataviewer-core.version>10.4.2</bigdataviewer-core.version>
 		<bigdataviewer-vistools.version>1.0.0-beta-30</bigdataviewer-vistools.version>
 		<imglib2-cache.version>1.0.0-beta-16</imglib2-cache.version>
 
-		<bigdataviewer-spimdata-extras.version>0.1.6</bigdataviewer-spimdata-extras.version>
+		<bigdataviewer-spimdata-extras.version>0.1.7-SNAPSHOT-10.4.1</bigdataviewer-spimdata-extras.version>
 		<reflections.version>0.9.11</reflections.version>
 		<slf4j-log4j12.version>1.7.30</slf4j-log4j12.version>
 
