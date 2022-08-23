@@ -53,6 +53,7 @@ import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
+import ome.codecs.CompressionType;
 import ome.units.UNITS;
 import ome.units.quantity.Length;
 import ome.units.unit.Unit;
@@ -531,7 +532,7 @@ public class OMETiffPyramidizerExporter {
                 currentLevelWriter.setBigTiff(true);
                 currentLevelWriter.setId(getFileName(r));
                 currentLevelWriter.setSeries(series);
-                //currentLevelWriter.setCompression(compression); -> uncompressed -> faster
+                currentLevelWriter.setCompression(compression); // -> uncompressed -> faster
                 currentLevelWriter.setTileSizeX((int) tileX);
                 currentLevelWriter.setTileSizeY((int) tileY);
                 if (r==0) {
@@ -669,7 +670,34 @@ public class OMETiffPyramidizerExporter {
         }
 
         public Builder lzw() {
-            this.compression = "LZW";
+            this.compression = CompressionType.LZW.getCompression();
+            return this;
+        }
+
+        /**
+         * see CompressionTypes
+         * @return the builder
+         */
+        public Builder j2k() {
+            this.compression = CompressionType.J2K.getCompression();
+            return this;
+        }
+
+        /**
+         * see CompressionTypes
+         * @return the builder
+         */
+        public Builder j2kLossy() {
+            this.compression = CompressionType.J2K_LOSSY.getCompression();
+            return this;
+        }
+
+        /**
+         * see CompressionTypes
+         * @return the builder
+         */
+        public Builder jpg() {
+            this.compression = CompressionType.JPEG.getCompression();
             return this;
         }
 
