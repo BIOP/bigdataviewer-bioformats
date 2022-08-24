@@ -33,7 +33,7 @@
 package ch.epfl.biop.bdv.bioformats.command;
 
 import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
-import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
+import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsBdvOpener;
 import ome.units.quantity.Length;
 import ome.units.unit.Unit;
 import org.scijava.command.Command;

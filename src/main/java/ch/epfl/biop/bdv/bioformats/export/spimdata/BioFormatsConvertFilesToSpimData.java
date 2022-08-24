@@ -33,7 +33,7 @@
 package ch.epfl.biop.bdv.bioformats.export.spimdata;
 
 import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
-import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
+import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.imageloader.*;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;

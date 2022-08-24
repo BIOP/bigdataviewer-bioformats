@@ -1,4 +1,4 @@
-package ch.epfl.biop.bdv.bioformats.bioformatssource;
+package ch.epfl.biop.bdv.bioformats.imageloader;
 
 import bdv.img.cache.CacheArrayLoader;
 import loci.formats.IFormatReader;

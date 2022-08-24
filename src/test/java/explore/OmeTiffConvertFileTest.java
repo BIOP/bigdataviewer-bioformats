@@ -39,7 +39,7 @@ import bdv.VolatileSpimSource;
 import bdv.spimdata.WrapBasicImgLoader;
 import bdv.viewer.Source;
 import bdv.viewer.SourceAndConverter;
-import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
+import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.export.ometiff.OMETiffPyramidizerExporter;
 import ch.epfl.biop.bdv.bioformats.export.spimdata.BioFormatsConvertFilesToSpimData;
 import ch.epfl.biop.bdv.bioformats.imageloader.SeriesNumber;

@@ -46,7 +46,7 @@
  * limitations under the License.
  */
 
-package ch.epfl.biop.bdv.bioformats.bioformatssource;
+package ch.epfl.biop.bdv.bioformats.imageloader;
 
 import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;

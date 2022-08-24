@@ -36,7 +36,6 @@ import bdv.ViewerImgLoader;
 import bdv.cache.CacheControl;
 import bdv.img.cache.VolatileGlobalCellCache;
 import bdv.cache.SharedQueue;
-import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;

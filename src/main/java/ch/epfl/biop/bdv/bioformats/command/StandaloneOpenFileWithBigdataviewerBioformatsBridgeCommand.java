@@ -33,7 +33,7 @@
 package ch.epfl.biop.bdv.bioformats.command;
 
 import bdv.util.BdvFunctions;
-import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
+import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.export.spimdata.BioFormatsConvertFilesToSpimData;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import org.scijava.command.Command;

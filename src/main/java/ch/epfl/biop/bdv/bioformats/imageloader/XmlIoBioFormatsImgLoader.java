@@ -32,7 +32,6 @@
  */
 package ch.epfl.biop.bdv.bioformats.imageloader;
 
-import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import com.google.gson.Gson;
 import mpicbg.spim.data.XmlHelpers;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
