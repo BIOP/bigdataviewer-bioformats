@@ -171,6 +171,7 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
                         openers.get(iF),
                         iS,
                         iC,
+                        setupId,
                         tTypeGetter.get(iF).get(iS),
                         vTypeGetter.get(iF).get(iS),
                         cache

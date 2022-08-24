@@ -97,13 +97,17 @@ public class BioFormatsSetupLoader<T extends NumericType<T> & NativeType<T>,V ex
 
     final CacheArrayLoader<A> loader;
 
+    final int setup;
+
     public BioFormatsSetupLoader(BioFormatsBdvOpener opener,
                                  int sourceIndex,
                                  int channelIndex,
+                                 int setup,
                                  T t,
                                  V v,
                                  VolatileGlobalCellCache cache) throws Exception {
         super(t, v);
+        this.setup = setup;
         this.cache = cache;
         this.opener = opener;
         this.readerPool = opener.getReaderPool();
@@ -255,7 +259,7 @@ public class BioFormatsSetupLoader<T extends NumericType<T> & NativeType<T>,V ex
         final int priority = this.numMipmapLevels - level;
         final CacheHints cacheHints = new CacheHints( LoadingStrategy.BLOCKING, priority, false );
 
-        return cache.createImg(grid,timepointId,iSerie,level,cacheHints, loader, type);
+        return cache.createImg(grid,timepointId,setup,level,cacheHints, loader, type);
     }
 
     @Override
@@ -267,7 +271,7 @@ public class BioFormatsSetupLoader<T extends NumericType<T> & NativeType<T>,V ex
         final int priority = this.numMipmapLevels - level;
         final CacheHints cacheHints = new CacheHints( LoadingStrategy.BUDGETED, priority, false );
 
-        return cache.createImg( grid, timepointId, iSerie, level, cacheHints, loader, volatileType );
+        return cache.createImg( grid, timepointId, setup, level, cacheHints, loader, volatileType );
     }
 
     @Override
