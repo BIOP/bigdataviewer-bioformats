@@ -35,7 +35,7 @@ package ch.epfl.biop.bdv.bioformats.imageloader;
 import bdv.ViewerImgLoader;
 import bdv.cache.CacheControl;
 import bdv.img.cache.VolatileGlobalCellCache;
-import bdv.util.volatiles.SharedQueue;
+import bdv.cache.SharedQueue;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
 import loci.formats.*;
@@ -147,24 +147,29 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
     }
 
     public BioFormatsSetupLoader getSetupImgLoader(int setupId) {
-        if (imgLoaders.containsKey(setupId)) {
-            return imgLoaders.get(setupId);
-        } else {
-            int iF = viewSetupToBFFileSerieChannel.get(setupId).iFile;
-            int iS = viewSetupToBFFileSerieChannel.get(setupId).iSerie;
-            int iC = viewSetupToBFFileSerieChannel.get(setupId).iChannel;
-            log.accept("loading file number = "+iF+" setupId = "+setupId);
+        try {
+            if (imgLoaders.containsKey(setupId)) {
+                return imgLoaders.get(setupId);
+            } else {
+                int iF = viewSetupToBFFileSerieChannel.get(setupId).iFile;
+                int iS = viewSetupToBFFileSerieChannel.get(setupId).iSerie;
+                int iC = viewSetupToBFFileSerieChannel.get(setupId).iChannel;
+                log.accept("loading file number = " + iF + " setupId = " + setupId);
 
-            BioFormatsSetupLoader imgL = new BioFormatsSetupLoader(
-                    openers.get(iF),
-                    iS,
-                    iC,
-                    tTypeGetter.get(iF).get(iS),
-                    vTypeGetter.get(iF).get(iS)
-            );
+                BioFormatsSetupLoader imgL = new BioFormatsSetupLoader(
+                        openers.get(iF),
+                        iS,
+                        iC,
+                        tTypeGetter.get(iF).get(iS),
+                        vTypeGetter.get(iF).get(iS),
+                        cache
+                );
 
-            imgLoaders.put(setupId,imgL);
-            return imgL;
+                imgLoaders.put(setupId, imgL);
+                return imgL;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error in setup loader creation: "+e.getMessage());
         }
     }
 

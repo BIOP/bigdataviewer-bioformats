@@ -32,7 +32,7 @@
  */
 package ch.epfl.biop.bdv.bioformats.bioformatssource;
 
-import bdv.util.volatiles.SharedQueue;
+import bdv.cache.SharedQueue;
 import bdv.viewer.Source;
 import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
 import ch.epfl.biop.bdv.bioformats.export.spimdata.BioFormatsConvertFilesToSpimData;
@@ -184,6 +184,10 @@ public class BioFormatsBdvOpener {
     public BioFormatsBdvOpener setReaderPool(ReaderPool pool) {
         this.pool = pool;
         return this;
+    }
+
+    public ReaderPool getReaderPool() {
+        return pool;
     }
 
     public BioFormatsBdvOpener queueOptions(int numFetcherThreads, int numPriorities) {

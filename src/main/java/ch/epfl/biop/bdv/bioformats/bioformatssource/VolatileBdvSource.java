@@ -33,7 +33,7 @@
 package ch.epfl.biop.bdv.bioformats.bioformatssource;
 
 import bdv.util.AbstractSource;
-import bdv.util.volatiles.SharedQueue;
+import bdv.cache.SharedQueue;
 import bdv.util.volatiles.VolatileViews;
 import bdv.viewer.Source;
 import mpicbg.spim.data.sequence.VoxelDimensions;
