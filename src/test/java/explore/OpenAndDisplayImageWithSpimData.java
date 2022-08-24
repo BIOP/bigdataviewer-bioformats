@@ -30,7 +30,9 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
+
 package explore;
+
 import bdv.util.BdvFunctions;
 import bdv.util.BdvStackSource;
 import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsBdvOpener;
@@ -48,48 +50,49 @@ import java.io.File;
 import java.util.List;
 
 /**
- * Example of opening and displaying a file by using conversion to SpimData beforehand
+ * Example of opening and displaying a file by using conversion to SpimData
+ * beforehand
  */
 
-public class OpenAndDisplayImageWithSpimData
-{
+public class OpenAndDisplayImageWithSpimData {
 
-	public static void main( String[] args )
-	{
+	public static void main(String[] args) {
 
-		//BasicConfigurator.configure();
+		// BasicConfigurator.configure();
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 
-		DatasetHelper.getSampleVSIDataset(); // Cached : no need to worry about double download
+		DatasetHelper.getSampleVSIDataset(); // Cached : no need to worry about
+																					// double download
 
-		//DebugTools.setRootLevel("ch.epfl.biop.bdv.bioformats.export");
-		//DebugTools.enableLogging();
-		//DebugTools.enableIJLogging(true);
+		// DebugTools.setRootLevel("ch.epfl.biop.bdv.bioformats.export");
+		// DebugTools.enableLogging();
+		// DebugTools.enableIJLogging(true);
 
 		File f = DatasetHelper.getDataset(DatasetHelper.VSI);
 
-		//String dataLocation = "N:\\Temp Oli\\Kunal\\Project001_Kunal.lif";
+		// String dataLocation = "N:\\Temp Oli\\Kunal\\Project001_Kunal.lif";
 
-		BioFormatsBdvOpener opener = BioFormatsConvertFilesToSpimData.getDefaultOpener(f.getAbsolutePath());
+		BioFormatsBdvOpener opener = BioFormatsConvertFilesToSpimData
+			.getDefaultOpener(f.getAbsolutePath());
 
-		AbstractSpimData asd = BioFormatsConvertFilesToSpimData.getSpimData(
-				opener
-						.voxSizeReferenceFrameLength(new Length(1, UNITS.MILLIMETER))
-						.positionReferenceFrameLength(new Length(1,UNITS.METER)));
+		AbstractSpimData asd = BioFormatsConvertFilesToSpimData.getSpimData(opener
+			.voxSizeReferenceFrameLength(new Length(1, UNITS.MILLIMETER))
+			.positionReferenceFrameLength(new Length(1, UNITS.METER)));
 
-		List<BdvStackSource<?>> bss_list =  BdvFunctions.show(asd);
+		List<BdvStackSource<?>> bss_list = BdvFunctions.show(asd);
 
 		for (BdvStackSource bss : bss_list) {
 			int viewSetupId = bss_list.indexOf(bss);
 
-			BasicViewSetup bvs = (BasicViewSetup)(asd.getSequenceDescription()
-					.getViewSetups().get(viewSetupId));
+			BasicViewSetup bvs = (BasicViewSetup) (asd.getSequenceDescription()
+				.getViewSetups().get(viewSetupId));
 			Displaysettings ds = bvs.getAttribute(Displaysettings.class);
 
-			bss.setDisplayRange(ds.min,ds.max);
+			bss.setDisplayRange(ds.min, ds.max);
 
-			bss.setColor(new ARGBType(ARGBType.rgba(ds.color[0],ds.color[1], ds.color[2],ds.color[3])));
+			bss.setColor(new ARGBType(ARGBType.rgba(ds.color[0], ds.color[1],
+				ds.color[2], ds.color[3])));
 		}
 	}
 }

@@ -30,6 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
+
 package ch.epfl.biop.bdv.bioformats.command;
 
 import bdv.util.BdvFunctions;
@@ -45,30 +46,37 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Plugin(type = Command.class,
-        menuPath = "Plugins>BigDataViewer>Bio-Formats>Open File with Bio-Formats",
-        description = "Support bioformats multiresolution api. Attempts to set colors based " +
-                "on bioformats metadata. Do not attempt auto contrast.")
-public class StandaloneOpenFileWithBigdataviewerBioformatsBridgeCommand implements Command {
+	menuPath = "Plugins>BigDataViewer>Bio-Formats>Open File with Bio-Formats",
+	description = "Support bioformats multiresolution api. Attempts to set colors based " +
+		"on bioformats metadata. Do not attempt auto contrast.")
+public class StandaloneOpenFileWithBigdataviewerBioformatsBridgeCommand
+	implements Command
+{
 
-    @Parameter(required = false, label="Physical units of the dataset", choices = {"MILLIMETER","MICROMETER","NANOMETER"})
-    public String unit = "MILLIMETER";
+	@Parameter(required = false, label = "Physical units of the dataset",
+		choices = { "MILLIMETER", "MICROMETER", "NANOMETER" })
+	public String unit = "MILLIMETER";
 
-    @Parameter(label = "File to open", style = "open")
-    File file;
+	@Parameter(label = "File to open", style = "open")
+	File file;
 
-    @Parameter(required = false, label="Split RGB channels if you have 16 bits RGB images")
-    boolean splitrgbchannels = true; // Split rgb channels to allow for best compatibility (RGB 16 bits)
+	@Parameter(required = false,
+		label = "Split RGB channels if you have 16 bits RGB images")
+	boolean splitrgbchannels = true; // Split rgb channels to allow for best
+																		// compatibility (RGB 16 bits)
 
-    public void run() {
+	public void run() {
 
-        BioformatsBigdataviewerBridgeDatasetCommand settings = new BioformatsBigdataviewerBridgeDatasetCommand();
-        settings.splitrgbchannels = splitrgbchannels;
-        settings.unit = unit;
+		BioformatsBigdataviewerBridgeDatasetCommand settings =
+			new BioformatsBigdataviewerBridgeDatasetCommand();
+		settings.splitrgbchannels = splitrgbchannels;
+		settings.unit = unit;
 
-        List<BioFormatsBdvOpener> openers = new ArrayList<>();
-        openers.add(settings.getOpener(file));
-        final AbstractSpimData spimData = BioFormatsConvertFilesToSpimData.getSpimData( openers );
-        BdvFunctions.show( spimData );
-    }
+		List<BioFormatsBdvOpener> openers = new ArrayList<>();
+		openers.add(settings.getOpener(file));
+		final AbstractSpimData spimData = BioFormatsConvertFilesToSpimData
+			.getSpimData(openers);
+		BdvFunctions.show(spimData);
+	}
 
 }

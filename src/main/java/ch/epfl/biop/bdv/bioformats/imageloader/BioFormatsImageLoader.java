@@ -30,6 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
+
 package ch.epfl.biop.bdv.bioformats.imageloader;
 
 import bdv.ViewerImgLoader;
@@ -65,182 +66,205 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
-public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImgLoader, Closeable {
+public class BioFormatsImageLoader implements ViewerImgLoader,
+	MultiResolutionImgLoader, Closeable
+{
 
-    public List<BioFormatsBdvOpener> openers;
+	public List<BioFormatsBdvOpener> openers;
 
-    final AbstractSequenceDescription<?, ?, ?> sequenceDescription;
+	final AbstractSequenceDescription<?, ?, ?> sequenceDescription;
 
-    protected static Logger logger = LoggerFactory.getLogger(BioFormatsBdvOpener.class);
+	protected static Logger logger = LoggerFactory.getLogger(
+		BioFormatsBdvOpener.class);
 
-    public Consumer<String> log = logger::debug;
+	public Consumer<String> log = logger::debug;
 
-    Map<Integer, FileSerieChannel> viewSetupToBFFileSerieChannel = new HashMap<>();
+	Map<Integer, FileSerieChannel> viewSetupToBFFileSerieChannel =
+		new HashMap<>();
 
-    int viewSetupCounter = 0;
+	int viewSetupCounter = 0;
 
-    Map<Integer,Map<Integer,NumericType>> tTypeGetter = new HashMap<>();
+	Map<Integer, Map<Integer, NumericType>> tTypeGetter = new HashMap<>();
 
-    Map<Integer,Map<Integer,Volatile>> vTypeGetter = new HashMap<>();
+	Map<Integer, Map<Integer, Volatile>> vTypeGetter = new HashMap<>();
 
-    HashMap<Integer, BioFormatsSetupLoader> imgLoaders = new HashMap<>();
+	HashMap<Integer, BioFormatsSetupLoader> imgLoaders = new HashMap<>();
 
-    protected VolatileGlobalCellCache cache;
+	protected VolatileGlobalCellCache cache;
 
-    protected SharedQueue sq;
+	protected SharedQueue sq;
 
-    public final int numFetcherThreads;
-    public final int numPriorities;
+	public final int numFetcherThreads;
+	public final int numPriorities;
 
-    public BioFormatsImageLoader(List<BioFormatsBdvOpener> openers, final AbstractSequenceDescription<?, ?, ?> sequenceDescription, int numFetcherThreads, int numPriorities) {
-        this.openers = openers;
-        this.sequenceDescription = sequenceDescription;
-        this.numFetcherThreads=numFetcherThreads;
-        this.numPriorities=numPriorities;
-        sq = new SharedQueue(numFetcherThreads,numPriorities);
+	public BioFormatsImageLoader(List<BioFormatsBdvOpener> openers,
+		final AbstractSequenceDescription<?, ?, ?> sequenceDescription,
+		int numFetcherThreads, int numPriorities)
+	{
+		this.openers = openers;
+		this.sequenceDescription = sequenceDescription;
+		this.numFetcherThreads = numFetcherThreads;
+		this.numPriorities = numPriorities;
+		sq = new SharedQueue(numFetcherThreads, numPriorities);
 
-        openers.forEach(opener -> opener.setCache(sq));
+		openers.forEach(opener -> opener.setCache(sq));
 
-        IntStream openersIdxStream = IntStream.range(0, openers.size());
-        if ((sequenceDescription!=null)) {
-            openersIdxStream.forEach(iF -> {
-                try {
-                    BioFormatsBdvOpener opener = openers.get(iF);
+		IntStream openersIdxStream = IntStream.range(0, openers.size());
+		if ((sequenceDescription != null)) {
+			openersIdxStream.forEach(iF -> {
+				try {
+					BioFormatsBdvOpener opener = openers.get(iF);
 
-                    log.accept("Data location = "+opener.getDataLocation());
+					log.accept("Data location = " + opener.getDataLocation());
 
-                    IFormatReader memo = opener.getNewReader();
+					IFormatReader memo = opener.getNewReader();
 
-                    tTypeGetter.put(iF,new HashMap<>());
-                    vTypeGetter.put(iF,new HashMap<>());
+					tTypeGetter.put(iF, new HashMap<>());
+					vTypeGetter.put(iF, new HashMap<>());
 
-                    log.accept("Number of Series : " + memo.getSeriesCount());
-                    IMetadata omeMeta = (IMetadata) memo.getMetadataStore();
-                    memo.setMetadataStore(omeMeta);
-                    // -------------------------- SETUPS For each Series : one per timepoint and one per channel
+					log.accept("Number of Series : " + memo.getSeriesCount());
+					IMetadata omeMeta = (IMetadata) memo.getMetadataStore();
+					memo.setMetadataStore(omeMeta);
+					// -------------------------- SETUPS For each Series : one per
+					// timepoint and one per channel
 
-                    IntStream series = IntStream.range(0, memo.getSeriesCount());
+					IntStream series = IntStream.range(0, memo.getSeriesCount());
 
-                    final int iFile = iF;
+					final int iFile = iF;
 
-                    series.forEach(iSerie -> {
-                        memo.setSeries(iSerie);
-                        // One serie = one Tile
-                        // ---------- Serie >
-                        // ---------- Serie > Timepoints
-                        log.accept("\t Serie " + iSerie + " Number of timesteps = " + omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
-                        // ---------- Serie > Channels
-                        log.accept("\t Serie " + iSerie + " Number of channels = " + omeMeta.getChannelCount(iSerie));
-                        // Properties of the serie
-                        IntStream channels = IntStream.range(0, omeMeta.getChannelCount(iSerie));
-                        // Register Setups (one per channel and one per timepoint)
-                        channels.forEach(
-                                iCh -> {
-                                    FileSerieChannel fsc = new FileSerieChannel(iFile, iSerie, iCh);
-                                    viewSetupToBFFileSerieChannel.put(viewSetupCounter,fsc);
-                                    viewSetupCounter++;
-                                });
-                        Type t = getBioformatsBdvSourceType(memo, iSerie);
-                        tTypeGetter.get(iF).put(iSerie,(NumericType)t);
-                        Volatile v = getVolatileOf((NumericType)t);
-                        vTypeGetter.get(iF).put(iSerie, v);
-                    });
-                    memo.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-        }
+					series.forEach(iSerie -> {
+						memo.setSeries(iSerie);
+						// One serie = one Tile
+						// ---------- Serie >
+						// ---------- Serie > Timepoints
+						log.accept("\t Serie " + iSerie + " Number of timesteps = " +
+							omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
+						// ---------- Serie > Channels
+						log.accept("\t Serie " + iSerie + " Number of channels = " + omeMeta
+							.getChannelCount(iSerie));
+						// Properties of the serie
+						IntStream channels = IntStream.range(0, omeMeta.getChannelCount(
+							iSerie));
+						// Register Setups (one per channel and one per timepoint)
+						channels.forEach(iCh -> {
+							FileSerieChannel fsc = new FileSerieChannel(iFile, iSerie, iCh);
+							viewSetupToBFFileSerieChannel.put(viewSetupCounter, fsc);
+							viewSetupCounter++;
+						});
+						Type t = getBioformatsBdvSourceType(memo, iSerie);
+						tTypeGetter.get(iF).put(iSerie, (NumericType) t);
+						Volatile v = getVolatileOf((NumericType) t);
+						vTypeGetter.get(iF).put(iSerie, v);
+					});
+					memo.close();
+				}
+				catch (Exception e) {
+					e.printStackTrace();
+				}
+			});
+		}
 
-        // NOT CORRECTLY IMPLEMENTED YET
-        //final BlockingFetchQueues<Callable<?>> queue = new BlockingFetchQueues<>(1,1);
-        cache = new VolatileGlobalCellCache(sq);
-    }
+		// NOT CORRECTLY IMPLEMENTED YET
+		// final BlockingFetchQueues<Callable<?>> queue = new
+		// BlockingFetchQueues<>(1,1);
+		cache = new VolatileGlobalCellCache(sq);
+	}
 
-    public BioFormatsSetupLoader getSetupImgLoader(int setupId) {
-        try {
-            if (imgLoaders.containsKey(setupId)) {
-                return imgLoaders.get(setupId);
-            } else {
-                int iF = viewSetupToBFFileSerieChannel.get(setupId).iFile;
-                int iS = viewSetupToBFFileSerieChannel.get(setupId).iSerie;
-                int iC = viewSetupToBFFileSerieChannel.get(setupId).iChannel;
-                log.accept("loading file number = " + iF + " setupId = " + setupId);
+	public BioFormatsSetupLoader getSetupImgLoader(int setupId) {
+		try {
+			if (imgLoaders.containsKey(setupId)) {
+				return imgLoaders.get(setupId);
+			}
+			else {
+				int iF = viewSetupToBFFileSerieChannel.get(setupId).iFile;
+				int iS = viewSetupToBFFileSerieChannel.get(setupId).iSerie;
+				int iC = viewSetupToBFFileSerieChannel.get(setupId).iChannel;
+				log.accept("loading file number = " + iF + " setupId = " + setupId);
 
-                BioFormatsSetupLoader imgL = new BioFormatsSetupLoader(
-                        openers.get(iF),
-                        iS,
-                        iC,
-                        setupId,
-                        tTypeGetter.get(iF).get(iS),
-                        vTypeGetter.get(iF).get(iS),
-                        cache
-                );
+				BioFormatsSetupLoader imgL = new BioFormatsSetupLoader(openers.get(iF),
+					iS, iC, setupId, tTypeGetter.get(iF).get(iS), vTypeGetter.get(iF).get(
+						iS), cache);
 
-                imgLoaders.put(setupId, imgL);
-                return imgL;
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Error in setup loader creation: "+e.getMessage());
-        }
-    }
+				imgLoaders.put(setupId, imgL);
+				return imgL;
+			}
+		}
+		catch (Exception e) {
+			throw new RuntimeException("Error in setup loader creation: " + e
+				.getMessage());
+		}
+	}
 
-    @Override
-    public CacheControl getCacheControl() {
-        return cache;
-    }
+	@Override
+	public CacheControl getCacheControl() {
+		return cache;
+	}
 
-    public SharedQueue getQueue() {
-        return sq;
-    }
+	public SharedQueue getQueue() {
+		return sq;
+	}
 
-    @Override
-    public void close() {
-        synchronized (this) {
-            openers.forEach(opener -> {
-                opener.getReaderPool().shutDown(reader -> {
-                    try {
-                        reader.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
-            });
-            cache.clearCache();
-            sq.shutdown();
-        }
-    }
+	@Override
+	public void close() {
+		synchronized (this) {
+			openers.forEach(opener -> {
+				opener.getReaderPool().shutDown(reader -> {
+					try {
+						reader.close();
+					}
+					catch (IOException e) {
+						e.printStackTrace();
+					}
+				});
+			});
+			cache.clearCache();
+			sq.shutdown();
+		}
+	}
 
-    static Type getBioformatsBdvSourceType(IFormatReader reader, int image_index) throws UnsupportedOperationException {
-        final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
-        reader.setSeries(image_index);
-        if (reader.isRGB()) {
-            if (omeMeta.getPixelsType(image_index)== PixelType.UINT8) {
-                return new ARGBType();
-            } else {
-                throw new UnsupportedOperationException("Unhandled 16 bits RGB images");
-            }
-        } else {
-            PixelType pt = omeMeta.getPixelsType(image_index);
-            if  (pt == PixelType.UINT8) {return new UnsignedByteType();}
-            if  (pt == PixelType.UINT16) {return new UnsignedShortType();}
-            if  (pt == PixelType.INT32) {return new IntType();}
-            if  (pt == PixelType.FLOAT) {return new FloatType();}
-        }
-        throw new UnsupportedOperationException("Unhandled pixel type for serie "+image_index+": "+omeMeta.getPixelsType(image_index));
-    }
+	static Type getBioformatsBdvSourceType(IFormatReader reader, int image_index)
+		throws UnsupportedOperationException
+	{
+		final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
+		reader.setSeries(image_index);
+		if (reader.isRGB()) {
+			if (omeMeta.getPixelsType(image_index) == PixelType.UINT8) {
+				return new ARGBType();
+			}
+			else {
+				throw new UnsupportedOperationException("Unhandled 16 bits RGB images");
+			}
+		}
+		else {
+			PixelType pt = omeMeta.getPixelsType(image_index);
+			if (pt == PixelType.UINT8) {
+				return new UnsignedByteType();
+			}
+			if (pt == PixelType.UINT16) {
+				return new UnsignedShortType();
+			}
+			if (pt == PixelType.INT32) {
+				return new IntType();
+			}
+			if (pt == PixelType.FLOAT) {
+				return new FloatType();
+			}
+		}
+		throw new UnsupportedOperationException("Unhandled pixel type for serie " +
+			image_index + ": " + omeMeta.getPixelsType(image_index));
+	}
 
-    static Volatile getVolatileOf(NumericType t) {
-        if (t instanceof UnsignedShortType) return new VolatileUnsignedShortType();
+	static Volatile getVolatileOf(NumericType t) {
+		if (t instanceof UnsignedShortType) return new VolatileUnsignedShortType();
 
-        if (t instanceof IntType) return new VolatileIntType();
+		if (t instanceof IntType) return new VolatileIntType();
 
-        if (t instanceof UnsignedByteType) return new VolatileUnsignedByteType();
+		if (t instanceof UnsignedByteType) return new VolatileUnsignedByteType();
 
-        if (t instanceof FloatType) return new VolatileFloatType();
+		if (t instanceof FloatType) return new VolatileFloatType();
 
-        if (t instanceof ARGBType) return new VolatileARGBType();
-        return null;
-    }
+		if (t instanceof ARGBType) return new VolatileARGBType();
+		return null;
+	}
 
 }

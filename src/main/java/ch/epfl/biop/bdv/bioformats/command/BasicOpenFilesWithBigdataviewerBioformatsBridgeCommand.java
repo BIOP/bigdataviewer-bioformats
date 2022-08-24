@@ -30,6 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
+
 package ch.epfl.biop.bdv.bioformats.command;
 
 import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsBdvOpener;
@@ -48,47 +49,53 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Plugin(type = Command.class,
-        menuPath = "Plugins>BigDataViewer-Playground>BDVDataset>Open [BioFormats Bdv Bridge (Basic)]",
-        description = "Support bioformats multiresolution API. Attempts to set colors based " +
-                "on bioformats metadata. Do not attempt auto contrast.")
-public class BasicOpenFilesWithBigdataviewerBioformatsBridgeCommand implements Command {
+	menuPath = "Plugins>BigDataViewer-Playground>BDVDataset>Open [BioFormats Bdv Bridge (Basic)]",
+	description = "Support bioformats multiresolution API. Attempts to set colors based " +
+		"on bioformats metadata. Do not attempt auto contrast.")
+public class BasicOpenFilesWithBigdataviewerBioformatsBridgeCommand implements
+	Command
+{
 
-    final private static Logger logger = LoggerFactory.getLogger(BasicOpenFilesWithBigdataviewerBioformatsBridgeCommand.class);
+	final private static Logger logger = LoggerFactory.getLogger(
+		BasicOpenFilesWithBigdataviewerBioformatsBridgeCommand.class);
 
-    @Parameter(label = "Name of this dataset")
-    public String datasetname = "dataset";
+	@Parameter(label = "Name of this dataset")
+	public String datasetname = "dataset";
 
-    @Parameter(required = false, label="Physical units of the dataset", choices = {"MILLIMETER","MICROMETER","NANOMETER"})
-    public String unit = "MILLIMETER";
+	@Parameter(required = false, label = "Physical units of the dataset",
+		choices = { "MILLIMETER", "MICROMETER", "NANOMETER" })
+	public String unit = "MILLIMETER";
 
-    @Parameter(label = "Dataset files")
-    File[] files;
+	@Parameter(label = "Dataset files")
+	File[] files;
 
-    @Parameter(label = "Split RGB channels")
-    boolean splitrgbchannels;
+	@Parameter(label = "Split RGB channels")
+	boolean splitrgbchannels;
 
-    @Parameter(type = ItemIO.OUTPUT)
-    AbstractSpimData spimdata;
+	@Parameter(type = ItemIO.OUTPUT)
+	AbstractSpimData spimdata;
 
-    public void run() {
-        List<BioFormatsBdvOpener> openers = new ArrayList<>();
+	public void run() {
+		List<BioFormatsBdvOpener> openers = new ArrayList<>();
 
-        BioformatsBigdataviewerBridgeDatasetCommand settings = new BioformatsBigdataviewerBridgeDatasetCommand();
-        settings.splitrgbchannels = splitrgbchannels;
-        settings.unit = unit;
+		BioformatsBigdataviewerBridgeDatasetCommand settings =
+			new BioformatsBigdataviewerBridgeDatasetCommand();
+		settings.splitrgbchannels = splitrgbchannels;
+		settings.unit = unit;
 
-        for (File f:files) {
-            logger.debug("Getting opener for file f "+f.getAbsolutePath());
-            openers.add(settings.getOpener(f));
-        }
+		for (File f : files) {
+			logger.debug("Getting opener for file f " + f.getAbsolutePath());
+			openers.add(settings.getOpener(f));
+		}
 
-        StopWatch watch = new StopWatch();
-        logger.debug("All openers obtained, converting to spimdata object ");
-        watch.start();
-        spimdata = BioFormatsConvertFilesToSpimData.getSpimData(openers);
-        watch.stop();
-        logger.debug("Converted to SpimData in "+(int)(watch.getTime()/1000)+" s");
+		StopWatch watch = new StopWatch();
+		logger.debug("All openers obtained, converting to spimdata object ");
+		watch.start();
+		spimdata = BioFormatsConvertFilesToSpimData.getSpimData(openers);
+		watch.stop();
+		logger.debug("Converted to SpimData in " + (int) (watch.getTime() / 1000) +
+			" s");
 
-    }
+	}
 
 }

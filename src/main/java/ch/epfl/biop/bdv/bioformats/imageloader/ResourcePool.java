@@ -55,73 +55,70 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 /**
- *
  * https://www.dbtsai.com/blog/2013/java-concurrent-dynamic-object-pool-for-non-thread-safe-objects-using-blocking-queue/
- *
- * Created with IntelliJ IDEA.
- * User: dtsai
- * Date: 2/18/13
- * Time: 3:42 PM
+ * Created with IntelliJ IDEA. User: dtsai Date: 2/18/13 Time: 3:42 PM
  */
 
 public abstract class ResourcePool<Resource> {
-    private final BlockingQueue<Resource> pool;
-    private final ReentrantLock lock = new ReentrantLock();
-    private int createdObjects = 0;
-    private int size;
 
-    protected ResourcePool(int size) {
-        this(size, false);
-    }
+	private final BlockingQueue<Resource> pool;
+	private final ReentrantLock lock = new ReentrantLock();
+	private int createdObjects = 0;
+	private int size;
 
-    protected ResourcePool(int size, Boolean dynamicCreation) {
-        // Enable the fairness; otherwise, some threads may wait forever.
-        pool = new ArrayBlockingQueue<>(size, true);
-        this.size = size;
-        if (!dynamicCreation) {
-            lock.lock();
-        }
-    }
+	protected ResourcePool(int size) {
+		this(size, false);
+	}
 
-    public Resource acquire() throws Exception {
-        if (isClosed) throw new IllegalStateException("The pool has been closed");
-        if (!lock.isLocked()) {
-            if (lock.tryLock()) {
-                try {
-                    ++createdObjects;
-                    return createObject();
-                } finally {
-                    if (createdObjects < size) lock.unlock();
-                }
-            }
-        }
-        return pool.take();
-    }
+	protected ResourcePool(int size, Boolean dynamicCreation) {
+		// Enable the fairness; otherwise, some threads may wait forever.
+		pool = new ArrayBlockingQueue<>(size, true);
+		this.size = size;
+		if (!dynamicCreation) {
+			lock.lock();
+		}
+	}
 
-    public void recycle(Resource resource) throws Exception {
-        // Will throws Exception when the queue is full,
-        // but it should never happen.
-        pool.add(resource);
-    }
+	public Resource acquire() throws Exception {
+		if (isClosed) throw new IllegalStateException("The pool has been closed");
+		if (!lock.isLocked()) {
+			if (lock.tryLock()) {
+				try {
+					++createdObjects;
+					return createObject();
+				}
+				finally {
+					if (createdObjects < size) lock.unlock();
+				}
+			}
+		}
+		return pool.take();
+	}
 
-    public void createPool() {
-        if (isClosed) throw new IllegalStateException("The pool has been closed");
-        if (lock.isLocked()) {
-            for (int i = 0; i < size; ++i) {
-                pool.add(createObject());
-                createdObjects++;
-            }
-        }
-    }
+	public void recycle(Resource resource) throws Exception {
+		// Will throws Exception when the queue is full,
+		// but it should never happen.
+		pool.add(resource);
+	}
 
-    protected abstract Resource createObject();
+	public void createPool() {
+		if (isClosed) throw new IllegalStateException("The pool has been closed");
+		if (lock.isLocked()) {
+			for (int i = 0; i < size; ++i) {
+				pool.add(createObject());
+				createdObjects++;
+			}
+		}
+	}
 
-    boolean isClosed = false;
+	protected abstract Resource createObject();
 
-    public void shutDown(Consumer<Resource> closer) {
-        isClosed = true;
-        ArrayList<Resource> resources = new ArrayList<>(size);
-        pool.drainTo(resources);
-        resources.forEach(resource -> closer.accept(resource));
-    }
+	boolean isClosed = false;
+
+	public void shutDown(Consumer<Resource> closer) {
+		isClosed = true;
+		ArrayList<Resource> resources = new ArrayList<>(size);
+		pool.drainTo(resources);
+		resources.forEach(resource -> closer.accept(resource));
+	}
 }
