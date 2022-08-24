@@ -32,18 +32,12 @@
  */
 package ch.epfl.biop.bdv.bioformats;
 
-import bdv.viewer.Source;
-import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
-import ch.epfl.biop.bdv.bioformats.bioformatssource.VolatileBdvSource;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.Dimensions;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.ARGBType;
-import net.imglib2.type.numeric.NumericType;
-import net.imglib2.type.volatiles.VolatileARGBType;
-import net.imglib2.type.volatiles.VolatileNumericType;
 import ome.units.UNITS;
 import ome.units.quantity.Length;
 import ome.units.unit.Unit;
@@ -569,20 +563,6 @@ public class BioFormatsMetaDataHelper {
         return arrayOfIndexes;
     }
 
-    public static ARGBType getSourceColor(Source src) {
-        if (src instanceof BioFormatsBdvSource) {
-            return getSourceColor((BioFormatsBdvSource) src);
-        } else if (src instanceof VolatileBdvSource) {
-            return getSourceColor((VolatileBdvSource) src);
-        } else {
-            return null;
-        }
-    }
-
-    public static ARGBType getSourceColor(VolatileBdvSource src) {
-        return getSourceColor((BioFormatsBdvSource) src.source);
-    }
-
     final static int[] loopR = {1,0,0,1,1,1,0};
     final static int[] loopG = {0,1,0,1,1,0,1};
     final static int[] loopB = {0,0,1,1,0,1,1};
@@ -608,51 +588,6 @@ public class BioFormatsMetaDataHelper {
             }
         }
         return color;
-    }
-
-    /**
-     * Looks into BioFormats metadata to find the color corresponding to the source
-     * If source is RGB null is returned
-     * First attempt: from IMetaData.getChannelColor
-     * Second attempt: from IMetaData.getChannelEmissionWavelength
-     * @param src Bdv Source
-     * @return ARGBType instance containing a color code for the source
-     */
-    public static ARGBType getSourceColor(BioFormatsBdvSource src) {
-        try {
-            // Get color based on emission wavelength
-            IFormatReader reader = src.getReaderPool().acquire();//.getReader();
-
-            //final IMetadata omeMetaIdxOmeXml = MetadataTools.createOMEXMLMetadata();
-            //reader.setMetadataStore(omeMetaIdxOmeXml);
-
-            final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
-
-            ARGBType color = new ARGBType(ARGBType.rgba(255, 255, 255, 255)); // default is white
-            if ((src.getType() instanceof ARGBType) || (src.getType() instanceof VolatileARGBType)) {
-
-            } else {
-                if ((src.getType() instanceof NumericType) || (src.getType() instanceof VolatileNumericType)) {
-                    ome.xml.model.primitives.Color c = omeMeta.getChannelColor(src.cSerie, src.cChannel);
-                    if (c != null) {
-                        color = new ARGBType(ARGBType.rgba(c.getRed(), c.getGreen(), c.getBlue(), 255));
-                    } else {
-                        if (omeMeta.getChannelEmissionWavelength(src.cSerie, src.cChannel) != null) {
-                            int emission = omeMeta.getChannelEmissionWavelength(src.cSerie, src.cChannel)
-                                    .value(UNITS.NANOMETER)
-                                    .intValue();
-                            Color cAwt = getColorFromWavelength(emission);
-                            color = new ARGBType(ARGBType.rgba(cAwt.getRed(), cAwt.getGreen(), cAwt.getBlue(), 255));
-                        }
-                    }
-                }
-            }
-            src.getReaderPool().recycle(reader);
-            return color;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new ARGBType(ARGBType.rgba(255, 255, 255, 255));
-        }
     }
 
     /** Taken from Earl F. Glynn's web page:

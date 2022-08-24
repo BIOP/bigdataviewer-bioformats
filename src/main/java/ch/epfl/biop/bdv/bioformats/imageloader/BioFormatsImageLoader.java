@@ -37,24 +37,36 @@ import bdv.cache.CacheControl;
 import bdv.img.cache.VolatileGlobalCellCache;
 import bdv.cache.SharedQueue;
 import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
-import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.sequence.*;
 import net.imglib2.Volatile;
 import net.imglib2.type.Type;
+import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.NumericType;
+import net.imglib2.type.numeric.integer.IntType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.type.volatiles.VolatileARGBType;
+import net.imglib2.type.volatiles.VolatileFloatType;
+import net.imglib2.type.volatiles.VolatileIntType;
+import net.imglib2.type.volatiles.VolatileUnsignedByteType;
+import net.imglib2.type.volatiles.VolatileUnsignedShortType;
+import ome.xml.model.enums.PixelType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
-public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImgLoader {
+public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImgLoader, Closeable {
 
     public List<BioFormatsBdvOpener> openers;
 
@@ -129,9 +141,9 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
                                     viewSetupToBFFileSerieChannel.put(viewSetupCounter,fsc);
                                     viewSetupCounter++;
                                 });
-                        Type t = BioFormatsBdvSource.getBioformatsBdvSourceType(memo, iSerie);
+                        Type t = getBioformatsBdvSourceType(memo, iSerie);
                         tTypeGetter.get(iF).put(iSerie,(NumericType)t);
-                        Volatile v = BioFormatsBdvSource.getVolatileOf((NumericType)t);
+                        Volatile v = getVolatileOf((NumericType)t);
                         vTypeGetter.get(iF).put(iSerie, v);
                     });
                     memo.close();
@@ -182,11 +194,53 @@ public class BioFormatsImageLoader implements ViewerImgLoader,MultiResolutionImg
         return sq;
     }
 
+    @Override
     public void close() {
         synchronized (this) {
+            openers.forEach(opener -> {
+                opener.getReaderPool().shutDown(reader -> {
+                    try {
+                        reader.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+            });
             cache.clearCache();
             sq.shutdown();
         }
+    }
+
+    static Type getBioformatsBdvSourceType(IFormatReader reader, int image_index) throws UnsupportedOperationException {
+        final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
+        reader.setSeries(image_index);
+        if (reader.isRGB()) {
+            if (omeMeta.getPixelsType(image_index)== PixelType.UINT8) {
+                return new ARGBType();
+            } else {
+                throw new UnsupportedOperationException("Unhandled 16 bits RGB images");
+            }
+        } else {
+            PixelType pt = omeMeta.getPixelsType(image_index);
+            if  (pt == PixelType.UINT8) {return new UnsignedByteType();}
+            if  (pt == PixelType.UINT16) {return new UnsignedShortType();}
+            if  (pt == PixelType.INT32) {return new IntType();}
+            if  (pt == PixelType.FLOAT) {return new FloatType();}
+        }
+        throw new UnsupportedOperationException("Unhandled pixel type for serie "+image_index+": "+omeMeta.getPixelsType(image_index));
+    }
+
+    static Volatile getVolatileOf(NumericType t) {
+        if (t instanceof UnsignedShortType) return new VolatileUnsignedShortType();
+
+        if (t instanceof IntType) return new VolatileIntType();
+
+        if (t instanceof UnsignedByteType) return new VolatileUnsignedByteType();
+
+        if (t instanceof FloatType) return new VolatileFloatType();
+
+        if (t instanceof ARGBType) return new VolatileARGBType();
+        return null;
     }
 
 }

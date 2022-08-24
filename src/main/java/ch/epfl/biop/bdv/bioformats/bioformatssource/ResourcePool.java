@@ -48,9 +48,11 @@
 
 package ch.epfl.biop.bdv.bioformats.bioformatssource;
 
+import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 
 /**
  *
@@ -82,6 +84,7 @@ public abstract class ResourcePool<Resource> {
     }
 
     public Resource acquire() throws Exception {
+        if (isClosed) throw new IllegalStateException("The pool has been closed");
         if (!lock.isLocked()) {
             if (lock.tryLock()) {
                 try {
@@ -102,6 +105,7 @@ public abstract class ResourcePool<Resource> {
     }
 
     public void createPool() {
+        if (isClosed) throw new IllegalStateException("The pool has been closed");
         if (lock.isLocked()) {
             for (int i = 0; i < size; ++i) {
                 pool.add(createObject());
@@ -111,4 +115,13 @@ public abstract class ResourcePool<Resource> {
     }
 
     protected abstract Resource createObject();
+
+    boolean isClosed = false;
+
+    public void shutDown(Consumer<Resource> closer) {
+        isClosed = true;
+        ArrayList<Resource> resources = new ArrayList<>(size);
+        pool.drainTo(resources);
+        resources.forEach(resource -> closer.accept(resource));
+    }
 }

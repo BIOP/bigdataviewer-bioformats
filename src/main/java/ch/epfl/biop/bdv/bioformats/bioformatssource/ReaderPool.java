@@ -32,6 +32,8 @@
  */
 package ch.epfl.biop.bdv.bioformats.bioformatssource;
 import loci.formats.IFormatReader;
+
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -55,4 +57,5 @@ public class ReaderPool extends ResourcePool<IFormatReader> {
     public IFormatReader createObject() {
         return readerSupplier.get();
     }
+
 }
