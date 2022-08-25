@@ -63,6 +63,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class BioFormatsSetupLoader<T extends NumericType<T> & NativeType<T>, V extends Volatile<T> & NumericType<V> & NativeType<V>, A>
 	extends AbstractViewerSetupImgLoader<T, V> implements
@@ -82,7 +83,7 @@ public class BioFormatsSetupLoader<T extends NumericType<T> & NativeType<T>, V e
 
 	final int iSerie, iChannel;
 
-	final VolatileGlobalCellCache cache;
+	final Supplier<VolatileGlobalCellCache> cacheSupplier;
 
 	final int[] cellDimensions;
 
@@ -105,12 +106,12 @@ public class BioFormatsSetupLoader<T extends NumericType<T> & NativeType<T>, V e
 	final int setup;
 
 	public BioFormatsSetupLoader(BioFormatsBdvOpener opener, int sourceIndex,
-		int channelIndex, int setup, T t, V v, VolatileGlobalCellCache cache)
+		int channelIndex, int setup, T t, V v, Supplier<VolatileGlobalCellCache> cacheSupplier)
 		throws Exception
 	{
 		super(t, v);
 		this.setup = setup;
-		this.cache = cache;
+		this.cacheSupplier = cacheSupplier;
 		this.opener = opener;
 		this.readerPool = opener.getReaderPool();
 		iSerie = sourceIndex;
@@ -301,7 +302,7 @@ public class BioFormatsSetupLoader<T extends NumericType<T> & NativeType<T>, V e
 		final CacheHints cacheHints = new CacheHints(LoadingStrategy.BLOCKING,
 			priority, false);
 
-		return cache.createImg(grid, timepointId, setup, level, cacheHints, loader,
+		return cacheSupplier.get().createImg(grid, timepointId, setup, level, cacheHints, loader,
 			type);
 	}
 
@@ -317,7 +318,7 @@ public class BioFormatsSetupLoader<T extends NumericType<T> & NativeType<T>, V e
 		final CacheHints cacheHints = new CacheHints(LoadingStrategy.BUDGETED,
 			priority, false);
 
-		return cache.createImg(grid, timepointId, setup, level, cacheHints, loader,
+		return cacheSupplier.get().createImg(grid, timepointId, setup, level, cacheHints, loader,
 			volatileType);
 	}
 

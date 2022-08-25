@@ -37,7 +37,7 @@ import bdv.ViewerImgLoader;
 import bdv.cache.CacheControl;
 import bdv.img.cache.VolatileGlobalCellCache;
 import bdv.cache.SharedQueue;
-import loci.formats.*;
+import loci.formats.IFormatReader;
 import loci.formats.meta.IMetadata;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.sequence.*;
@@ -183,7 +183,7 @@ public class BioFormatsImageLoader implements ViewerImgLoader,
 
 				BioFormatsSetupLoader imgL = new BioFormatsSetupLoader(openers.get(iF),
 					iS, iC, setupId, tTypeGetter.get(iF).get(iS), vTypeGetter.get(iF).get(
-						iS), cache);
+						iS), this::getCacheControl);
 
 				imgLoaders.put(setupId, imgL);
 				return imgL;
@@ -222,7 +222,7 @@ public class BioFormatsImageLoader implements ViewerImgLoader,
 		}
 	}
 
-	static Type getBioformatsBdvSourceType(IFormatReader reader, int image_index)
+	public static Type getBioformatsBdvSourceType(IFormatReader reader, int image_index)
 		throws UnsupportedOperationException
 	{
 		final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
@@ -254,7 +254,7 @@ public class BioFormatsImageLoader implements ViewerImgLoader,
 			image_index + ": " + omeMeta.getPixelsType(image_index));
 	}
 
-	static Volatile getVolatileOf(NumericType t) {
+	public static Volatile getVolatileOf(NumericType t) {
 		if (t instanceof UnsignedShortType) return new VolatileUnsignedShortType();
 
 		if (t instanceof IntType) return new VolatileIntType();
