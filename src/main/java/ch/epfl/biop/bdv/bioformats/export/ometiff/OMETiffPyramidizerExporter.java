@@ -253,10 +253,11 @@ public class OMETiffPyramidizerExporter {
 																																// hash
 	}
 
-	ThreadLocal<OMETiffReader> localReader = new ThreadLocal<>(); // One object
+	final ThreadLocal<OMETiffReader> localReader = new ThreadLocal<>(); // One object
 																																// per thread
-	ThreadLocal<IImageScaler> localScaler = new ThreadLocal<>();
-	ThreadLocal<Integer> localResolution = new ThreadLocal<>();
+
+	final ThreadLocal<IImageScaler> localScaler = new ThreadLocal<>();
+	final ThreadLocal<Integer> localResolution = new ThreadLocal<>();
 
 	volatile int currentLevelWritten = -1;
 
@@ -672,7 +673,7 @@ public class OMETiffPyramidizerExporter {
 
 	public static class Builder {
 
-		Unit unit = UNITS.MILLIMETER;
+		Unit<Length> unit = UNITS.MILLIMETER;
 		String path;
 		int tileX = Integer.MAX_VALUE; // = no tiling
 		int tileY = Integer.MAX_VALUE; // = no tiling

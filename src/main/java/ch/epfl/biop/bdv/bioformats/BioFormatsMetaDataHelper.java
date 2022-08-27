@@ -56,23 +56,17 @@ import org.slf4j.LoggerFactory;
 
 public class BioFormatsMetaDataHelper {
 
-	protected static Logger logger = LoggerFactory.getLogger(
+	final protected static Logger logger = LoggerFactory.getLogger(
 		BioFormatsMetaDataHelper.class);
-
-	// private static final Logger log = Logger.getLogger(
-	// BioFormatsMetaDataHelper.class.getName() );
-
-	// public static Consumer<String> log = (s) -> LOGGER.info(s);//(s) ->
-	// {};//System.out.println(BioFormatsMetaDataHelper.class.getName()+":"+s);
 
 	public static class BioformatsChannel {
 
-		int iSerie;
-		int iChannel;
+		final int iSerie;
+		final int iChannel;
 		int emissionWl = 1;
 		public String chName = "";
 		String pxType = "";
-		boolean isRGB;
+		final boolean isRGB;
 
 		public BioformatsChannel(IMetadata m, int iSerie, int iChannel,
 			boolean isRGB)
@@ -338,8 +332,6 @@ public class BioFormatsMetaDataHelper {
 		int iSerie, Unit u, Length voxSizeReferenceFrameLength)
 	{
 		// Always 3 to allow for big stitcher compatibility
-		// int numDimensions = 2 +
-		// (omeMeta.getPixelsSizeZ(iSerie).getNumberValue().intValue()>1?1:0);
 		int numDimensions = 3;
 		Length[] voxSize = getSeriesVoxelSizeAsLengths(omeMeta, iSerie);
 		double[] d = new double[3];
@@ -401,8 +393,6 @@ public class BioFormatsMetaDataHelper {
 
 	public static Dimensions getSeriesDimensions(IMetadata omeMeta, int iSerie) {
 		// Always set 3d to allow for Big Stitcher compatibility
-		// int numDimensions = 2 +
-		// (omeMeta.getPixelsSizeZ(iSerie).getNumberValue().intValue()>1?1:0);
 		int numDimensions = 3;
 
 		int sX = omeMeta.getPixelsSizeX(iSerie).getNumberValue().intValue();
@@ -417,7 +407,7 @@ public class BioFormatsMetaDataHelper {
 
 		dims[2] = sZ;
 
-		Dimensions dimensions = new Dimensions() {
+		@SuppressWarnings("UnnecessaryLocalVariable") Dimensions dimensions = new Dimensions() {
 
 			@Override
 			public void dimensions(long[] dimensions) {
@@ -443,7 +433,7 @@ public class BioFormatsMetaDataHelper {
 	public static ArrayList<Pair<Integer, ArrayList<Integer>>>
 		getListOfSeriesAndChannels(IFormatReader reader, String code)
 	{
-		ArrayList<Pair<Integer, ArrayList<Integer>>> listOfSources =
+		@SuppressWarnings("UnnecessaryLocalVariable") ArrayList<Pair<Integer, ArrayList<Integer>>> listOfSources =
 			commaSeparatedListToArrayOfArray(code, idxSeries -> (idxSeries >= 0)
 				? idxSeries : reader.getSeriesCount() + idxSeries, // apparently -1 is
 																														// necessary -> I
@@ -452,15 +442,16 @@ public class BioFormatsMetaDataHelper {
 				(idxSeries, idxChannel) -> (idxChannel >= 0) ? idxChannel
 					: ((IMetadata) reader.getMetadataStore()).getChannelCount(idxSeries) +
 						idxChannel);
-		/*System.out.println("Number of series: "+reader.getSeriesCount());
-		for (int i=0;i<reader.getSeriesCount();i++) {
-		    System.out.println("Number of channels series: "+i+" : "+((IMetadata)reader.getMetadataStore()).getChannelCount(i));
-		}*/
+
 		return listOfSources;
 	}
 
 	/**
 	 * BiFunction necessary to be able to find index of negative values
+	 * @param expression to be parsed
+	 * @param fbounds description to do
+	 * @param f to do
+	 * @return to do
 	 */
 	static public ArrayList<Pair<Integer, ArrayList<Integer>>>
 		commaSeparatedListToArrayOfArray(String expression,
@@ -557,7 +548,7 @@ public class BioFormatsMetaDataHelper {
 	 * [1,2,5,6,7,10,11,12,14] Invalid format are ignored and an error message is
 	 * displayed
 	 *
-	 * @param expression
+	 * @param expression expression to parse
 	 * @return list of indexes in ArrayList
 	 */
 	static public ArrayList<Integer> expressionToArray(String expression,
@@ -658,10 +649,9 @@ public class BioFormatsMetaDataHelper {
 	 * Lab Report</a> Return a RGB array encoding a color from an input wavelength
 	 * in nm
 	 */
-	static private double Gamma = 0.80;
-	static private double IntensityMax = 255;
-
 	public static int[] waveLengthToRGB(double Wavelength) {
+		double Gamma = 0.80;
+		double IntensityMax = 255;
 		double factor;
 		double Red, Green, Blue;
 
@@ -742,7 +732,7 @@ public class BioFormatsMetaDataHelper {
 	 * @param unit_string
 	 * @return corresponding BF Unit object
 	 */
-	public static Unit getUnitFromString(String unit_string) {
+	public static Unit<Length> getUnitFromString(String unit_string) {
 		Field[] bfUnits = UNITS.class.getFields();
 		for (Field f : bfUnits) {
 			if (f.getType().equals(Unit.class)) {
@@ -754,8 +744,7 @@ public class BioFormatsMetaDataHelper {
 						{// (f.getName().toUpperCase().equals(unit_string.trim().toUpperCase()))
 							// {
 							// Field found
-							Unit u = (Unit) f.get(null); // Field is assumed to be static
-							return u;
+							return (Unit) f.get(null); // Field is assumed to be static
 						}
 					}
 					catch (Exception e) {

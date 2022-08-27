@@ -102,7 +102,7 @@ public class OMETiffExporter {
 	final long tileX, tileY;
 	final int nResolutionLevels;
 	final File file;
-	final Source[] sources;
+	final Source<?>[] sources;
 	final String name;
 	final ColorConverter[] converters;
 	final Unit<Length> unit;
@@ -263,7 +263,7 @@ public class OMETiffExporter {
 		if (endX > maxX) endX = maxX;
 		if (endY > maxY) endY = maxY;
 
-		RandomAccessibleInterval<NumericType<?>> rai = sources[range.getRangeC()
+		RandomAccessibleInterval<NumericType<?>> rai = (RandomAccessibleInterval<NumericType<?>>) sources[range.getRangeC()
 			.get(c)].getSource(range.getRangeT().get(t), r);
 		RandomAccessibleInterval<NumericType<?>> slice = Views.hyperSlice(rai, 2,
 			range.getRangeZ().get(z));
@@ -399,8 +399,6 @@ public class OMETiffExporter {
 
 		// setup writer
 		PyramidOMETiffWriter writer = new PyramidOMETiffWriter();
-		// ((DynamicMetadataOptions)writer.getMetadataOptions()).set(OMETiffWriter.COMPANION_KEY,FilenameUtils.removeExtension(file.getAbsolutePath())+".companion.ome");
-		// // TODO : check ome xml does not already exists ?
 
 		writer.setWriteSequentially(true); // Setting this to false can be
 																				// problematic!
@@ -538,7 +536,7 @@ public class OMETiffExporter {
 
 	public static class Builder {
 
-		Unit unit = UNITS.MILLIMETER;
+		Unit<Length> unit = UNITS.MILLIMETER;
 		String path;
 		int tileX = Integer.MAX_VALUE; // = no tiling
 		int tileY = Integer.MAX_VALUE; // = no tiling

@@ -35,7 +35,6 @@ package ch.epfl.biop.bdv.bioformats.imageloader;
 
 import loci.formats.IFormatReader;
 
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -44,7 +43,7 @@ import java.util.function.Supplier;
 
 public class ReaderPool extends ResourcePool<IFormatReader> {
 
-	Supplier<IFormatReader> readerSupplier;
+	final Supplier<IFormatReader> readerSupplier;
 
 	public ReaderPool(int size, Boolean dynamicCreation,
 		Supplier<IFormatReader> readerSupplier)

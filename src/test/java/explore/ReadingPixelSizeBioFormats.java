@@ -74,9 +74,7 @@ public class ReadingPixelSizeBioFormats {
 			String unit = meta.getPixelsPhysicalSizeX(0).unit().getSymbol();
 			final double value = meta.getPixelsPhysicalSizeX(0).value().doubleValue();
 
-			double voxelSize = asNanometers(value, unit);
-
-			return voxelSize;
+			return asNanometers(value, unit);
 
 		}
 		catch (Exception e) {

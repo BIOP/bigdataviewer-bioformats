@@ -34,16 +34,16 @@
 package ch.epfl.biop.bdv.bioformats.imageloader;
 
 import bdv.cache.SharedQueue;
-import bdv.viewer.Source;
 import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
-import ch.epfl.biop.bdv.bioformats.export.spimdata.BioFormatsConvertFilesToSpimData;
-import loci.formats.*;
+import loci.formats.ChannelSeparator;
+import loci.formats.FormatException;
+import loci.formats.IFormatReader;
+import loci.formats.ImageReader;
+import loci.formats.Memoizer;
+import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
 import net.imglib2.FinalInterval;
-import net.imglib2.cache.img.DiskCachedCellImgOptions;
-import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
 import net.imglib2.realtransform.AffineTransform3D;
-import net.imglib2.type.numeric.NumericType;
 import ome.units.UNITS;
 import ome.units.quantity.Length;
 import ome.units.unit.Unit;
@@ -54,15 +54,11 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class BioFormatsBdvOpener {
 
-	protected static Logger logger = LoggerFactory.getLogger(
+	final protected static Logger logger = LoggerFactory.getLogger(
 		BioFormatsBdvOpener.class);
 
 	transient protected Consumer<IFormatReader> readerModifier = (e) -> {};
@@ -310,6 +306,7 @@ public class BioFormatsBdvOpener {
 		final IMetadata omeMetaOmeXml = MetadataTools.createOMEXMLMetadata();
 		memo.setMetadataStore(omeMetaOmeXml);
 
+		// TODO : fix CZI
 		// if (dataLocation.endsWith("czi"))
 		// BioFormatsBdvOpenerFix.fixCziReader(memo);
 
@@ -320,17 +317,16 @@ public class BioFormatsBdvOpener {
 			e.printStackTrace();
 			return null;
 		}
-		final IFormatReader reader = memo;
 
-		logger.info("Attempts to set opener settings for file format " + reader
+		logger.info("Attempts to set opener settings for file format " + memo
 			.getFormat() + "; data location = " + dataLocation);
 
 		// Adjustements here!
 
-		if (reader.getFormat().equals("Nikon ND2")) {
+		if (memo.getFormat().equals("Nikon ND2")) {
 			return BioFormatsBdvOpenerFix.fixNikonND2(this);
 		}
-		else if (reader.getFormat().equals("Leica Image File Format")) {
+		else if (memo.getFormat().equals("Leica Image File Format")) {
 			return BioFormatsBdvOpenerFix.fixLif(this);
 		}
 		/*else if (dataLocation.endsWith("czi")) {
@@ -356,7 +352,7 @@ public class BioFormatsBdvOpener {
 		return this;
 	}
 
-	public BioFormatsBdvOpener unit(Unit u) {
+	public BioFormatsBdvOpener unit(Unit<Length> u) {
 		this.u = u;
 		return this;
 	}
@@ -442,16 +438,14 @@ public class BioFormatsBdvOpener {
 		catch (IOException e) {
 			e.printStackTrace();
 		}
-		final IFormatReader readerIdx = memo;
-		return readerIdx;
+		return memo;
 	}
 
 	public static BioFormatsBdvOpener getOpener() {
-		BioFormatsBdvOpener opener = new BioFormatsBdvOpener()
-			.positionReferenceFrameLength(new Length(1, UNITS.MICROMETER)) // Compulsory
-			.voxSizeReferenceFrameLength(new Length(1, UNITS.MICROMETER)).millimeter()
-			.useCacheBlockSizeFromBioFormats(true);
-		return opener;
+		return new BioFormatsBdvOpener()
+				.positionReferenceFrameLength(new Length(1, UNITS.MICROMETER)) // Compulsory
+				.voxSizeReferenceFrameLength(new Length(1, UNITS.MICROMETER)).millimeter()
+				.useCacheBlockSizeFromBioFormats(true);
 	}
 
 }

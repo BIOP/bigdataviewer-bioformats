@@ -47,7 +47,7 @@ public class DatasetHelper {
 
 	// https://downloads.openmicroscopy.org/images/
 
-	public static File cachedSampleDir = new File(System.getProperty("user.home"),
+	final public static File cachedSampleDir = new File(System.getProperty("user.home"),
 		"CachedSamples");
 
 	final public static String JPG_RGB =
@@ -87,7 +87,7 @@ public class DatasetHelper {
 			t3.join();
 		}
 		catch (Exception e) {
-
+			e.printStackTrace();
 		}
 		return getDataset(VSI).getAbsolutePath();
 	}

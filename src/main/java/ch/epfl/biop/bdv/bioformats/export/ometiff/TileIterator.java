@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class TileIterator implements Iterator<TileIterator.IntsKey> {
 
-	AtomicLong nTilesInQueue = new AtomicLong();
+	final AtomicLong nTilesInQueue = new AtomicLong();
 	final int maxTilesInQueue;
 
 	final int nr;
@@ -115,7 +115,9 @@ public class TileIterator implements Iterator<TileIterator.IntsKey> {
 				try {
 					nTilesInQueue.wait();
 				}
-				catch (InterruptedException e) {}
+				catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 		nTilesInQueue.incrementAndGet();

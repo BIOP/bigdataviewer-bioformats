@@ -64,7 +64,7 @@ public abstract class ResourcePool<Resource> {
 	private final BlockingQueue<Resource> pool;
 	private final ReentrantLock lock = new ReentrantLock();
 	private int createdObjects = 0;
-	private int size;
+	final private int size;
 
 	protected ResourcePool(int size) {
 		this(size, false);
@@ -119,6 +119,6 @@ public abstract class ResourcePool<Resource> {
 		isClosed = true;
 		ArrayList<Resource> resources = new ArrayList<>(size);
 		pool.drainTo(resources);
-		resources.forEach(resource -> closer.accept(resource));
+		resources.forEach(closer::accept);
 	}
 }

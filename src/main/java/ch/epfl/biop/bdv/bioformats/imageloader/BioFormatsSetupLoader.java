@@ -73,7 +73,7 @@ public class BioFormatsSetupLoader<T extends NumericType<T> & NativeType<T>, V e
 	private static final Logger logger = LoggerFactory.getLogger(
 		BioFormatsSetupLoader.class);
 
-	Function<RandomAccessibleInterval<T>, RandomAccessibleInterval<FloatType>> cvtRaiToFloatRai;
+	final Function<RandomAccessibleInterval<T>, RandomAccessibleInterval<FloatType>> cvtRaiToFloatRai;
 
 	final Converter<T, FloatType> cvt;
 
@@ -105,9 +105,10 @@ public class BioFormatsSetupLoader<T extends NumericType<T> & NativeType<T>, V e
 
 	final int setup;
 
+	@SuppressWarnings("unchecked")
 	public BioFormatsSetupLoader(BioFormatsBdvOpener opener, int sourceIndex,
-		int channelIndex, int setup, T t, V v,
-		Supplier<VolatileGlobalCellCache> cacheSupplier) throws Exception
+								 int channelIndex, int setup, T t, V v,
+								 Supplier<VolatileGlobalCellCache> cacheSupplier) throws Exception
 	{
 		super(t, v);
 		this.setup = setup;
@@ -158,13 +159,8 @@ public class BioFormatsSetupLoader<T extends NumericType<T> & NativeType<T>, V e
 			reader.setSeries(iSerie);
 			numMipmapLevels = reader.getResolutionCount();
 			reader.setResolution(0);
+			isLittleEndian = reader.isLittleEndian();
 
-			if (reader.isLittleEndian()) {
-				isLittleEndian = true;
-			}
-			else {
-				isLittleEndian = false;
-			}
 			// MetaData
 			final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
 

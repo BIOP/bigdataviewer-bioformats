@@ -69,26 +69,23 @@ import java.util.stream.IntStream;
 public class BioFormatsImageLoader implements ViewerImgLoader,
 	MultiResolutionImgLoader, Closeable
 {
+	final protected static Logger logger = LoggerFactory.getLogger(
+			BioFormatsBdvOpener.class);
 
-	public List<BioFormatsBdvOpener> openers;
+	final public List<BioFormatsBdvOpener> openers;
 
 	final AbstractSequenceDescription<?, ?, ?> sequenceDescription;
 
-	protected static Logger logger = LoggerFactory.getLogger(
-		BioFormatsBdvOpener.class);
-
-	public Consumer<String> log = logger::debug;
-
-	Map<Integer, FileSerieChannel> viewSetupToBFFileSerieChannel =
+	final Map<Integer, FileSerieChannel> viewSetupToBFFileSerieChannel =
 		new HashMap<>();
 
 	int viewSetupCounter = 0;
 
-	Map<Integer, Map<Integer, NumericType>> tTypeGetter = new HashMap<>();
+	final Map<Integer, Map<Integer, NumericType>> tTypeGetter = new HashMap<>();
 
-	Map<Integer, Map<Integer, Volatile>> vTypeGetter = new HashMap<>();
+	final Map<Integer, Map<Integer, Volatile>> vTypeGetter = new HashMap<>();
 
-	HashMap<Integer, BioFormatsSetupLoader> imgLoaders = new HashMap<>();
+	final HashMap<Integer, BioFormatsSetupLoader> imgLoaders = new HashMap<>();
 
 	protected VolatileGlobalCellCache cache;
 
@@ -115,14 +112,14 @@ public class BioFormatsImageLoader implements ViewerImgLoader,
 				try {
 					BioFormatsBdvOpener opener = openers.get(iF);
 
-					log.accept("Data location = " + opener.getDataLocation());
+					logger.debug("Data location = " + opener.getDataLocation());
 
 					IFormatReader memo = opener.getNewReader();
 
 					tTypeGetter.put(iF, new HashMap<>());
 					vTypeGetter.put(iF, new HashMap<>());
 
-					log.accept("Number of Series : " + memo.getSeriesCount());
+					logger.debug("Number of Series : " + memo.getSeriesCount());
 					IMetadata omeMeta = (IMetadata) memo.getMetadataStore();
 					memo.setMetadataStore(omeMeta);
 					// -------------------------- SETUPS For each Series : one per
@@ -137,10 +134,10 @@ public class BioFormatsImageLoader implements ViewerImgLoader,
 						// One serie = one Tile
 						// ---------- Serie >
 						// ---------- Serie > Timepoints
-						log.accept("\t Serie " + iSerie + " Number of timesteps = " +
+						logger.debug("\t Serie " + iSerie + " Number of timesteps = " +
 							omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
 						// ---------- Serie > Channels
-						log.accept("\t Serie " + iSerie + " Number of channels = " + omeMeta
+						logger.debug("\t Serie " + iSerie + " Number of channels = " + omeMeta
 							.getChannelCount(iSerie));
 						// Properties of the serie
 						IntStream channels = IntStream.range(0, omeMeta.getChannelCount(
@@ -163,10 +160,6 @@ public class BioFormatsImageLoader implements ViewerImgLoader,
 				}
 			});
 		}
-
-		// NOT CORRECTLY IMPLEMENTED YET
-		// final BlockingFetchQueues<Callable<?>> queue = new
-		// BlockingFetchQueues<>(1,1);
 		cache = new VolatileGlobalCellCache(sq);
 	}
 
@@ -179,7 +172,7 @@ public class BioFormatsImageLoader implements ViewerImgLoader,
 				int iF = viewSetupToBFFileSerieChannel.get(setupId).iFile;
 				int iS = viewSetupToBFFileSerieChannel.get(setupId).iSerie;
 				int iC = viewSetupToBFFileSerieChannel.get(setupId).iChannel;
-				log.accept("loading file number = " + iF + " setupId = " + setupId);
+				logger.debug("loading file number = " + iF + " setupId = " + setupId);
 
 				BioFormatsSetupLoader imgL = new BioFormatsSetupLoader(openers.get(iF),
 					iS, iC, setupId, tTypeGetter.get(iF).get(iS), vTypeGetter.get(iF).get(

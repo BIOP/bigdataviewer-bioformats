@@ -35,7 +35,11 @@ package ch.epfl.biop.bdv.bioformats.export.spimdata;
 
 import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
 import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsBdvOpener;
-import ch.epfl.biop.bdv.bioformats.imageloader.*;
+import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsImageLoader;
+import ch.epfl.biop.bdv.bioformats.imageloader.FileIndex;
+import ch.epfl.biop.bdv.bioformats.imageloader.FileSerieChannel;
+import ch.epfl.biop.bdv.bioformats.imageloader.SeriesNumber;
+import ch.epfl.biop.bdv.bioformats.imageloader.SeriesTps;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;
 import mpicbg.spim.data.SpimData;
@@ -68,7 +72,7 @@ import java.util.stream.IntStream;
 
 public class BioFormatsConvertFilesToSpimData {
 
-	protected static Logger logger = LoggerFactory.getLogger(
+	final protected static Logger logger = LoggerFactory.getLogger(
 		BioFormatsConvertFilesToSpimData.class);
 
 	private int getChannelId(IMetadata omeMeta, int iSerie, int iChannel,
@@ -89,8 +93,7 @@ public class BioFormatsConvertFilesToSpimData {
 			logger.debug("Channel for series " + iSerie + ", channel " + iChannel +
 				", already known.");
 		}
-		int idChannel = channelIdToChannel.get(channelToId.get(channel)).getId();
-		return idChannel;
+		return channelIdToChannel.get(channelToId.get(channel)).getId();
 	}
 
 	int viewSetupCounter = 0;
@@ -98,13 +101,13 @@ public class BioFormatsConvertFilesToSpimData {
 	int maxTimepoints = -1;
 	int channelCounter = 0;
 
-	Map<Integer, Channel> channelIdToChannel = new HashMap<>();
-	Map<BioFormatsMetaDataHelper.BioformatsChannel, Integer> channelToId =
+	final Map<Integer, Channel> channelIdToChannel = new HashMap<>();
+	final Map<BioFormatsMetaDataHelper.BioformatsChannel, Integer> channelToId =
 		new HashMap<>();
-	Map<Integer, Integer> fileIdxToNumberOfSeries = new HashMap<>();
-	Map<Integer, SeriesTps> fileIdxToNumberOfSeriesAndTimepoints =
+	final Map<Integer, Integer> fileIdxToNumberOfSeries = new HashMap<>();
+	final Map<Integer, SeriesTps> fileIdxToNumberOfSeriesAndTimepoints =
 		new HashMap<>();
-	Map<Integer, FileSerieChannel> viewSetupToBFFileSerieChannel =
+	final Map<Integer, FileSerieChannel> viewSetupToBFFileSerieChannel =
 		new HashMap<>();
 
 	public AbstractSpimData getSpimDataInstance(
@@ -125,6 +128,7 @@ public class BioFormatsConvertFilesToSpimData {
 
 		try {
 			for (int iF = 0; iF < openers.size(); iF++) {
+
 				FileIndex fi = new FileIndex(iF);
 				String dataLocation = openers.get(iF).getDataLocation();
 				fi.setName(dataLocation);
@@ -290,9 +294,8 @@ public class BioFormatsConvertFilesToSpimData {
 			sd.setImgLoader(new BioFormatsImageLoader(openers, sd, openers.get(
 				0).nFetcherThread, openers.get(0).numPriorities));
 
-			final SpimData spimData = new SpimData(null, sd, new ViewRegistrations(
-				registrations));
-			return spimData;
+			return new SpimData(null, sd, new ViewRegistrations(
+					registrations));
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -341,7 +344,7 @@ public class BioFormatsConvertFilesToSpimData {
 	public static AbstractSpimData getSpimData(BioFormatsBdvOpener opener) {
 		ArrayList<BioFormatsBdvOpener> singleOpenerList = new ArrayList<>();
 		singleOpenerList.add(opener);
-		return new BioFormatsConvertFilesToSpimData().getSpimData(singleOpenerList);
+		return BioFormatsConvertFilesToSpimData.getSpimData(singleOpenerList);
 	}
 
 	public static AbstractSpimData getSpimData(File f) {
@@ -354,7 +357,7 @@ public class BioFormatsConvertFilesToSpimData {
 		for (File f : files) {
 			openers.add(getDefaultOpener(f.getAbsolutePath()));
 		}
-		return new BioFormatsConvertFilesToSpimData().getSpimData(openers);
+		return BioFormatsConvertFilesToSpimData.getSpimData(openers);
 	}
 
 	public static BioFormatsBdvOpener getDefaultOpener(String dataLocation) {

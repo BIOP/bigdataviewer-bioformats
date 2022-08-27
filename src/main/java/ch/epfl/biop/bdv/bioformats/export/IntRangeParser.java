@@ -71,7 +71,7 @@ public class IntRangeParser {
 		}
 
 		String[] blocks = expression.split(",");
-		LinkedList<Integer> list = new LinkedList();
+		LinkedList<Integer> list = new LinkedList<>();
 		int location = 0;
 		for (String block : blocks) {
 			location += block.length();
@@ -153,7 +153,7 @@ public class IntRangeParser {
 
 	// convert argument to value : if the value is negative, then subtract to the
 	// end
-	final static double cvt(String arg, int length) throws Exception {
+	static double cvt(String arg, int length) throws Exception {
 		double value = Double.valueOf(arg);
 		if (value < 0) {
 			value = length + value;
@@ -162,7 +162,7 @@ public class IntRangeParser {
 	}
 
 	// convert argument to value : let it be negative for step size
-	final static double cvtDouble(String arg, int length) throws Exception {
+	static double cvtDouble(String arg, int length) throws Exception {
 		return Double.valueOf(arg);
 	}
 
