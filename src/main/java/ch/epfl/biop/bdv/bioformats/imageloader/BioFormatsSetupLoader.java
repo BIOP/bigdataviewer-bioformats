@@ -106,8 +106,8 @@ public class BioFormatsSetupLoader<T extends NumericType<T> & NativeType<T>, V e
 	final int setup;
 
 	public BioFormatsSetupLoader(BioFormatsBdvOpener opener, int sourceIndex,
-		int channelIndex, int setup, T t, V v, Supplier<VolatileGlobalCellCache> cacheSupplier)
-		throws Exception
+		int channelIndex, int setup, T t, V v,
+		Supplier<VolatileGlobalCellCache> cacheSupplier) throws Exception
 	{
 		super(t, v);
 		this.setup = setup;
@@ -302,8 +302,8 @@ public class BioFormatsSetupLoader<T extends NumericType<T> & NativeType<T>, V e
 		final CacheHints cacheHints = new CacheHints(LoadingStrategy.BLOCKING,
 			priority, false);
 
-		return cacheSupplier.get().createImg(grid, timepointId, setup, level, cacheHints, loader,
-			type);
+		return cacheSupplier.get().createImg(grid, timepointId, setup, level,
+			cacheHints, loader, type);
 	}
 
 	@Override
@@ -318,8 +318,8 @@ public class BioFormatsSetupLoader<T extends NumericType<T> & NativeType<T>, V e
 		final CacheHints cacheHints = new CacheHints(LoadingStrategy.BUDGETED,
 			priority, false);
 
-		return cacheSupplier.get().createImg(grid, timepointId, setup, level, cacheHints, loader,
-			volatileType);
+		return cacheSupplier.get().createImg(grid, timepointId, setup, level,
+			cacheHints, loader, volatileType);
 	}
 
 	@Override

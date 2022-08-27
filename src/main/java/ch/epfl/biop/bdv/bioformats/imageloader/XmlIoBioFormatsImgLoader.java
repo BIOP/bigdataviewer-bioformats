@@ -96,8 +96,11 @@ public class XmlIoBioFormatsImgLoader implements
 
 			String openerClassName = XmlHelpers.getText(elem, OPENER_CLASS_TAG);
 
-			if (openerClassName.equals("ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener")) {
-				openerClassName = BioFormatsBdvOpener.class.getName(); // Fix for old versions
+			if (openerClassName.equals(
+				"ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener"))
+			{
+				openerClassName = BioFormatsBdvOpener.class.getName(); // Fix for old
+																																// versions
 			}
 
 			if (!openerClassName.equals(BioFormatsBdvOpener.class.getName())) {

@@ -222,8 +222,8 @@ public class BioFormatsImageLoader implements ViewerImgLoader,
 		}
 	}
 
-	public static Type getBioformatsBdvSourceType(IFormatReader reader, int image_index)
-		throws UnsupportedOperationException
+	public static Type getBioformatsBdvSourceType(IFormatReader reader,
+		int image_index) throws UnsupportedOperationException
 	{
 		final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
 		reader.setSeries(image_index);
