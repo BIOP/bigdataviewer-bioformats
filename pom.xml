@@ -103,11 +103,7 @@
 		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
 		<license.excludes>**/resources/**</license.excludes>
 
-		<bigdataviewer-core.version>10.4.2</bigdataviewer-core.version>
-		<bigdataviewer-vistools.version>1.0.0-beta-30</bigdataviewer-vistools.version>
-		<imglib2-cache.version>1.0.0-beta-16</imglib2-cache.version>
-
-		<bigdataviewer-spimdata-extras.version>0.1.7-SNAPSHOT-10.4.1</bigdataviewer-spimdata-extras.version>
+		<bigdataviewer-spimdata-extras.version>0.2.0</bigdataviewer-spimdata-extras.version>
 		<reflections.version>0.9.11</reflections.version>
 		<slf4j-log4j12.version>1.7.30</slf4j-log4j12.version>
 
@@ -179,7 +175,6 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>bigdataviewer-vistools</artifactId>
-			<version>${bigdataviewer-vistools.version}</version>
 		</dependency>
 
 		<dependency>
