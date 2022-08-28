@@ -44,7 +44,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
-@SuppressWarnings({"Unused","CanBeFinal"})
+@SuppressWarnings({ "Unused", "CanBeFinal" })
 @Plugin(type = Command.class,
 	menuPath = "Plugins>BigDataViewer-Playground>Sources>Export>Export Sources To OME Tiff",
 	description = "Saves Bdv sources as a multi-channel OME-Tiff file, keeping original multiresolution levels" +

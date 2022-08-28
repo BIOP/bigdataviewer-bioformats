@@ -43,7 +43,6 @@ import java.util.function.Supplier;
 
 public class ReaderPool extends ResourcePool<IFormatReader> {
 
-
 	final Supplier<IFormatReader> readerSupplier;
 
 	public ReaderPool(int size, Boolean dynamicCreation,

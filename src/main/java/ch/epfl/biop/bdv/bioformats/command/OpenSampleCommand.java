@@ -48,7 +48,7 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 
-@SuppressWarnings({"Unused","CanBeFinal"})
+@SuppressWarnings({ "Unused", "CanBeFinal" })
 @Plugin(type = Command.class,
 	menuPath = "Plugins>BigDataViewer-Playground>BDVDataset>Open sample dataset",
 	label = "Open sample datasets",

@@ -56,7 +56,6 @@ import org.slf4j.LoggerFactory;
 
 public class BioFormatsMetaDataHelper {
 
-
 	final protected static Logger logger = LoggerFactory.getLogger(
 		BioFormatsMetaDataHelper.class);
 
@@ -410,9 +409,8 @@ public class BioFormatsMetaDataHelper {
 
 		dims[2] = sZ;
 
-
-		@SuppressWarnings("UnnecessaryLocalVariable") Dimensions dimensions = new Dimensions() {
-
+		@SuppressWarnings("UnnecessaryLocalVariable")
+		Dimensions dimensions = new Dimensions() {
 
 			@Override
 			public void dimensions(long[] dimensions) {
@@ -438,7 +436,8 @@ public class BioFormatsMetaDataHelper {
 	public static ArrayList<Pair<Integer, ArrayList<Integer>>>
 		getListOfSeriesAndChannels(IFormatReader reader, String code)
 	{
-		@SuppressWarnings("UnnecessaryLocalVariable") ArrayList<Pair<Integer, ArrayList<Integer>>> listOfSources =
+		@SuppressWarnings("UnnecessaryLocalVariable")
+		ArrayList<Pair<Integer, ArrayList<Integer>>> listOfSources =
 
 			commaSeparatedListToArrayOfArray(code, idxSeries -> (idxSeries >= 0)
 				? idxSeries : reader.getSeriesCount() + idxSeries, // apparently -1 is
@@ -453,14 +452,13 @@ public class BioFormatsMetaDataHelper {
 	}
 
 	/**
-	 * BiFunction necessary to be able to find index of negative values
-<<<<<<< HEAD
-=======
+	 * BiFunction necessary to be able to find index of negative values <<<<<<<
+	 * HEAD =======
+	 * 
 	 * @param expression to be parsed
 	 * @param fbounds description to do
 	 * @param f to do
-	 * @return to do
->>>>>>> bdv-10.4.1
+	 * @return to do >>>>>>> bdv-10.4.1
 	 */
 	static public ArrayList<Pair<Integer, ArrayList<Integer>>>
 		commaSeparatedListToArrayOfArray(String expression,
@@ -555,13 +553,10 @@ public class BioFormatsMetaDataHelper {
 	 * Convert a comma separated list of indexes into an arraylist of integer For
 	 * instance 1,2,5:7,10:12,14 returns an ArrayList containing
 	 * [1,2,5,6,7,10,11,12,14] Invalid format are ignored and an error message is
-	 * displayed
-	 *
-<<<<<<< HEAD
-	 * @param expression
-=======
-	 * @param expression expression to parse
->>>>>>> bdv-10.4.1
+	 * displayed <<<<<<< HEAD
+	 * 
+	 * @param expression =======
+	 * @param expression expression to parse >>>>>>> bdv-10.4.1
 	 * @return list of indexes in ArrayList
 	 */
 	static public ArrayList<Integer> expressionToArray(String expression,

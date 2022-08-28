@@ -70,7 +70,6 @@ public class BioFormatsSetupLoader<T extends NumericType<T> & NativeType<T>, V e
 	MultiResolutionSetupImgLoader<T>
 {
 
-
 	private static final Logger logger = LoggerFactory.getLogger(
 		BioFormatsSetupLoader.class);
 
@@ -108,8 +107,8 @@ public class BioFormatsSetupLoader<T extends NumericType<T> & NativeType<T>, V e
 
 	@SuppressWarnings("unchecked")
 	public BioFormatsSetupLoader(BioFormatsBdvOpener opener, int sourceIndex,
-								 int channelIndex, int setup, T t, V v,
-								 Supplier<VolatileGlobalCellCache> cacheSupplier) throws Exception
+		int channelIndex, int setup, T t, V v,
+		Supplier<VolatileGlobalCellCache> cacheSupplier) throws Exception
 	{
 		super(t, v);
 		this.setup = setup;

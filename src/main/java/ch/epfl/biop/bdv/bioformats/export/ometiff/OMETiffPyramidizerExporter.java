@@ -254,8 +254,9 @@ public class OMETiffPyramidizerExporter {
 																																// hash
 	}
 
-	final ThreadLocal<OMETiffReader> localReader = new ThreadLocal<>(); // One object
-																																// per thread
+	final ThreadLocal<OMETiffReader> localReader = new ThreadLocal<>(); // One
+																																			// object
+	// per thread
 	final ThreadLocal<IImageScaler> localScaler = new ThreadLocal<>();
 	final ThreadLocal<Integer> localResolution = new ThreadLocal<>();
 

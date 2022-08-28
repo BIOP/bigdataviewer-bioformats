@@ -48,7 +48,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings({"Unused","CanBeFinal"})
+@SuppressWarnings({ "Unused", "CanBeFinal" })
 @Plugin(type = Command.class,
 	menuPath = "Plugins>BigDataViewer-Playground>BDVDataset>Open [BioFormats Bdv Bridge]",
 	description = "Support bioformats multiresolution api. Attempts to set colors based " +

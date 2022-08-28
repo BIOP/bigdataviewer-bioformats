@@ -263,8 +263,9 @@ public class OMETiffExporter {
 		if (endX > maxX) endX = maxX;
 		if (endY > maxY) endY = maxY;
 
-		RandomAccessibleInterval<NumericType<?>> rai = (RandomAccessibleInterval<NumericType<?>>) sources[range.getRangeC()
-			.get(c)].getSource(range.getRangeT().get(t), r);
+		RandomAccessibleInterval<NumericType<?>> rai =
+			(RandomAccessibleInterval<NumericType<?>>) sources[range.getRangeC().get(
+				c)].getSource(range.getRangeT().get(t), r);
 		RandomAccessibleInterval<NumericType<?>> slice = Views.hyperSlice(rai, 2,
 			range.getRangeZ().get(z));
 		byte[] tileByte = SourceToByteArray.raiToByteArray(Views.interval(slice,

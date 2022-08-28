@@ -68,8 +68,9 @@ import java.util.stream.IntStream;
 public class BioFormatsImageLoader implements ViewerImgLoader,
 	MultiResolutionImgLoader, Closeable
 {
+
 	final protected static Logger logger = LoggerFactory.getLogger(
-			BioFormatsBdvOpener.class);
+		BioFormatsBdvOpener.class);
 
 	final public List<BioFormatsBdvOpener> openers;
 
@@ -136,8 +137,8 @@ public class BioFormatsImageLoader implements ViewerImgLoader,
 						logger.debug("\t Serie " + iSerie + " Number of timesteps = " +
 							omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
 						// ---------- Serie > Channels
-						logger.debug("\t Serie " + iSerie + " Number of channels = " + omeMeta
-							.getChannelCount(iSerie));
+						logger.debug("\t Serie " + iSerie + " Number of channels = " +
+							omeMeta.getChannelCount(iSerie));
 						// Properties of the serie
 						IntStream channels = IntStream.range(0, omeMeta.getChannelCount(
 							iSerie));

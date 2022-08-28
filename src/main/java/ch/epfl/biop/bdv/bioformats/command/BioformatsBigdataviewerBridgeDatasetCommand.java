@@ -44,7 +44,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-@SuppressWarnings({"Unused","CanBeFinal"})
+@SuppressWarnings({ "Unused", "CanBeFinal" })
 public class BioformatsBigdataviewerBridgeDatasetCommand implements Command {
 
 	static public Map<String, Object> getDefaultParameters() {
