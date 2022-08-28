@@ -30,29 +30,30 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
+
 package ch.epfl.biop.bdv.bioformats.bioformatssource;
+
 import loci.formats.IFormatReader;
 import java.util.function.Supplier;
 
 /**
- * Created with IntelliJ IDEA.
- * User: dbtsai
- * Date: 2/24/13
- * Time: 1:21 PM
+ * Created with IntelliJ IDEA. User: dbtsai Date: 2/24/13 Time: 1:21 PM
  */
 
 public class ReaderPool extends ResourcePool<IFormatReader> {
 
-    Supplier<IFormatReader> readerSupplier;
+	Supplier<IFormatReader> readerSupplier;
 
-    public ReaderPool(int size, Boolean dynamicCreation, Supplier<IFormatReader> readerSupplier) {
-        super(size, dynamicCreation);
-        createPool();
-        this.readerSupplier = readerSupplier;
-    }
+	public ReaderPool(int size, Boolean dynamicCreation,
+		Supplier<IFormatReader> readerSupplier)
+	{
+		super(size, dynamicCreation);
+		createPool();
+		this.readerSupplier = readerSupplier;
+	}
 
-    @Override
-    public IFormatReader createObject() {
-        return readerSupplier.get();
-    }
+	@Override
+	public IFormatReader createObject() {
+		return readerSupplier.get();
+	}
 }

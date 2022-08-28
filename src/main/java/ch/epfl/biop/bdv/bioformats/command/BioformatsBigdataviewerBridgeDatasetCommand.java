@@ -30,6 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
+
 package ch.epfl.biop.bdv.bioformats.command;
 
 import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
@@ -45,131 +46,135 @@ import java.util.Map;
 
 public class BioformatsBigdataviewerBridgeDatasetCommand implements Command {
 
-    static public Map<String, Object> getDefaultParameters() {
-        Map<String, Object> def = new HashMap();
-        def.put("unit", "MILLIMETER");
-        def.put("splitrgbchannels",false);
-        def.put("positioniscenter","AUTO");
-        def.put("switchzandc","AUTO");
-        def.put("flippositionx","AUTO");
-        def.put("flippositiony","AUTO");
-        def.put("flippositionz","AUTO");
-        def.put("usebioformatscacheblocksize",true);
-        def.put("cachesizex",512);
-        def.put("cachesizey",512);
-        def.put("cachesizez",1);
-        def.put("refframesizeinunitlocation",1);
-        def.put("refframesizeinunitvoxsize",1);
-        def.put("numberofblockskeptinmemory",-1);
-        return def;
-    }
+	static public Map<String, Object> getDefaultParameters() {
+		Map<String, Object> def = new HashMap();
+		def.put("unit", "MILLIMETER");
+		def.put("splitrgbchannels", false);
+		def.put("positioniscenter", "AUTO");
+		def.put("switchzandc", "AUTO");
+		def.put("flippositionx", "AUTO");
+		def.put("flippositiony", "AUTO");
+		def.put("flippositionz", "AUTO");
+		def.put("usebioformatscacheblocksize", true);
+		def.put("cachesizex", 512);
+		def.put("cachesizey", 512);
+		def.put("cachesizez", 1);
+		def.put("refframesizeinunitlocation", 1);
+		def.put("refframesizeinunitvoxsize", 1);
+		def.put("numberofblockskeptinmemory", -1);
+		return def;
+	}
 
-    // Parameter for dataset creation
-    @Parameter(required = false, label="Physical units of the dataset", choices = {"MILLIMETER","MICROMETER","NANOMETER"})
-    public String unit = "MILLIMETER";
+	// Parameter for dataset creation
+	@Parameter(required = false, label = "Physical units of the dataset",
+		choices = { "MILLIMETER", "MICROMETER", "NANOMETER" })
+	public String unit = "MILLIMETER";
 
-    @Parameter(required = false, label="Split RGB channels")
-    public boolean splitrgbchannels = false;
+	@Parameter(required = false, label = "Split RGB channels")
+	public boolean splitrgbchannels = false;
 
-    @Parameter(required = false, choices = {"AUTO", "TRUE", "FALSE"})
-    public String positioniscenter = "AUTO";
+	@Parameter(required = false, choices = { "AUTO", "TRUE", "FALSE" })
+	public String positioniscenter = "AUTO";
 
-    @Parameter(required = false, choices = {"AUTO", "TRUE", "FALSE"})
-    public String switchzandc = "AUTO";
+	@Parameter(required = false, choices = { "AUTO", "TRUE", "FALSE" })
+	public String switchzandc = "AUTO";
 
-    @Parameter(required = false, choices = {"AUTO", "TRUE", "FALSE"})
-    public String flippositionx = "AUTO";
+	@Parameter(required = false, choices = { "AUTO", "TRUE", "FALSE" })
+	public String flippositionx = "AUTO";
 
-    @Parameter(required = false, choices = {"AUTO", "TRUE", "FALSE"})
-    public String flippositiony = "AUTO";
+	@Parameter(required = false, choices = { "AUTO", "TRUE", "FALSE" })
+	public String flippositiony = "AUTO";
 
-    @Parameter(required = false, choices = {"AUTO", "TRUE", "FALSE"})
-    public String flippositionz = "AUTO";
+	@Parameter(required = false, choices = { "AUTO", "TRUE", "FALSE" })
+	public String flippositionz = "AUTO";
 
-    @Parameter(required = false)
-    public boolean usebioformatscacheblocksize = true;
+	@Parameter(required = false)
+	public boolean usebioformatscacheblocksize = true;
 
-    @Parameter(required = false)
-    public int cachesizex = 512, cachesizey = 512, cachesizez = 1;
+	@Parameter(required = false)
+	public int cachesizex = 512, cachesizey = 512, cachesizez = 1;
 
-    @Parameter(required = false)
-    public int numberofblockskeptinmemory = -1;
+	@Parameter(required = false)
+	public int numberofblockskeptinmemory = -1;
 
-    @Parameter(required = false, label="Reference frame size in unit (position)")
-    public double refframesizeinunitlocation = 1;
+	@Parameter(required = false,
+		label = "Reference frame size in unit (position)")
+	public double refframesizeinunitlocation = 1;
 
-    @Parameter(required = false, label="Reference frame size in unit (voxel size)")
-    public double refframesizeinunitvoxsize = 1;
+	@Parameter(required = false,
+		label = "Reference frame size in unit (voxel size)")
+	public double refframesizeinunitvoxsize = 1;
 
-    public BioFormatsBdvOpener getOpener(String datalocation) {
+	public BioFormatsBdvOpener getOpener(String datalocation) {
 
-        Unit bfUnit = BioFormatsMetaDataHelper.getUnitFromString(unit);
+		Unit bfUnit = BioFormatsMetaDataHelper.getUnitFromString(unit);
 
-        Length positionReferenceFrameLength = new Length(refframesizeinunitlocation, bfUnit);
-        Length voxSizeReferenceFrameLength = new Length(refframesizeinunitvoxsize, bfUnit);
+		Length positionReferenceFrameLength = new Length(refframesizeinunitlocation,
+			bfUnit);
+		Length voxSizeReferenceFrameLength = new Length(refframesizeinunitvoxsize,
+			bfUnit);
 
-        BioFormatsBdvOpener opener = BioFormatsBdvOpener.getOpener()
-                .location(datalocation)
-                .unit(unit)
-                .auto()
-                .ignoreMetadata();
+		BioFormatsBdvOpener opener = BioFormatsBdvOpener.getOpener().location(
+			datalocation).unit(unit).auto().ignoreMetadata();
 
-        if (!switchzandc.equals("AUTO")) {
-            opener = opener.switchZandC(switchzandc.equals("TRUE"));
-        }
+		if (!switchzandc.equals("AUTO")) {
+			opener = opener.switchZandC(switchzandc.equals("TRUE"));
+		}
 
-        if (!usebioformatscacheblocksize) {
-            opener = opener.cacheBlockSize(cachesizex,cachesizey,cachesizez);
-        }
+		if (!usebioformatscacheblocksize) {
+			opener = opener.cacheBlockSize(cachesizex, cachesizey, cachesizez);
+		}
 
-        if (numberofblockskeptinmemory>0) {
-            opener = opener.cacheBounded(numberofblockskeptinmemory);
-        }
+		if (numberofblockskeptinmemory > 0) {
+			opener = opener.cacheBounded(numberofblockskeptinmemory);
+		}
 
-        // Not sure it is useful here because the metadata location is handled somewhere else
-        if (!positioniscenter.equals("AUTO")) {
-            if (positioniscenter.equals("TRUE")) {
-                opener = opener.centerPositionConvention();
-            } else {
-                opener=opener.cornerPositionConvention();
-            }
-        }
+		// Not sure it is useful here because the metadata location is handled
+		// somewhere else
+		if (!positioniscenter.equals("AUTO")) {
+			if (positioniscenter.equals("TRUE")) {
+				opener = opener.centerPositionConvention();
+			}
+			else {
+				opener = opener.cornerPositionConvention();
+			}
+		}
 
-        if (!flippositionx.equals("AUTO")) {
-            if (flippositionx.equals("TRUE")) {
-                opener = opener.flipPositionX();
-            }
-        }
+		if (!flippositionx.equals("AUTO")) {
+			if (flippositionx.equals("TRUE")) {
+				opener = opener.flipPositionX();
+			}
+		}
 
-        if (!flippositiony.equals("AUTO")) {
-            if (flippositiony.equals("TRUE")) {
-                opener = opener.flipPositionY();
-            }
-        }
+		if (!flippositiony.equals("AUTO")) {
+			if (flippositiony.equals("TRUE")) {
+				opener = opener.flipPositionY();
+			}
+		}
 
-        if (!flippositionz.equals("AUTO")) {
-            if (flippositionz.equals("TRUE")) {
-                opener = opener.flipPositionZ();
-            }
-        }
+		if (!flippositionz.equals("AUTO")) {
+			if (flippositionz.equals("TRUE")) {
+				opener = opener.flipPositionZ();
+			}
+		}
 
-        opener = opener.unit(unit);
+		opener = opener.unit(unit);
 
-        opener = opener.positionReferenceFrameLength(positionReferenceFrameLength);
+		opener = opener.positionReferenceFrameLength(positionReferenceFrameLength);
 
-        opener = opener.voxSizeReferenceFrameLength(voxSizeReferenceFrameLength);
+		opener = opener.voxSizeReferenceFrameLength(voxSizeReferenceFrameLength);
 
-        if (splitrgbchannels) opener = opener.splitRGBChannels();
+		if (splitrgbchannels) opener = opener.splitRGBChannels();
 
-        return opener;
-    }
+		return opener;
+	}
 
-    public BioFormatsBdvOpener getOpener(File f) {
-        return getOpener(f.getAbsolutePath());
-    }
+	public BioFormatsBdvOpener getOpener(File f) {
+		return getOpener(f.getAbsolutePath());
+	}
 
-    @Override
-    public void run() {
+	@Override
+	public void run() {
 
-    }
+	}
 }

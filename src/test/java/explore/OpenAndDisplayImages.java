@@ -30,6 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
+
 package explore;
 
 import bdv.util.BdvFunctions;
@@ -51,45 +52,47 @@ import java.util.Map;
 
 public class OpenAndDisplayImages {
 
-    public static void main( String[] args ) throws Exception
-    {
-        DatasetHelper.getSampleVSIDataset();
-        final ImageJ ij = new ImageJ();
-        ij.ui().showUI();
+	public static void main(String[] args) throws Exception {
+		DatasetHelper.getSampleVSIDataset();
+		final ImageJ ij = new ImageJ();
+		ij.ui().showUI();
 
-        DatasetHelper.getSampleVSIDataset(); // Cached : no need to worry about double download
+		DatasetHelper.getSampleVSIDataset(); // Cached : no need to worry about
+																					// double download
 
-        Map<String, Object> params = BioformatsBigdataviewerBridgeDatasetCommand.getDefaultParameters();
-        //params.put("splitRGBChannels",true);
+		Map<String, Object> params = BioformatsBigdataviewerBridgeDatasetCommand
+			.getDefaultParameters();
+		// params.put("splitRGBChannels",true);
 
-        params.put("files", new File[] {
-                //new File("C:\\Users\\chiarutt\\Desktop\\vsipb\\Image_01.vsi") // See https://forum.image.sc/t/qupath-omero-weird-pyramid-levels/65484
-                DatasetHelper.getDataset(DatasetHelper.VSI)
-        });
+		params.put("files", new File[] {
+			// new File("C:\\Users\\chiarutt\\Desktop\\vsipb\\Image_01.vsi") // See
+			// https://forum.image.sc/t/qupath-omero-weird-pyramid-levels/65484
+			DatasetHelper.getDataset(DatasetHelper.VSI) });
 
-        AbstractSpimData asd = (AbstractSpimData) ij.command()
-                .run(OpenFilesWithBigdataviewerBioformatsBridgeCommand.class,true,params)
-                .get().getOutput("spimdata");
+		AbstractSpimData asd = (AbstractSpimData) ij.command().run(
+			OpenFilesWithBigdataviewerBioformatsBridgeCommand.class, true, params)
+			.get().getOutput("spimdata");
 
-        List<BdvStackSource<?>> bss_list =  BdvFunctions.show(asd);
+		List<BdvStackSource<?>> bss_list = BdvFunctions.show(asd);
 
-        for (BdvStackSource bss : bss_list) {
-            int viewSetupId = bss_list.indexOf(bss);
+		for (BdvStackSource bss : bss_list) {
+			int viewSetupId = bss_list.indexOf(bss);
 
-            BasicViewSetup bvs = (BasicViewSetup)(asd.getSequenceDescription()
-                    .getViewSetups().get(viewSetupId));
-            Displaysettings ds = bvs.getAttribute(Displaysettings.class);
+			BasicViewSetup bvs = (BasicViewSetup) (asd.getSequenceDescription()
+				.getViewSetups().get(viewSetupId));
+			Displaysettings ds = bvs.getAttribute(Displaysettings.class);
 
-            bss.setDisplayRange(ds.min,ds.max);
+			bss.setDisplayRange(ds.min, ds.max);
 
-            bss.setColor(new ARGBType(ARGBType.rgba(ds.color[0],ds.color[1], ds.color[2],ds.color[3])));
-        }
-    }
+			bss.setColor(new ARGBType(ARGBType.rgba(ds.color[0], ds.color[1],
+				ds.color[2], ds.color[3])));
+		}
+	}
 
-    /*
-        asd.setBasePath(new File("C:\\Users\\chiarutt\\Desktop\\vsipb\\"));
-        new XmlIoSpimData().save((SpimData) asd, "C:\\Users\\chiarutt\\Desktop\\vsipb\\Image_01.xml");
-        SpimData reopened = new XmlIoSpimData().load("C:\\Users\\chiarutt\\Desktop\\vsipb\\Image_01.xml");
-        BdvFunctions.show(reopened);
-     */
+	/*
+	    asd.setBasePath(new File("C:\\Users\\chiarutt\\Desktop\\vsipb\\"));
+	    new XmlIoSpimData().save((SpimData) asd, "C:\\Users\\chiarutt\\Desktop\\vsipb\\Image_01.xml");
+	    SpimData reopened = new XmlIoSpimData().load("C:\\Users\\chiarutt\\Desktop\\vsipb\\Image_01.xml");
+	    BdvFunctions.show(reopened);
+	 */
 }

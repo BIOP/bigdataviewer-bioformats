@@ -30,13 +30,16 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
+
 package ch.epfl.biop.bdv.bioformats.imageloader;
 
 public class SeriesTps {
-    public int nSeries;
-    public int nTps;
-    public SeriesTps(int nSeries, int nTps) {
-        this.nSeries = nSeries;
-        this.nTps = nTps;
-    }
+
+	public int nSeries;
+	public int nTps;
+
+	public SeriesTps(int nSeries, int nTps) {
+		this.nSeries = nSeries;
+		this.nTps = nTps;
+	}
 }

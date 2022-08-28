@@ -30,6 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * #L%
  */
+
 package ch.epfl.biop.bdv.bioformats.bioformatssource;
 
 import loci.formats.IFormatReader;
@@ -47,115 +48,107 @@ import ome.units.unit.Unit;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-public class BioFormatsBdvSourceUnsignedByte extends BioFormatsBdvSource<UnsignedByteType> {
-    public BioFormatsBdvSourceUnsignedByte(ReaderPool readerPool,
-                                           int image_index,
-                                           int channel_index,
-                                           boolean swZC,
-                                           FinalInterval cacheBlockSize,
-                                           ReadOnlyCachedCellImgOptions cacheOptions,
-                                           boolean useBioFormatsXYBlockSize,
-                                           boolean ignoreBioFormatsLocationMetaData,
-                                           boolean ignoreBioFormatsVoxelSizeMetaData,
-                                           boolean positionConventionIsCenter,
-                                           Length locationReferenceFrameLength,
-                                           Length voxSizeReferenceFrameLength,
-                                           Unit<Length> u,
-                                           AffineTransform3D locationPreTransform,
-                                           AffineTransform3D locationPostTransform,
-                                           AffineTransform3D voxSizePreTransform,
-                                           AffineTransform3D voxSizePostTransform,
-                                           boolean[] axesFlip) {
-        super(readerPool,
-                image_index,
-                channel_index,
-                swZC,
-                cacheBlockSize,
-                cacheOptions,
-                useBioFormatsXYBlockSize,
-                ignoreBioFormatsLocationMetaData,
-                ignoreBioFormatsVoxelSizeMetaData,
-                positionConventionIsCenter,
-                locationReferenceFrameLength,
-                voxSizeReferenceFrameLength,
-                u,
-                locationPreTransform,
-                locationPostTransform,
-                voxSizePreTransform,
-                voxSizePostTransform,
-                axesFlip);
-    }
+public class BioFormatsBdvSourceUnsignedByte extends
+	BioFormatsBdvSource<UnsignedByteType>
+{
 
-    @Override
-    public RandomAccessibleInterval<UnsignedByteType> createSource(int t, int level) {
-        try {
-            IFormatReader reader_init = readerPool.acquire();
-            reader_init.setSeries(this.cSerie);
+	public BioFormatsBdvSourceUnsignedByte(ReaderPool readerPool, int image_index,
+		int channel_index, boolean swZC, FinalInterval cacheBlockSize,
+		ReadOnlyCachedCellImgOptions cacheOptions, boolean useBioFormatsXYBlockSize,
+		boolean ignoreBioFormatsLocationMetaData,
+		boolean ignoreBioFormatsVoxelSizeMetaData,
+		boolean positionConventionIsCenter, Length locationReferenceFrameLength,
+		Length voxSizeReferenceFrameLength, Unit<Length> u,
+		AffineTransform3D locationPreTransform,
+		AffineTransform3D locationPostTransform,
+		AffineTransform3D voxSizePreTransform,
+		AffineTransform3D voxSizePostTransform, boolean[] axesFlip)
+	{
+		super(readerPool, image_index, channel_index, swZC, cacheBlockSize,
+			cacheOptions, useBioFormatsXYBlockSize, ignoreBioFormatsLocationMetaData,
+			ignoreBioFormatsVoxelSizeMetaData, positionConventionIsCenter,
+			locationReferenceFrameLength, voxSizeReferenceFrameLength, u,
+			locationPreTransform, locationPostTransform, voxSizePreTransform,
+			voxSizePostTransform, axesFlip);
+	}
 
-            if (!raiMap.containsKey(t)) {
-                raiMap.put(t, new ConcurrentHashMap<>());
-            }
+	@Override
+	public RandomAccessibleInterval<UnsignedByteType> createSource(int t,
+		int level)
+	{
+		try {
+			IFormatReader reader_init = readerPool.acquire();
+			reader_init.setSeries(this.cSerie);
 
-            reader_init.setResolution(level);
-            int sx = reader_init.getSizeX();
-            int sy = reader_init.getSizeY();
-            int sz = (!is3D)?1:reader_init.getSizeZ();
+			if (!raiMap.containsKey(t)) {
+				raiMap.put(t, new ConcurrentHashMap<>());
+			}
 
-            // Creates cached image factory of Type Byte
-            final ReadOnlyCachedCellImgFactory factory = new ReadOnlyCachedCellImgFactory( cacheOptions );
+			reader_init.setResolution(level);
+			int sx = reader_init.getSizeX();
+			int sy = reader_init.getSizeY();
+			int sz = (!is3D) ? 1 : reader_init.getSizeZ();
 
-            int xc = cellDimensions[0];
-            int yc = cellDimensions[1];
-            int zc = cellDimensions[2];
+			// Creates cached image factory of Type Byte
+			final ReadOnlyCachedCellImgFactory factory =
+				new ReadOnlyCachedCellImgFactory(cacheOptions);
 
-            final Img<UnsignedByteType> rai = factory.create(new long[]{sx, sy, sz}, new UnsignedByteType(),
-                    cell -> {
-                        try {
-                            IFormatReader reader = readerPool.acquire();
-                            reader.setSeries(this.cSerie);
-                            reader.setResolution(level);
-                            Cursor<UnsignedByteType> out = Views.flatIterable(cell).cursor();
-                            int minZ = (int) cell.min(2);
-                            int maxZ = Math.min(minZ + zc, reader.getSizeZ());
+			int xc = cellDimensions[0];
+			int yc = cellDimensions[1];
+			int zc = cellDimensions[2];
 
-                            for (int z=minZ;z<maxZ;z++) {
+			final Img<UnsignedByteType> rai = factory.create(new long[] { sx, sy,
+				sz }, new UnsignedByteType(), cell -> {
+					try {
+						IFormatReader reader = readerPool.acquire();
+						reader.setSeries(this.cSerie);
+						reader.setResolution(level);
+						Cursor<UnsignedByteType> out = Views.flatIterable(cell).cursor();
+						int minZ = (int) cell.min(2);
+						int maxZ = Math.min(minZ + zc, reader.getSizeZ());
 
-                                int minX = (int) cell.min(0);
-                                int maxX = Math.min(minX + xc, reader.getSizeX());
+						for (int z = minZ; z < maxZ; z++) {
 
-                                int minY = (int) cell.min(1);
-                                int maxY = Math.min(minY + yc, reader.getSizeY());
+							int minX = (int) cell.min(0);
+							int maxX = Math.min(minX + xc, reader.getSizeX());
 
-                                int w = maxX - minX;
-                                int h = maxY - minY;
+							int minY = (int) cell.min(1);
+							int maxY = Math.min(minY + yc, reader.getSizeY());
 
-                                byte[] bytes = reader.openBytes(switchZandC ? reader.getIndex(cChannel, z, t) : reader.getIndex(z, cChannel, t), minX, minY, w, h);
+							int w = maxX - minX;
+							int h = maxY - minY;
 
-                                int idxPx = 0;
+							byte[] bytes = reader.openBytes(switchZandC ? reader.getIndex(
+								cChannel, z, t) : reader.getIndex(z, cChannel, t), minX, minY,
+								w, h);
 
-                                int totBytes = (w * h);
-                                while ((out.hasNext()) && (idxPx < totBytes)) {
-                                    out.next().set(bytes[idxPx]);
-                                    idxPx++;
-                                }
-                            }
-                            readerPool.recycle(reader);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    });
+							int idxPx = 0;
 
-            raiMap.get(t).put(level, rai);
-            readerPool.recycle(reader_init);
-            return raiMap.get(t).get(level);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
+							int totBytes = (w * h);
+							while ((out.hasNext()) && (idxPx < totBytes)) {
+								out.next().set(bytes[idxPx]);
+								idxPx++;
+							}
+						}
+						readerPool.recycle(reader);
+					}
+					catch (Exception e) {
+						e.printStackTrace();
+					}
+				});
 
-    @Override
-    public UnsignedByteType getType() {
-        return new UnsignedByteType();
-    }
+			raiMap.get(t).put(level, rai);
+			readerPool.recycle(reader_init);
+			return raiMap.get(t).get(level);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	@Override
+	public UnsignedByteType getType() {
+		return new UnsignedByteType();
+	}
 }
