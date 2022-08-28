@@ -31,33 +31,32 @@
  * #L%
  */
 
-package ch.epfl.biop.bdv.bioformats.bioformatssource;
+package ch.epfl.biop.bdv.bioformats.imageloader;
 
 import loci.formats.IFormatReader;
-import loci.formats.in.DynamicMetadataOptions;
-import loci.formats.in.ZeissCZIReader;
 
-public class BioFormatsBdvOpenerFix {
+import java.util.function.Supplier;
 
-	static public BioFormatsBdvOpener fixNikonND2(BioFormatsBdvOpener opener) {
-		return opener.centerPositionConvention().flipPositionX().flipPositionY();
-	}
+/**
+ * Created with IntelliJ IDEA. User: dbtsai Date: 2/24/13 Time: 1:21 PM
+ */
 
-	public static BioFormatsBdvOpener fixLif(
-		BioFormatsBdvOpener bioFormatsBdvOpener)
+public class ReaderPool extends ResourcePool<IFormatReader> {
+
+
+	final Supplier<IFormatReader> readerSupplier;
+
+	public ReaderPool(int size, Boolean dynamicCreation,
+		Supplier<IFormatReader> readerSupplier)
 	{
-		return bioFormatsBdvOpener.centerPositionConvention();
+		super(size, dynamicCreation);
+		createPool();
+		this.readerSupplier = readerSupplier;
 	}
 
-	/*
-	public static BioFormatsBdvOpener fixCzi(BioFormatsBdvOpener bioFormatsBdvOpener) {
-	    return bioFormatsBdvOpener.addReaderModifier(BioFormatsBdvOpenerFix::fixCziReader);
+	@Override
+	public IFormatReader createObject() {
+		return readerSupplier.get();
 	}
-	
-	public static void fixCziReader(IFormatReader reader) {
-	    DynamicMetadataOptions m = new DynamicMetadataOptions();
-	    m.setBoolean(ZeissCZIReader.ALLOW_AUTOSTITCHING_KEY, Boolean.FALSE);
-	    //m.setBoolean(ZeissCZIReader.RELATIVE_POSITIONS_KEY, Boolean.TRUE);
-	    reader.setMetadataOptions(m);
-	}*/
+
 }

@@ -38,13 +38,13 @@ import ch.epfl.biop.bdv.bioformats.export.ometiff.OMETiffPyramidizerExporter;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-import org.scijava.task.Task;
 import org.scijava.task.TaskService;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
+@SuppressWarnings({"Unused","CanBeFinal"})
 @Plugin(type = Command.class,
 	menuPath = "Plugins>BigDataViewer-Playground>Sources>Export>Export Sources To OME Tiff (build pyramid)",
 	description = "Saves Bdv sources as a multi-channel OME-Tiff file, with multi-resolution levels recomputed " +

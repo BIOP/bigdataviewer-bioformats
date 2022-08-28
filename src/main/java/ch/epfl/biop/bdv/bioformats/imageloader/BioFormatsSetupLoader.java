@@ -34,79 +34,95 @@
 package ch.epfl.biop.bdv.bioformats.imageloader;
 
 import bdv.AbstractViewerSetupImgLoader;
-import bdv.viewer.Source;
-import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
-import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
-import ch.epfl.biop.bdv.bioformats.bioformatssource.ReaderPool;
+import bdv.img.cache.CacheArrayLoader;
+import bdv.img.cache.VolatileGlobalCellCache;
+import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
+import loci.formats.IFormatReader;
+import loci.formats.meta.IMetadata;
 import mpicbg.spim.data.generic.sequence.ImgLoaderHint;
 import mpicbg.spim.data.sequence.MultiResolutionSetupImgLoader;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.*;
+import net.imglib2.cache.volatiles.CacheHints;
+import net.imglib2.cache.volatiles.LoadingStrategy;
 import net.imglib2.converter.Converter;
 import net.imglib2.converter.Converters;
+import net.imglib2.img.cell.CellGrid;
 import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.integer.AbstractIntegerType;
+import net.imglib2.type.numeric.integer.IntType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import ome.units.quantity.Length;
+import ome.units.unit.Unit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
-public class BioFormatsSetupLoader<T extends NumericType<T>, V extends Volatile<T> & NumericType<V>>
+public class BioFormatsSetupLoader<T extends NumericType<T> & NativeType<T>, V extends Volatile<T> & NumericType<V> & NativeType<V>, A>
 	extends AbstractViewerSetupImgLoader<T, V> implements
 	MultiResolutionSetupImgLoader<T>
 {
 
-	public Source<T> concreteSource;
 
-	public Source<V> volatileSource;
+	private static final Logger logger = LoggerFactory.getLogger(
+		BioFormatsSetupLoader.class);
 
-	int[] cellDimensions;
-
-	Function<RandomAccessibleInterval<T>, RandomAccessibleInterval<FloatType>> cvtRaiToFloatRai;
+	final Function<RandomAccessibleInterval<T>, RandomAccessibleInterval<FloatType>> cvtRaiToFloatRai;
 
 	final Converter<T, FloatType> cvt;
 
-	Consumer<String> errlog = s -> System.err.println(
-		BioFormatsSetupLoader.class + " error:" + s);
-
-	public ReaderPool getReaderPool() {
-		return ((BioFormatsBdvSource) concreteSource).getReaderPool();
-	}
-
 	final BioFormatsBdvOpener opener;
 
-	public BioFormatsBdvOpener getOpener() {
-		return opener;
-	}
+	final private ReaderPool readerPool;
 
-	final public int iSerie, iChannel;
+	final int iSerie, iChannel;
 
+	final Supplier<VolatileGlobalCellCache> cacheSupplier;
+
+	final int[] cellDimensions;
+
+	final int numberOfTimePoints;
+
+	final boolean switchZandC;
+
+	final Unit<Length> targetUnit;
+
+	final Dimensions[] dimensions;
+
+	final int numMipmapLevels;
+
+	final VoxelDimensions voxelsDimensions;
+
+	final double[][] mmResolutions;
+
+	final CacheArrayLoader<A> loader;
+
+	final int setup;
+
+	@SuppressWarnings("unchecked")
 	public BioFormatsSetupLoader(BioFormatsBdvOpener opener, int sourceIndex,
-		int channelIndex, T t, V v)
+								 int channelIndex, int setup, T t, V v,
+								 Supplier<VolatileGlobalCellCache> cacheSupplier) throws Exception
 	{
 		super(t, v);
-
+		this.setup = setup;
+		this.cacheSupplier = cacheSupplier;
 		this.opener = opener;
+		this.readerPool = opener.getReaderPool();
 		iSerie = sourceIndex;
 		iChannel = channelIndex;
 
-		Map<String, Source> sources = opener.getConcreteAndVolatileSources(
-			sourceIndex, channelIndex);
-
-		concreteSource = (Source<T>) sources.get(BioFormatsBdvSource.CONCRETE);
-		volatileSource = (Source<V>) sources.get(BioFormatsBdvSource.VOLATILE);
-
-		cellDimensions = ((BioFormatsBdvSource) concreteSource).cellDimensions;
-
 		if (t instanceof FloatType) {
 			cvt = null;
-			cvtRaiToFloatRai = rai -> (RandomAccessibleInterval<FloatType>) rai; // Nothing
-																																						// to
-																																						// be
-																																						// done
+			cvtRaiToFloatRai = null; // rai -> (RandomAccessibleInterval<FloatType>)
+																// ((Object) rai); // Nothing to be done
 		}
 		else if (t instanceof ARGBType) {
 			// Average of RGB value
@@ -127,18 +143,136 @@ public class BioFormatsSetupLoader<T extends NumericType<T>, V extends Volatile<
 		else {
 			cvt = null;
 			cvtRaiToFloatRai = e -> {
-				errlog.accept("Conversion of " + t.getClass() +
+				logger.error("Conversion of " + t.getClass() +
 					" to FloatType unsupported.");
 				return null;
 			};
 		}
+
+		this.targetUnit = opener.u;
+		this.switchZandC = opener.swZC;
+
+		boolean isLittleEndian;
+
+		IFormatReader reader = null;
+		try {
+			reader = readerPool.acquire();
+			reader.setSeries(iSerie);
+			numMipmapLevels = reader.getResolutionCount();
+			reader.setResolution(0);
+			isLittleEndian = reader.isLittleEndian();
+
+			// MetaData
+			final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
+
+			boolean is3D;
+
+			if (omeMeta.getPixelsSizeZ(iSerie).getNumberValue().intValue() > 1) {
+				is3D = true;
+			}
+			else {
+				is3D = false;
+			}
+
+			numberOfTimePoints = reader.getSizeT();
+			cellDimensions = new int[] { opener.useBioFormatsXYBlockSize ? reader
+				.getOptimalTileWidth() : (int) opener.cacheBlockSize.dimension(0),
+				opener.useBioFormatsXYBlockSize ? reader.getOptimalTileHeight()
+					: (int) opener.cacheBlockSize.dimension(1), (!is3D) ? 1
+						: (int) opener.cacheBlockSize.dimension(2) };
+
+			voxelsDimensions = BioFormatsMetaDataHelper.getSeriesVoxelDimensions(
+				omeMeta, iSerie, opener.u, opener.voxSizeReferenceFrameLength);
+
+			dimensions = new Dimensions[numMipmapLevels];
+			for (int level = 0; level < numMipmapLevels; level++) {
+				reader.setResolution(level);
+				dimensions[level] = getDimensions(reader.getSizeX(), reader.getSizeY(),
+					(!is3D) ? 1 : reader.getSizeZ());
+			}
+
+			// Needs to compute mipmap resolutions... pfou
+			mmResolutions = new double[numMipmapLevels][3];
+			mmResolutions[0][0] = 1;
+			mmResolutions[0][1] = 1;
+			mmResolutions[0][2] = 1;
+
+			if (reader.getFormat().equals("CellSens VSI")) { // Fix vsi issue see
+																												// https://forum.image.sc/t/qupath-omero-weird-pyramid-levels/65484
+				for (int iLevel = 1; iLevel < numMipmapLevels; iLevel++) {
+					double downscalingFactor = Math.pow(2, iLevel);
+					mmResolutions[iLevel][0] = downscalingFactor;
+					mmResolutions[iLevel][1] = downscalingFactor;
+					mmResolutions[iLevel][2] = 1;
+				}
+			}
+			else {
+				int[] srcL0dims = new int[] { (int) dimensions[0].dimension(0),
+					(int) dimensions[0].dimension(1), (int) dimensions[0].dimension(2) };
+				for (int iLevel = 1; iLevel < numMipmapLevels; iLevel++) {
+					int[] srcLidims = new int[] { (int) dimensions[iLevel].dimension(0),
+						(int) dimensions[iLevel].dimension(1), (int) dimensions[iLevel]
+							.dimension(2) };
+					mmResolutions[iLevel][0] = (double) srcL0dims[0] /
+						(double) srcLidims[0];
+					mmResolutions[iLevel][1] = (double) srcL0dims[1] /
+						(double) srcLidims[1];
+					mmResolutions[iLevel][2] = (double) srcL0dims[2] /
+						(double) srcLidims[2];
+				}
+			}
+
+		}
+		finally {
+			readerPool.recycle(reader);
+		}
+		if (t instanceof UnsignedByteType) {
+			loader =
+				(CacheArrayLoader<A>) new BioFormatsArrayLoaders.BioFormatsUnsignedByteArrayLoader(
+					readerPool, iSerie, iChannel, switchZandC);
+		}
+		else if (t instanceof UnsignedShortType) {
+			loader =
+				(CacheArrayLoader<A>) new BioFormatsArrayLoaders.BioFormatsUnsignedShortArrayLoader(
+					readerPool, iSerie, iChannel, switchZandC, isLittleEndian);
+		}
+		else if (t instanceof FloatType) {
+			loader =
+				(CacheArrayLoader<A>) new BioFormatsArrayLoaders.BioFormatsFloatArrayLoader(
+					readerPool, iSerie, iChannel, switchZandC, isLittleEndian);
+		}
+		else if (t instanceof IntType) {
+			loader =
+				(CacheArrayLoader<A>) new BioFormatsArrayLoaders.BioFormatsIntArrayLoader(
+					readerPool, iSerie, iChannel, switchZandC, isLittleEndian);
+		}
+		else if (t instanceof ARGBType) {
+			loader =
+				(CacheArrayLoader<A>) new BioFormatsArrayLoaders.BioFormatsRGBArrayLoader(
+					readerPool, iSerie, iChannel, switchZandC);
+		}
+		else {
+			throw new UnsupportedOperationException("Pixel type " + t.getClass()
+				.getName() + " unsupported in " + BioFormatsSetupLoader.class
+					.getName());
+		}
 	}
 
-	@Override
-	public RandomAccessibleInterval<V> getVolatileImage(int timepointId,
-		int level, ImgLoaderHint... hints)
-	{
-		return volatileSource.getSource(timepointId, level);
+	static Dimensions getDimensions(long sizeX, long sizeY, long sizeZ) {
+		return new Dimensions() {
+
+			@Override
+			public long dimension(int d) {
+				if (d == 0) return sizeX;
+				if (d == 1) return sizeY;
+				return sizeZ;
+			}
+
+			@Override
+			public int numDimensions() {
+				return 3;
+			}
+		};
 	}
 
 	@Override
@@ -150,64 +284,54 @@ public class BioFormatsSetupLoader<T extends NumericType<T>, V extends Volatile<
 
 	@Override
 	public Dimensions getImageSize(int timepointId, int level) {
-		return new Dimensions() {
-
-			@Override
-			public void dimensions(long[] dimensions) {
-				concreteSource.getSource(timepointId, level).dimensions(dimensions);
-			}
-
-			@Override
-			public long dimension(int d) {
-				return concreteSource.getSource(timepointId, level).dimension(d);
-			}
-
-			@Override
-			public int numDimensions() {
-				return concreteSource.getSource(timepointId, level).numDimensions();
-			}
-		};
+		return dimensions[level];
 	}
 
 	@Override
 	public RandomAccessibleInterval<T> getImage(int timepointId, int level,
 		ImgLoaderHint... hints)
 	{
-		return concreteSource.getSource(timepointId, level);
+		final long[] dims = dimensions[level].dimensionsAsLongArray();
+		final int[] cellDimensions = this.cellDimensions;
+		final CellGrid grid = new CellGrid(dims, cellDimensions);
+
+		final int priority = this.numMipmapLevels - level;
+		final CacheHints cacheHints = new CacheHints(LoadingStrategy.BLOCKING,
+			priority, false);
+
+		return cacheSupplier.get().createImg(grid, timepointId, setup, level,
+			cacheHints, loader, type);
+	}
+
+	@Override
+	public RandomAccessibleInterval<V> getVolatileImage(int timepointId,
+		int level, ImgLoaderHint... hints)
+	{
+		final long[] dims = dimensions[level].dimensionsAsLongArray();
+		final int[] cellDimensions = this.cellDimensions;
+		final CellGrid grid = new CellGrid(dims, cellDimensions);
+
+		final int priority = this.numMipmapLevels - level;
+		final CacheHints cacheHints = new CacheHints(LoadingStrategy.BUDGETED,
+			priority, false);
+
+		return cacheSupplier.get().createImg(grid, timepointId, setup, level,
+			cacheHints, loader, volatileType);
 	}
 
 	@Override
 	public double[][] getMipmapResolutions() {
-		// Needs to compute mipmap resolutions... pfou
-		int numMipmapLevels = concreteSource.getNumMipmapLevels();
-		double[][] mmResolutions = new double[numMipmapLevels][3];
-		mmResolutions[0][0] = 1;
-		mmResolutions[0][1] = 1;
-		mmResolutions[0][2] = 1;
-
-		RandomAccessibleInterval srcL0 = concreteSource.getSource(0, 0);
-		for (int iLevel = 1; iLevel < numMipmapLevels; iLevel++) {
-			RandomAccessibleInterval srcLi = concreteSource.getSource(0, iLevel);
-			mmResolutions[iLevel][0] = (double) srcL0.dimension(0) / (double) srcLi
-				.dimension(0);
-			mmResolutions[iLevel][1] = (double) srcL0.dimension(1) / (double) srcLi
-				.dimension(1);
-			mmResolutions[iLevel][2] = (double) srcL0.dimension(2) / (double) srcLi
-				.dimension(2);
-		}
 		return mmResolutions;
 	}
 
 	@Override
 	public AffineTransform3D[] getMipmapTransforms() {
-		AffineTransform3D[] ats = new AffineTransform3D[concreteSource
-			.getNumMipmapLevels()];
+		AffineTransform3D[] ats = new AffineTransform3D[numMipmapLevels];
 
-		for (int iLevel = 0; iLevel < concreteSource
-			.getNumMipmapLevels(); iLevel++)
-		{
+		for (int iLevel = 0; iLevel < numMipmapLevels; iLevel++) {
 			AffineTransform3D at = new AffineTransform3D();
-			concreteSource.getSourceTransform(0, iLevel, at);
+			at.scale(mmResolutions[iLevel][0], mmResolutions[iLevel][1],
+				mmResolutions[iLevel][2]);
 			ats[iLevel] = at;
 		}
 
@@ -216,7 +340,7 @@ public class BioFormatsSetupLoader<T extends NumericType<T>, V extends Volatile<
 
 	@Override
 	public int numMipmapLevels() {
-		return concreteSource.getNumMipmapLevels();
+		return numMipmapLevels;
 	}
 
 	@Override
@@ -233,7 +357,15 @@ public class BioFormatsSetupLoader<T extends NumericType<T>, V extends Volatile<
 
 	@Override
 	public VoxelDimensions getVoxelSize(int timepointId) {
-		return concreteSource.getVoxelDimensions();
+		return voxelsDimensions;
+	}
+
+	public ReaderPool getReaderPool() {
+		return readerPool;
+	}
+
+	public BioFormatsBdvOpener getOpener() {
+		return opener;
 	}
 
 }

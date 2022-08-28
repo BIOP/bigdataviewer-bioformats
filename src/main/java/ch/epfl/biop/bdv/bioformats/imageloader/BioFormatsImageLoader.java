@@ -36,48 +36,55 @@ package ch.epfl.biop.bdv.bioformats.imageloader;
 import bdv.ViewerImgLoader;
 import bdv.cache.CacheControl;
 import bdv.img.cache.VolatileGlobalCellCache;
-import bdv.util.volatiles.SharedQueue;
-import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
-import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
-import loci.formats.*;
+import bdv.cache.SharedQueue;
+import loci.formats.IFormatReader;
 import loci.formats.meta.IMetadata;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.sequence.*;
 import net.imglib2.Volatile;
 import net.imglib2.type.Type;
+import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.NumericType;
+import net.imglib2.type.numeric.integer.IntType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.type.volatiles.VolatileARGBType;
+import net.imglib2.type.volatiles.VolatileFloatType;
+import net.imglib2.type.volatiles.VolatileIntType;
+import net.imglib2.type.volatiles.VolatileUnsignedByteType;
+import net.imglib2.type.volatiles.VolatileUnsignedShortType;
+import ome.xml.model.enums.PixelType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 public class BioFormatsImageLoader implements ViewerImgLoader,
-	MultiResolutionImgLoader
+	MultiResolutionImgLoader, Closeable
 {
+	final protected static Logger logger = LoggerFactory.getLogger(
+			BioFormatsBdvOpener.class);
 
-	public List<BioFormatsBdvOpener> openers;
+	final public List<BioFormatsBdvOpener> openers;
 
 	final AbstractSequenceDescription<?, ?, ?> sequenceDescription;
 
-	protected static Logger logger = LoggerFactory.getLogger(
-		BioFormatsBdvOpener.class);
-
-	public Consumer<String> log = logger::debug;
-
-	Map<Integer, FileSerieChannel> viewSetupToBFFileSerieChannel =
+	final Map<Integer, FileSerieChannel> viewSetupToBFFileSerieChannel =
 		new HashMap<>();
 
 	int viewSetupCounter = 0;
 
-	Map<Integer, Map<Integer, NumericType>> tTypeGetter = new HashMap<>();
+	final Map<Integer, Map<Integer, NumericType>> tTypeGetter = new HashMap<>();
 
-	Map<Integer, Map<Integer, Volatile>> vTypeGetter = new HashMap<>();
+	final Map<Integer, Map<Integer, Volatile>> vTypeGetter = new HashMap<>();
 
-	HashMap<Integer, BioFormatsSetupLoader> imgLoaders = new HashMap<>();
+	final HashMap<Integer, BioFormatsSetupLoader> imgLoaders = new HashMap<>();
 
 	protected VolatileGlobalCellCache cache;
 
@@ -104,14 +111,14 @@ public class BioFormatsImageLoader implements ViewerImgLoader,
 				try {
 					BioFormatsBdvOpener opener = openers.get(iF);
 
-					log.accept("Data location = " + opener.getDataLocation());
+					logger.debug("Data location = " + opener.getDataLocation());
 
 					IFormatReader memo = opener.getNewReader();
 
 					tTypeGetter.put(iF, new HashMap<>());
 					vTypeGetter.put(iF, new HashMap<>());
 
-					log.accept("Number of Series : " + memo.getSeriesCount());
+					logger.debug("Number of Series : " + memo.getSeriesCount());
 					IMetadata omeMeta = (IMetadata) memo.getMetadataStore();
 					memo.setMetadataStore(omeMeta);
 					// -------------------------- SETUPS For each Series : one per
@@ -126,10 +133,10 @@ public class BioFormatsImageLoader implements ViewerImgLoader,
 						// One serie = one Tile
 						// ---------- Serie >
 						// ---------- Serie > Timepoints
-						log.accept("\t Serie " + iSerie + " Number of timesteps = " +
+						logger.debug("\t Serie " + iSerie + " Number of timesteps = " +
 							omeMeta.getPixelsSizeT(iSerie).getNumberValue().intValue());
 						// ---------- Serie > Channels
-						log.accept("\t Serie " + iSerie + " Number of channels = " + omeMeta
+						logger.debug("\t Serie " + iSerie + " Number of channels = " + omeMeta
 							.getChannelCount(iSerie));
 						// Properties of the serie
 						IntStream channels = IntStream.range(0, omeMeta.getChannelCount(
@@ -140,10 +147,9 @@ public class BioFormatsImageLoader implements ViewerImgLoader,
 							viewSetupToBFFileSerieChannel.put(viewSetupCounter, fsc);
 							viewSetupCounter++;
 						});
-						Type t = BioFormatsBdvSource.getBioformatsBdvSourceType(memo,
-							iSerie);
+						Type t = getBioformatsBdvSourceType(memo, iSerie);
 						tTypeGetter.get(iF).put(iSerie, (NumericType) t);
-						Volatile v = BioFormatsBdvSource.getVolatileOf((NumericType) t);
+						Volatile v = getVolatileOf((NumericType) t);
 						vTypeGetter.get(iF).put(iSerie, v);
 					});
 					memo.close();
@@ -153,28 +159,31 @@ public class BioFormatsImageLoader implements ViewerImgLoader,
 				}
 			});
 		}
-
-		// NOT CORRECTLY IMPLEMENTED YET
-		// final BlockingFetchQueues<Callable<?>> queue = new
-		// BlockingFetchQueues<>(1,1);
 		cache = new VolatileGlobalCellCache(sq);
 	}
 
 	public BioFormatsSetupLoader getSetupImgLoader(int setupId) {
-		if (imgLoaders.containsKey(setupId)) {
-			return imgLoaders.get(setupId);
+		try {
+			if (imgLoaders.containsKey(setupId)) {
+				return imgLoaders.get(setupId);
+			}
+			else {
+				int iF = viewSetupToBFFileSerieChannel.get(setupId).iFile;
+				int iS = viewSetupToBFFileSerieChannel.get(setupId).iSerie;
+				int iC = viewSetupToBFFileSerieChannel.get(setupId).iChannel;
+				logger.debug("loading file number = " + iF + " setupId = " + setupId);
+
+				BioFormatsSetupLoader imgL = new BioFormatsSetupLoader(openers.get(iF),
+					iS, iC, setupId, tTypeGetter.get(iF).get(iS), vTypeGetter.get(iF).get(
+						iS), this::getCacheControl);
+
+				imgLoaders.put(setupId, imgL);
+				return imgL;
+			}
 		}
-		else {
-			int iF = viewSetupToBFFileSerieChannel.get(setupId).iFile;
-			int iS = viewSetupToBFFileSerieChannel.get(setupId).iSerie;
-			int iC = viewSetupToBFFileSerieChannel.get(setupId).iChannel;
-			log.accept("loading file number = " + iF + " setupId = " + setupId);
-
-			BioFormatsSetupLoader imgL = new BioFormatsSetupLoader(openers.get(iF),
-				iS, iC, tTypeGetter.get(iF).get(iS), vTypeGetter.get(iF).get(iS));
-
-			imgLoaders.put(setupId, imgL);
-			return imgL;
+		catch (Exception e) {
+			throw new RuntimeException("Error in setup loader creation: " + e
+				.getMessage());
 		}
 	}
 
@@ -187,11 +196,67 @@ public class BioFormatsImageLoader implements ViewerImgLoader,
 		return sq;
 	}
 
+	@Override
 	public void close() {
 		synchronized (this) {
+			openers.forEach(opener -> {
+				opener.getReaderPool().shutDown(reader -> {
+					try {
+						reader.close();
+					}
+					catch (IOException e) {
+						e.printStackTrace();
+					}
+				});
+			});
 			cache.clearCache();
 			sq.shutdown();
 		}
+	}
+
+	public static Type getBioformatsBdvSourceType(IFormatReader reader,
+		int image_index) throws UnsupportedOperationException
+	{
+		final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
+		reader.setSeries(image_index);
+		if (reader.isRGB()) {
+			if (omeMeta.getPixelsType(image_index) == PixelType.UINT8) {
+				return new ARGBType();
+			}
+			else {
+				throw new UnsupportedOperationException("Unhandled 16 bits RGB images");
+			}
+		}
+		else {
+			PixelType pt = omeMeta.getPixelsType(image_index);
+			if (pt == PixelType.UINT8) {
+				return new UnsignedByteType();
+			}
+			if (pt == PixelType.UINT16) {
+				return new UnsignedShortType();
+			}
+			if (pt == PixelType.INT32) {
+				return new IntType();
+			}
+			if (pt == PixelType.FLOAT) {
+				return new FloatType();
+			}
+		}
+		throw new UnsupportedOperationException("Unhandled pixel type for serie " +
+			image_index + ": " + omeMeta.getPixelsType(image_index));
+	}
+
+	public static Volatile getVolatileOf(NumericType t) {
+		if (t instanceof UnsignedShortType) return new VolatileUnsignedShortType();
+
+		if (t instanceof IntType) return new VolatileIntType();
+
+		if (t instanceof UnsignedByteType) return new VolatileUnsignedByteType();
+
+		if (t instanceof FloatType) return new VolatileFloatType();
+
+		if (t instanceof ARGBType) return new VolatileARGBType();
+		return null;
 	}
 
 }

@@ -33,7 +33,7 @@
 
 package ch.epfl.biop.bdv.bioformats.command;
 
-import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
+import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.export.spimdata.BioFormatsConvertFilesToSpimData;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import org.apache.commons.lang.time.StopWatch;
@@ -48,6 +48,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings({"Unused","CanBeFinal"})
 @Plugin(type = Command.class,
 	menuPath = "Plugins>BigDataViewer-Playground>BDVDataset>Open [BioFormats Bdv Bridge]",
 	description = "Support bioformats multiresolution api. Attempts to set colors based " +

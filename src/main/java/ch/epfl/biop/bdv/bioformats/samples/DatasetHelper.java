@@ -47,7 +47,7 @@ public class DatasetHelper {
 
 	// https://downloads.openmicroscopy.org/images/
 
-	public static File cachedSampleDir = new File(System.getProperty("user.home"),
+	final public static File cachedSampleDir = new File(System.getProperty("user.home"),
 		"CachedSamples");
 
 	final public static String JPG_RGB =
@@ -88,6 +88,7 @@ public class DatasetHelper {
 		}
 		catch (Exception e) {
 
+			e.printStackTrace();
 		}
 		return getDataset(VSI).getAbsolutePath();
 	}
@@ -134,6 +135,7 @@ public class DatasetHelper {
 		}
 		return urlToFile(url);
 	}
+
 
 	// https://stackoverflow.com/questions/12800588/how-to-calculate-a-file-size-from-url-in-java
 	private static int getFileSize(URL url) {

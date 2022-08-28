@@ -33,7 +33,7 @@
 
 package ch.epfl.biop.bdv.bioformats.command;
 
-import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
+import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.export.spimdata.BioFormatsConvertFilesToSpimData;
 import ch.epfl.biop.bdv.bioformats.samples.DatasetHelper;
 import mpicbg.spim.data.generic.AbstractSpimData;
@@ -48,6 +48,7 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 
+@SuppressWarnings({"Unused","CanBeFinal"})
 @Plugin(type = Command.class,
 	menuPath = "Plugins>BigDataViewer-Playground>BDVDataset>Open sample dataset",
 	label = "Open sample datasets",

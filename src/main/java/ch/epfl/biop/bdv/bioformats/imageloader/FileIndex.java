@@ -46,24 +46,6 @@ public class FileIndex extends NamedEntity implements Comparable<FileIndex> {
 	}
 
 	/**
-	 * Get the unique id of this location.
-	 */
-	@Override
-	public int getId() {
-		return super.getId();
-	}
-
-	/**
-	 * Get the name of this tile. The name is used for example to replace it in
-	 * filenames when opening individual 3d-stacks (e.g.
-	 * SPIM_TL20_Tile1_Angle45.tif)
-	 */
-	@Override
-	public String getName() {
-		return super.getName();
-	}
-
-	/**
 	 * Set the name of this tile.
 	 */
 	@Override

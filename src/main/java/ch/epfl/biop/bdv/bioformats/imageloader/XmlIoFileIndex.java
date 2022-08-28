@@ -48,13 +48,11 @@ public class XmlIoFileIndex extends XmlIoNamedEntity<FileIndex> {
 
 	@Override
 	public Element toXml(final FileIndex fi) {
-		final Element elem = super.toXml(fi);
-		return elem;
+		return super.toXml(fi);
 	}
 
 	@Override
 	public FileIndex fromXml(final Element elem) throws SpimDataException {
-		final FileIndex tile = super.fromXml(elem);
-		return tile;
+		return super.fromXml(elem);
 	}
 }

@@ -46,11 +46,13 @@
  * limitations under the License.
  */
 
-package ch.epfl.biop.bdv.bioformats.bioformatssource;
+package ch.epfl.biop.bdv.bioformats.imageloader;
 
+import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 
 /**
  * https://www.dbtsai.com/blog/2013/java-concurrent-dynamic-object-pool-for-non-thread-safe-objects-using-blocking-queue/
@@ -62,7 +64,7 @@ public abstract class ResourcePool<Resource> {
 	private final BlockingQueue<Resource> pool;
 	private final ReentrantLock lock = new ReentrantLock();
 	private int createdObjects = 0;
-	private int size;
+	final private int size;
 
 	protected ResourcePool(int size) {
 		this(size, false);
@@ -78,6 +80,7 @@ public abstract class ResourcePool<Resource> {
 	}
 
 	public Resource acquire() throws Exception {
+		if (isClosed) throw new IllegalStateException("The pool has been closed");
 		if (!lock.isLocked()) {
 			if (lock.tryLock()) {
 				try {
@@ -99,6 +102,7 @@ public abstract class ResourcePool<Resource> {
 	}
 
 	public void createPool() {
+		if (isClosed) throw new IllegalStateException("The pool has been closed");
 		if (lock.isLocked()) {
 			for (int i = 0; i < size; ++i) {
 				pool.add(createObject());
@@ -108,4 +112,14 @@ public abstract class ResourcePool<Resource> {
 	}
 
 	protected abstract Resource createObject();
+
+	boolean isClosed = false;
+
+	public void shutDown(Consumer<Resource> closer) {
+		isClosed = true;
+		ArrayList<Resource> resources = new ArrayList<>(size);
+		pool.drainTo(resources);
+		resources.forEach(closer::accept);
+	}
+
 }

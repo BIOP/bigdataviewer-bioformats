@@ -34,7 +34,7 @@
 package ch.epfl.biop.bdv.bioformats.command;
 
 import bdv.util.BdvFunctions;
-import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
+import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.export.spimdata.BioFormatsConvertFilesToSpimData;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import org.scijava.command.Command;
@@ -45,6 +45,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings({"Unused","CanBeFinal"})
 @Plugin(type = Command.class,
 	menuPath = "Plugins>BigDataViewer>Bio-Formats>Open File with Bio-Formats",
 	description = "Support bioformats multiresolution api. Attempts to set colors based " +

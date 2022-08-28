@@ -35,17 +35,15 @@ package explore;
 
 import bdv.util.BdvFunctions;
 import bdv.util.BdvStackSource;
-import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
+import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsBdvOpener;
 import ch.epfl.biop.bdv.bioformats.export.spimdata.BioFormatsConvertFilesToSpimData;
 import ch.epfl.biop.bdv.bioformats.samples.DatasetHelper;
-import loci.common.DebugTools;
 import mpicbg.spim.data.generic.AbstractSpimData;
 import mpicbg.spim.data.generic.sequence.BasicViewSetup;
 import net.imagej.ImageJ;
 import net.imglib2.type.numeric.ARGBType;
 import ome.units.UNITS;
 import ome.units.quantity.Length;
-import org.apache.log4j.BasicConfigurator;
 import spimdata.util.Displaysettings;
 
 import java.io.File;

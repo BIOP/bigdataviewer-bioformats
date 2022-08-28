@@ -31,19 +31,19 @@
  * #L%
  */
 
-package ch.epfl.biop.bdv.bioformats.bioformatssource;
+package ch.epfl.biop.bdv.bioformats.imageloader;
 
-import bdv.util.volatiles.SharedQueue;
-import bdv.viewer.Source;
+import bdv.cache.SharedQueue;
 import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
-import ch.epfl.biop.bdv.bioformats.export.spimdata.BioFormatsConvertFilesToSpimData;
-import loci.formats.*;
+import loci.formats.ChannelSeparator;
+import loci.formats.FormatException;
+import loci.formats.IFormatReader;
+import loci.formats.ImageReader;
+import loci.formats.Memoizer;
+import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
 import net.imglib2.FinalInterval;
-import net.imglib2.cache.img.DiskCachedCellImgOptions;
-import net.imglib2.cache.img.ReadOnlyCachedCellImgOptions;
 import net.imglib2.realtransform.AffineTransform3D;
-import net.imglib2.type.numeric.NumericType;
 import ome.units.UNITS;
 import ome.units.quantity.Length;
 import ome.units.unit.Unit;
@@ -54,15 +54,11 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class BioFormatsBdvOpener {
 
-	protected static Logger logger = LoggerFactory.getLogger(
+	final protected static Logger logger = LoggerFactory.getLogger(
 		BioFormatsBdvOpener.class);
 
 	transient protected Consumer<IFormatReader> readerModifier = (e) -> {};
@@ -197,6 +193,10 @@ public class BioFormatsBdvOpener {
 		return this;
 	}
 
+	public ReaderPool getReaderPool() {
+		return pool;
+	}
+
 	public BioFormatsBdvOpener queueOptions(int numFetcherThreads,
 		int numPriorities)
 	{
@@ -306,6 +306,7 @@ public class BioFormatsBdvOpener {
 		final IMetadata omeMetaOmeXml = MetadataTools.createOMEXMLMetadata();
 		memo.setMetadataStore(omeMetaOmeXml);
 
+		// TODO : fix CZI
 		// if (dataLocation.endsWith("czi"))
 		// BioFormatsBdvOpenerFix.fixCziReader(memo);
 
@@ -316,17 +317,16 @@ public class BioFormatsBdvOpener {
 			e.printStackTrace();
 			return null;
 		}
-		final IFormatReader reader = memo;
 
-		logger.info("Attempts to set opener settings for file format " + reader
+		logger.info("Attempts to set opener settings for file format " + memo
 			.getFormat() + "; data location = " + dataLocation);
 
 		// Adjustements here!
 
-		if (reader.getFormat().equals("Nikon ND2")) {
+		if (memo.getFormat().equals("Nikon ND2")) {
 			return BioFormatsBdvOpenerFix.fixNikonND2(this);
 		}
-		else if (reader.getFormat().equals("Leica Image File Format")) {
+		else if (memo.getFormat().equals("Leica Image File Format")) {
 			return BioFormatsBdvOpenerFix.fixLif(this);
 		}
 		/*else if (dataLocation.endsWith("czi")) {
@@ -352,7 +352,7 @@ public class BioFormatsBdvOpener {
 		return this;
 	}
 
-	public BioFormatsBdvOpener unit(Unit u) {
+	public BioFormatsBdvOpener unit(Unit<Length> u) {
 		this.u = u;
 		return this;
 	}
@@ -438,160 +438,14 @@ public class BioFormatsBdvOpener {
 		catch (IOException e) {
 			e.printStackTrace();
 		}
-		final IFormatReader readerIdx = memo;
-		return readerIdx;
-	}
-
-	public BioFormatsBdvSource getConcreteSource(int image_index,
-		int channel_index)
-	{
-		try {
-			// Huge performance issue with new reader when the memoization is large
-			// (typically the case for operetta data)
-			final IFormatReader readerIdx = pool.acquire();// getCachedReader();//getNewReader();
-
-			Class<? extends BioFormatsBdvSource> c = BioFormatsBdvSource
-				.getBioformatsBdvSourceClass(readerIdx, image_index);
-
-			AffineTransform3D positionPreTransform = null;
-			if (positionPreTransformMatrixArray != null) {
-				positionPreTransform = new AffineTransform3D();
-				positionPreTransform.set(positionPreTransformMatrixArray);
-			}
-
-			AffineTransform3D positionPostTransform = null;
-			if (positionPostTransformMatrixArray != null) {
-				positionPostTransform = new AffineTransform3D();
-				positionPostTransform.set(positionPostTransformMatrixArray);
-			}
-
-			AffineTransform3D voxSizePreTransform = null;
-			if (voxSizePreTransformMatrixArray != null) {
-				voxSizePreTransform = new AffineTransform3D();
-				voxSizePreTransform.set(voxSizePreTransformMatrixArray);
-			}
-
-			AffineTransform3D voxSizePostTransform = null;
-			if (voxSizePreTransformMatrixArray != null) {
-				voxSizePostTransform = new AffineTransform3D();
-				voxSizePostTransform.set(voxSizePostTransformMatrixArray);
-			}
-
-			ReadOnlyCachedCellImgOptions cacheOptions = ReadOnlyCachedCellImgOptions
-				.options();
-			if (isSoftRef) {
-				cacheOptions = cacheOptions.cacheType(
-					DiskCachedCellImgOptions.CacheType.SOFTREF);
-			}
-			else {
-				cacheOptions = cacheOptions.cacheType(
-					DiskCachedCellImgOptions.CacheType.BOUNDED).maxCacheSize(
-						maxCacheSize);
-			}
-
-			BioFormatsBdvSource bdvSrc = c.getConstructor(ReaderPool.class, int.class,
-				int.class, boolean.class, FinalInterval.class,
-				ReadOnlyCachedCellImgOptions.class, boolean.class, boolean.class,
-				boolean.class, boolean.class, Length.class, Length.class, Unit.class,
-				AffineTransform3D.class, // public positionPreTransform;
-				AffineTransform3D.class, // positionPostTransform;
-				AffineTransform3D.class, // public positionPreTransform;
-				AffineTransform3D.class, // positionPostTransform;
-				boolean[].class).newInstance(pool, image_index, channel_index, swZC,
-					cacheBlockSize, cacheOptions, useBioFormatsXYBlockSize,
-					positionIgnoreBioFormatsMetaData, voxSizeIgnoreBioFormatsMetaData,
-					positionIsImageCenter, positionReferenceFrameLength,
-					voxSizeReferenceFrameLength, u, positionPreTransform,
-					positionPostTransform, voxSizePreTransform, voxSizePostTransform,
-					axesOfImageFlip);
-
-			pool.recycle(readerIdx);
-			return bdvSrc;
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	public VolatileBdvSource getVolatileSource(int image_index,
-		int channel_index)
-	{
-		BioFormatsBdvSource concreteSource = this.getConcreteSource(image_index,
-			channel_index);
-		VolatileBdvSource volatileSource = new VolatileBdvSource(concreteSource,
-			BioFormatsBdvSource.getVolatileOf((NumericType) concreteSource.getType()),
-			cc);
-		return volatileSource;
-	}
-
-	public Map<String, Source> getConcreteAndVolatileSources(int image_index,
-		int channel_index)
-	{
-
-		BioFormatsBdvSource concreteSource = this.getConcreteSource(image_index,
-			channel_index);
-
-		VolatileBdvSource volatileSource = new VolatileBdvSource(concreteSource,
-			BioFormatsBdvSource.getVolatileOf((NumericType) concreteSource.getType()),
-			cc);
-
-		Map<String, Source> sources = new HashMap();
-		sources.put(BioFormatsBdvSource.CONCRETE, concreteSource);
-		sources.put(BioFormatsBdvSource.VOLATILE, volatileSource);
-		return sources;
-	}
-
-	public List<VolatileBdvSource> getVolatileSources(String codeSerieChannel) {
-		try {
-			IFormatReader reader = pool.acquire();
-			List<VolatileBdvSource> sources = BioFormatsMetaDataHelper
-				.getListOfSeriesAndChannels(reader, codeSerieChannel).stream().map(
-					sc -> sc.getRight().stream().map(ch -> this.getVolatileSource(sc
-						.getLeft(), ch)).collect(Collectors.toList())).collect(Collectors
-							.toList()).stream().flatMap(List::stream).collect(Collectors
-								.toList());
-			pool.recycle(reader);
-			return sources;
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	public List<VolatileBdvSource> getVolatileSources() {
-		return getVolatileSources("*.*");
-	}
-
-	public List<BioFormatsBdvSource> getConcreteSources() {
-		return getConcreteSources("*.*");
-	}
-
-	public List<BioFormatsBdvSource> getConcreteSources(String codeSerieChannel) {
-		try {
-			IFormatReader reader = pool.acquire();
-			List<BioFormatsBdvSource> sources = BioFormatsMetaDataHelper
-				.getListOfSeriesAndChannels(reader, codeSerieChannel).stream().map(
-					sc -> sc.getRight().stream().map(ch -> (BioFormatsBdvSource) this
-						.getConcreteSource(sc.getLeft(), ch)).collect(Collectors.toList()))
-				.collect(Collectors.toList()).stream().flatMap(List::stream).collect(
-					Collectors.toList());
-			pool.recycle(reader);
-			return sources;
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
+		return memo;
 	}
 
 	public static BioFormatsBdvOpener getOpener() {
-		BioFormatsBdvOpener opener = new BioFormatsBdvOpener()
-			.positionReferenceFrameLength(new Length(1, UNITS.MICROMETER)) // Compulsory
-			.voxSizeReferenceFrameLength(new Length(1, UNITS.MICROMETER)).millimeter()
-			.useCacheBlockSizeFromBioFormats(true);
-		return opener;
+		return new BioFormatsBdvOpener()
+				.positionReferenceFrameLength(new Length(1, UNITS.MICROMETER)) // Compulsory
+				.voxSizeReferenceFrameLength(new Length(1, UNITS.MICROMETER)).millimeter()
+				.useCacheBlockSizeFromBioFormats(true);
 	}
 
 }

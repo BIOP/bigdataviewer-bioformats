@@ -33,18 +33,12 @@
 
 package ch.epfl.biop.bdv.bioformats;
 
-import bdv.viewer.Source;
-import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvSource;
-import ch.epfl.biop.bdv.bioformats.bioformatssource.VolatileBdvSource;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;
 import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.Dimensions;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.numeric.ARGBType;
-import net.imglib2.type.numeric.NumericType;
-import net.imglib2.type.volatiles.VolatileARGBType;
-import net.imglib2.type.volatiles.VolatileNumericType;
 import ome.units.UNITS;
 import ome.units.quantity.Length;
 import ome.units.unit.Unit;
@@ -62,23 +56,18 @@ import org.slf4j.LoggerFactory;
 
 public class BioFormatsMetaDataHelper {
 
-	protected static Logger logger = LoggerFactory.getLogger(
+
+	final protected static Logger logger = LoggerFactory.getLogger(
 		BioFormatsMetaDataHelper.class);
-
-	// private static final Logger log = Logger.getLogger(
-	// BioFormatsMetaDataHelper.class.getName() );
-
-	// public static Consumer<String> log = (s) -> LOGGER.info(s);//(s) ->
-	// {};//System.out.println(BioFormatsMetaDataHelper.class.getName()+":"+s);
 
 	public static class BioformatsChannel {
 
-		int iSerie;
-		int iChannel;
+		final int iSerie;
+		final int iChannel;
 		int emissionWl = 1;
 		public String chName = "";
 		String pxType = "";
-		boolean isRGB;
+		final boolean isRGB;
 
 		public BioformatsChannel(IMetadata m, int iSerie, int iChannel,
 			boolean isRGB)
@@ -344,8 +333,7 @@ public class BioFormatsMetaDataHelper {
 		int iSerie, Unit u, Length voxSizeReferenceFrameLength)
 	{
 		// Always 3 to allow for big stitcher compatibility
-		// int numDimensions = 2 +
-		// (omeMeta.getPixelsSizeZ(iSerie).getNumberValue().intValue()>1?1:0);
+
 		int numDimensions = 3;
 		Length[] voxSize = getSeriesVoxelSizeAsLengths(omeMeta, iSerie);
 		double[] d = new double[3];
@@ -407,8 +395,7 @@ public class BioFormatsMetaDataHelper {
 
 	public static Dimensions getSeriesDimensions(IMetadata omeMeta, int iSerie) {
 		// Always set 3d to allow for Big Stitcher compatibility
-		// int numDimensions = 2 +
-		// (omeMeta.getPixelsSizeZ(iSerie).getNumberValue().intValue()>1?1:0);
+
 		int numDimensions = 3;
 
 		int sX = omeMeta.getPixelsSizeX(iSerie).getNumberValue().intValue();
@@ -423,7 +410,9 @@ public class BioFormatsMetaDataHelper {
 
 		dims[2] = sZ;
 
-		Dimensions dimensions = new Dimensions() {
+
+		@SuppressWarnings("UnnecessaryLocalVariable") Dimensions dimensions = new Dimensions() {
+
 
 			@Override
 			public void dimensions(long[] dimensions) {
@@ -449,7 +438,8 @@ public class BioFormatsMetaDataHelper {
 	public static ArrayList<Pair<Integer, ArrayList<Integer>>>
 		getListOfSeriesAndChannels(IFormatReader reader, String code)
 	{
-		ArrayList<Pair<Integer, ArrayList<Integer>>> listOfSources =
+		@SuppressWarnings("UnnecessaryLocalVariable") ArrayList<Pair<Integer, ArrayList<Integer>>> listOfSources =
+
 			commaSeparatedListToArrayOfArray(code, idxSeries -> (idxSeries >= 0)
 				? idxSeries : reader.getSeriesCount() + idxSeries, // apparently -1 is
 																														// necessary -> I
@@ -458,15 +448,19 @@ public class BioFormatsMetaDataHelper {
 				(idxSeries, idxChannel) -> (idxChannel >= 0) ? idxChannel
 					: ((IMetadata) reader.getMetadataStore()).getChannelCount(idxSeries) +
 						idxChannel);
-		/*System.out.println("Number of series: "+reader.getSeriesCount());
-		for (int i=0;i<reader.getSeriesCount();i++) {
-		    System.out.println("Number of channels series: "+i+" : "+((IMetadata)reader.getMetadataStore()).getChannelCount(i));
-		}*/
+
 		return listOfSources;
 	}
 
 	/**
 	 * BiFunction necessary to be able to find index of negative values
+<<<<<<< HEAD
+=======
+	 * @param expression to be parsed
+	 * @param fbounds description to do
+	 * @param f to do
+	 * @return to do
+>>>>>>> bdv-10.4.1
 	 */
 	static public ArrayList<Pair<Integer, ArrayList<Integer>>>
 		commaSeparatedListToArrayOfArray(String expression,
@@ -563,7 +557,11 @@ public class BioFormatsMetaDataHelper {
 	 * [1,2,5,6,7,10,11,12,14] Invalid format are ignored and an error message is
 	 * displayed
 	 *
+<<<<<<< HEAD
 	 * @param expression
+=======
+	 * @param expression expression to parse
+>>>>>>> bdv-10.4.1
 	 * @return list of indexes in ArrayList
 	 */
 	static public ArrayList<Integer> expressionToArray(String expression,
@@ -624,22 +622,6 @@ public class BioFormatsMetaDataHelper {
 		return arrayOfIndexes;
 	}
 
-	public static ARGBType getSourceColor(Source src) {
-		if (src instanceof BioFormatsBdvSource) {
-			return getSourceColor((BioFormatsBdvSource) src);
-		}
-		else if (src instanceof VolatileBdvSource) {
-			return getSourceColor((VolatileBdvSource) src);
-		}
-		else {
-			return null;
-		}
-	}
-
-	public static ARGBType getSourceColor(VolatileBdvSource src) {
-		return getSourceColor((BioFormatsBdvSource) src.source);
-	}
-
 	final static int[] loopR = { 1, 0, 0, 1, 1, 1, 0 };
 	final static int[] loopG = { 0, 1, 0, 1, 1, 0, 1 };
 	final static int[] loopB = { 0, 0, 1, 1, 0, 1, 1 };
@@ -675,75 +657,15 @@ public class BioFormatsMetaDataHelper {
 	}
 
 	/**
-	 * Looks into BioFormats metadata to find the color corresponding to the
-	 * source If source is RGB null is returned First attempt: from
-	 * IMetaData.getChannelColor Second attempt: from
-	 * IMetaData.getChannelEmissionWavelength
-	 * 
-	 * @param src Bdv Source
-	 * @return ARGBType instance containing a color code for the source
-	 */
-	public static ARGBType getSourceColor(BioFormatsBdvSource src) {
-		try {
-			// Get color based on emission wavelength
-			IFormatReader reader = src.getReaderPool().acquire();// .getReader();
-
-			// final IMetadata omeMetaIdxOmeXml =
-			// MetadataTools.createOMEXMLMetadata();
-			// reader.setMetadataStore(omeMetaIdxOmeXml);
-
-			final IMetadata omeMeta = (IMetadata) reader.getMetadataStore();
-
-			ARGBType color = new ARGBType(ARGBType.rgba(255, 255, 255, 255)); // default
-																																				// is
-																																				// white
-			if ((src.getType() instanceof ARGBType) || (src
-				.getType() instanceof VolatileARGBType))
-			{
-
-			}
-			else {
-				if ((src.getType() instanceof NumericType) || (src
-					.getType() instanceof VolatileNumericType))
-				{
-					ome.xml.model.primitives.Color c = omeMeta.getChannelColor(src.cSerie,
-						src.cChannel);
-					if (c != null) {
-						color = new ARGBType(ARGBType.rgba(c.getRed(), c.getGreen(), c
-							.getBlue(), 255));
-					}
-					else {
-						if (omeMeta.getChannelEmissionWavelength(src.cSerie,
-							src.cChannel) != null)
-						{
-							int emission = omeMeta.getChannelEmissionWavelength(src.cSerie,
-								src.cChannel).value(UNITS.NANOMETER).intValue();
-							Color cAwt = getColorFromWavelength(emission);
-							color = new ARGBType(ARGBType.rgba(cAwt.getRed(), cAwt.getGreen(),
-								cAwt.getBlue(), 255));
-						}
-					}
-				}
-			}
-			src.getReaderPool().recycle(reader);
-			return color;
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-			return new ARGBType(ARGBType.rgba(255, 255, 255, 255));
-		}
-	}
-
-	/**
 	 * Taken from Earl F. Glynn's web page:
 	 * <a href="http://www.efg2.com/Lab/ScienceAndEngineering/Spectra.htm">Spectra
 	 * Lab Report</a> Return a RGB array encoding a color from an input wavelength
 	 * in nm
 	 */
-	static private double Gamma = 0.80;
-	static private double IntensityMax = 255;
 
 	public static int[] waveLengthToRGB(double Wavelength) {
+		double Gamma = 0.80;
+		double IntensityMax = 255;
 		double factor;
 		double Red, Green, Blue;
 
@@ -824,7 +746,7 @@ public class BioFormatsMetaDataHelper {
 	 * @param unit_string
 	 * @return corresponding BF Unit object
 	 */
-	public static Unit getUnitFromString(String unit_string) {
+	public static Unit<Length> getUnitFromString(String unit_string) {
 		Field[] bfUnits = UNITS.class.getFields();
 		for (Field f : bfUnits) {
 			if (f.getType().equals(Unit.class)) {
@@ -836,8 +758,7 @@ public class BioFormatsMetaDataHelper {
 						{// (f.getName().toUpperCase().equals(unit_string.trim().toUpperCase()))
 							// {
 							// Field found
-							Unit u = (Unit) f.get(null); // Field is assumed to be static
-							return u;
+							return (Unit) f.get(null); // Field is assumed to be static
 						}
 					}
 					catch (Exception e) {

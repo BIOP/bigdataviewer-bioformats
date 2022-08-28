@@ -34,7 +34,7 @@
 package ch.epfl.biop.bdv.bioformats.command;
 
 import ch.epfl.biop.bdv.bioformats.BioFormatsMetaDataHelper;
-import ch.epfl.biop.bdv.bioformats.bioformatssource.BioFormatsBdvOpener;
+import ch.epfl.biop.bdv.bioformats.imageloader.BioFormatsBdvOpener;
 import ome.units.quantity.Length;
 import ome.units.unit.Unit;
 import org.scijava.command.Command;
@@ -44,10 +44,11 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+@SuppressWarnings({"Unused","CanBeFinal"})
 public class BioformatsBigdataviewerBridgeDatasetCommand implements Command {
 
 	static public Map<String, Object> getDefaultParameters() {
-		Map<String, Object> def = new HashMap();
+		Map<String, Object> def = new HashMap<>();
 		def.put("unit", "MILLIMETER");
 		def.put("splitrgbchannels", false);
 		def.put("positioniscenter", "AUTO");
@@ -107,7 +108,7 @@ public class BioformatsBigdataviewerBridgeDatasetCommand implements Command {
 
 	public BioFormatsBdvOpener getOpener(String datalocation) {
 
-		Unit bfUnit = BioFormatsMetaDataHelper.getUnitFromString(unit);
+		Unit<Length> bfUnit = BioFormatsMetaDataHelper.getUnitFromString(unit);
 
 		Length positionReferenceFrameLength = new Length(refframesizeinunitlocation,
 			bfUnit);

@@ -47,13 +47,11 @@ public class XmlIoSeriesNumber extends XmlIoNamedEntity<SeriesNumber> {
 
 	@Override
 	public Element toXml(final SeriesNumber fi) {
-		final Element elem = super.toXml(fi);
-		return elem;
+		return super.toXml(fi);
 	}
 
 	@Override
 	public SeriesNumber fromXml(final Element elem) throws SpimDataException {
-		final SeriesNumber tile = super.fromXml(elem);
-		return tile;
+		return super.fromXml(elem);
 	}
 }
