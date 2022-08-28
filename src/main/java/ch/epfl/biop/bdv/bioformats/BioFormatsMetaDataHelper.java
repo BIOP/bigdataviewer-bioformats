@@ -452,13 +452,12 @@ public class BioFormatsMetaDataHelper {
 	}
 
 	/**
-	 * BiFunction necessary to be able to find index of negative values <<<<<<<
-	 * HEAD =======
+	 * BiFunction necessary to be able to find index of negative values
 	 * 
 	 * @param expression to be parsed
 	 * @param fbounds description to do
 	 * @param f to do
-	 * @return to do >>>>>>> bdv-10.4.1
+	 * @return to do
 	 */
 	static public ArrayList<Pair<Integer, ArrayList<Integer>>>
 		commaSeparatedListToArrayOfArray(String expression,
@@ -553,10 +552,8 @@ public class BioFormatsMetaDataHelper {
 	 * Convert a comma separated list of indexes into an arraylist of integer For
 	 * instance 1,2,5:7,10:12,14 returns an ArrayList containing
 	 * [1,2,5,6,7,10,11,12,14] Invalid format are ignored and an error message is
-	 * displayed <<<<<<< HEAD
-	 * 
-	 * @param expression =======
-	 * @param expression expression to parse >>>>>>> bdv-10.4.1
+	 * displayed
+	 * @param expression expression to parse
 	 * @return list of indexes in ArrayList
 	 */
 	static public ArrayList<Integer> expressionToArray(String expression,
