@@ -1,3 +1,5 @@
+# THE FUNCTIONALITIES OF THIS REPOSITORY ARE MOVED TO https://github.com/BIOP/bigdataviewer-image-loaders
+
 [![](https://github.com/BIOP/bigdataviewer-bioformats/actions/workflows/build-main.yml/badge.svg)](https://github.com/BIOP/bigdataviewer-bioformats/actions/workflows/build-main.yml)
 
 # BigDataViewer Bio-Formats Bridge 
